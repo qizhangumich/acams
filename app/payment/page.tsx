@@ -128,7 +128,7 @@ export default function PaymentPage() {
   }, []);
 
   const options = {
-    clientSecret,
+    clientSecret: clientSecret || undefined,
     appearance: {
       theme: 'stripe' as const,
       variables: {

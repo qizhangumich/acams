@@ -46,9 +46,10 @@ export default function WrongAnswersPage() {
   useEffect(() => {
     if (!email) return;
 
+    const userEmail = email; // Store in local variable for type narrowing
     async function loadProgress() {
       try {
-        const response = await fetch(`/api/progress?email=${encodeURIComponent(email)}`);
+        const response = await fetch(`/api/progress?email=${encodeURIComponent(userEmail)}`);
         if (response.ok) {
           const data = await response.json();
           setProgress(data.progress || {});
