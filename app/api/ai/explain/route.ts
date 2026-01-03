@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { aiCache } from '@/lib/ai-cache';
+import { subscriptionStore } from '@/lib/subscription-store';
 
 // Initialize OpenAI client
 const openai = process.env.OPENAI_API_KEY
@@ -78,10 +79,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ explanation: cachedExplanation });
     }
 
-    // Check rate limit
-    if (!aiCache.checkRateLimit(email)) {
+    // Check if user is subscribed (subscribed users have unlimited access)
+    const isSubscribed = await subscriptionStore.isSubscribed(email);
+
+    // Check rate limit only for non-subscribed users
+    if (!isSubscribed && !aiCache.checkRateLimit(email)) {
       return NextResponse.json(
-        { error: 'Rate limit exceeded. You can request 1 AI explanation per day.' },
+        { error: 'Rate limit exceeded. You can request 1 AI explanation per day. Subscribe for unlimited access!' },
         { status: 429 }
       );
     }
@@ -147,8 +151,10 @@ ${topic}`;
     // Cache the explanation
     aiCache.setCachedExplanation(question_id, language, explanation);
 
-    // Increment rate limit
-    aiCache.incrementRateLimit(email);
+    // Increment rate limit only for non-subscribed users
+    if (!isSubscribed) {
+      aiCache.incrementRateLimit(email);
+    }
 
     return NextResponse.json({ explanation });
   } catch (error) {

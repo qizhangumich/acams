@@ -19,6 +19,7 @@ export default function QuestionsPage() {
   const [aiExplanation, setAiExplanation] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
 
   // Load email from localStorage
   useEffect(() => {
@@ -77,6 +78,25 @@ export default function QuestionsPage() {
       }
     }
     loadProgress();
+  }, [email]);
+
+  // Check subscription status
+  useEffect(() => {
+    if (!email) return;
+
+    const userEmail = email; // Store in local variable for type narrowing
+    async function checkSubscription() {
+      try {
+        const response = await fetch(`/api/subscription/check?email=${encodeURIComponent(userEmail)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setIsSubscribed(data.subscribed || false);
+        }
+      } catch (error) {
+        console.error('Failed to check subscription:', error);
+      }
+    }
+    checkSubscription();
   }, [email]);
 
   // Restore selected answers when question changes
@@ -282,7 +302,7 @@ export default function QuestionsPage() {
             Wrong Answers ({wrongCount})
           </Link>
           <a
-            href="https://buy.stripe.com/bJe7sMcZ4bvC6954grcV200"
+            href={`https://buy.stripe.com/bJe7sMcZ4bvC6954grcV200?client_reference_id=${encodeURIComponent(email || '')}`}
             target="_blank"
             rel="noopener noreferrer"
             className={styles.paymentButton}
@@ -354,6 +374,16 @@ export default function QuestionsPage() {
             
             {!isCorrect && (
               <div className={styles.aiExplanationSection}>
+                {isSubscribed && (
+                  <div className={styles.subscribedBadge}>
+                    ✓ Premium: Unlimited AI explanations
+                  </div>
+                )}
+                {!isSubscribed && (
+                  <div className={styles.freeUserNote}>
+                    Free: 1 AI explanation per day. <a href="https://buy.stripe.com/bJe7sMcZ4bvC6954grcV200" target="_blank" rel="noopener noreferrer" className={styles.subscribeLink}>Subscribe for unlimited</a>
+                  </div>
+                )}
                 <button
                   onClick={handleAiExplain}
                   disabled={aiLoading}
