@@ -129,12 +129,10 @@ STRIPE_SECRET_KEY=your_stripe_secret_key
 
 **Required Keys:**
 - `OPENAI_API_KEY`: Get from [OpenAI Platform](https://platform.openai.com/api-keys)
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: Get from [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
-- `STRIPE_SECRET_KEY`: Get from [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
 
 **Note**: 
 - The AI explanation feature requires a valid OpenAI API key. Without it, the AI explanation button will show an error when clicked.
-- Payment functionality (including Apple Pay) requires valid Stripe keys. Apple Pay will automatically appear as an option on supported devices when using Stripe Payment Element.
+- Payment functionality uses Stripe Payment Links - no API keys needed. Apple Pay and other payment methods are automatically supported by Stripe.
 
 ## Deployment to Vercel
 

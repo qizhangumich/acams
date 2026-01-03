@@ -281,12 +281,14 @@ export default function QuestionsPage() {
           <Link href="/wrong-answers" className={styles.wrongAnswersLink}>
             Wrong Answers ({wrongCount})
           </Link>
-          <Link
-            href="/payment"
+          <a
+            href="https://buy.stripe.com/bJe7sMcZ4bvC6954grcV200"
+            target="_blank"
+            rel="noopener noreferrer"
             className={styles.paymentButton}
           >
-            💳 Upgrade
-          </Link>
+            💳 Subscribe
+          </a>
           <button onClick={handleReset} className={styles.resetButton}>
             Reset Progress
           </button>
