@@ -12,41 +12,12 @@ function PaidPageContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [autoActivating, setAutoActivating] = useState(false);
 
-  // Retrieve subscription email: prioritize user's existing email, then URL param, then subscriptionEmail
-  useEffect(() => {
-    // Priority 1: User's existing email (from before payment)
-    const userEmail = localStorage.getItem('userEmail');
-    
-    // Priority 2: URL query param
-    const emailFromUrl = searchParams.get('email');
-    
-    // Priority 3: Subscription email from /subscribe page
-    const subscriptionEmail = localStorage.getItem('subscriptionEmail');
-    
-    // Use user's existing email if available, otherwise use subscription email or URL param
-    const finalEmail = userEmail || emailFromUrl || subscriptionEmail;
-    
-    if (finalEmail) {
-      // Skip temp emails (placeholders)
-      if (!finalEmail.startsWith('temp_')) {
-        const normalizedEmail = finalEmail.trim().toLowerCase();
-        setEmail(normalizedEmail);
-        
-        // Auto-activate if user has existing email (they already entered it before payment)
-        if (userEmail && !userEmail.startsWith('temp_')) {
-          // Auto-activate after a short delay
-          setTimeout(() => {
-            const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
-            handleSubmit(fakeEvent);
-          }, 800);
-        }
-      }
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
     }
-  }, [searchParams]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
     
     if (!email) {
       setError('Please enter your email address');
@@ -60,6 +31,9 @@ function PaidPageContent() {
       return;
     }
 
+    // Skip if already loading
+    if (loading) return;
+    
     setLoading(true);
     setError(null);
 
@@ -88,6 +62,7 @@ function PaidPageContent() {
       localStorage.removeItem('subscriptionEmail');
       
       setSuccess(true);
+      setAutoActivating(false);
       
       // Redirect to questions page with success parameter
       setTimeout(() => {
@@ -97,8 +72,42 @@ function PaidPageContent() {
       console.error('Error activating access:', err);
       setError('An unexpected error occurred. Please try again.');
       setLoading(false);
+      setAutoActivating(false);
     }
   };
+
+  // Retrieve subscription email: prioritize user's existing email, then URL param, then subscriptionEmail
+  useEffect(() => {
+    // Priority 1: User's existing email (from before payment)
+    const userEmail = localStorage.getItem('userEmail');
+    
+    // Priority 2: URL query param
+    const emailFromUrl = searchParams.get('email');
+    
+    // Priority 3: Subscription email from /subscribe page
+    const subscriptionEmail = localStorage.getItem('subscriptionEmail');
+    
+    // Use user's existing email if available, otherwise use subscription email or URL param
+    const finalEmail = userEmail || emailFromUrl || subscriptionEmail;
+    
+    if (finalEmail) {
+      // Skip temp emails (placeholders)
+      if (!finalEmail.startsWith('temp_')) {
+        const normalizedEmail = finalEmail.trim().toLowerCase();
+        setEmail(normalizedEmail);
+        
+        // Auto-activate if user has existing email (they already entered it before payment)
+        if (userEmail && !userEmail.startsWith('temp_')) {
+          setAutoActivating(true);
+          // Auto-activate after a short delay
+          setTimeout(() => {
+            handleSubmit();
+          }, 1000);
+        }
+      }
+    }
+  }, [searchParams]);
+
 
   return (
     <div className={styles.container}>
@@ -111,13 +120,19 @@ function PaidPageContent() {
             <p className={styles.subtitle}>
               Your subscription email will be used as your paid account identity.
             </p>
-            {!email && (
+            {autoActivating && (
+              <div className={styles.autoActivatingBox}>
+                <strong>🔄 Auto-activating...</strong> Using your email: {email}
+              </div>
+            )}
+            
+            {!email && !autoActivating && (
               <div className={styles.infoBox}>
                 <strong>Note:</strong> Please enter the email you used during subscription.
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className={styles.form}>
+            <form onSubmit={(e) => handleSubmit(e)} className={styles.form}>
               <input
                 type="email"
                 value={email}

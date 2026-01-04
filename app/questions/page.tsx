@@ -88,7 +88,9 @@ export default function QuestionsPage() {
     const userEmail = email; // Store in local variable for type narrowing
     async function checkPaymentStatus() {
       try {
-        const response = await fetch(`/api/subscription/check?email=${encodeURIComponent(userEmail)}`);
+        // Normalize email for API call
+        const normalizedEmail = userEmail.trim().toLowerCase();
+        const response = await fetch(`/api/subscription/check?email=${encodeURIComponent(normalizedEmail)}`);
         if (response.ok) {
           const data = await response.json();
           const paid = data.is_paid || data.subscribed || false;
@@ -105,6 +107,10 @@ export default function QuestionsPage() {
               setShowActivationPrompt(true);
               // Clean up URL params
               window.history.replaceState({}, '', window.location.pathname);
+            } else if (fromPayment && paid) {
+              // User just activated, refresh to show premium status
+              // Clean up URL params
+              window.history.replaceState({}, '', window.location.pathname);
             }
           }
         }
@@ -113,6 +119,13 @@ export default function QuestionsPage() {
       }
     }
     checkPaymentStatus();
+    
+    // Re-check payment status when URL changes (e.g., after activation)
+    const interval = setInterval(() => {
+      checkPaymentStatus();
+    }, 2000);
+    
+    return () => clearInterval(interval);
   }, [email]);
 
   // Restore selected answers when question changes
