@@ -8,105 +8,66 @@ import styles from './page.module.css';
 function PaidPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [autoActivating, setAutoActivating] = useState(false);
+  const [confirmedEmail, setConfirmedEmail] = useState<string | null>(null);
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-    }
-    
-    if (!email) {
-      setError('Please enter your email address');
-      return;
-    }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address');
-      return;
-    }
-
-    // Skip if already loading
-    if (loading) return;
-    
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/payment/activate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || 'Failed to activate access. Please try again.');
-        setLoading(false);
-        return;
-      }
-
-      // Success - upgrade account with subscription email
-      const normalizedEmail = email.trim().toLowerCase();
-      
-      // Update userEmail to subscription email (becomes authoritative)
-      localStorage.setItem('userEmail', normalizedEmail);
-      
-      // Clear temporary subscription email
-      localStorage.removeItem('subscriptionEmail');
-      
-      setSuccess(true);
-      setAutoActivating(false);
-      
-      // Redirect to questions page with success parameter
-      setTimeout(() => {
-        router.push('/questions?activated=true');
-      }, 2000);
-    } catch (err) {
-      console.error('Error activating access:', err);
-      setError('An unexpected error occurred. Please try again.');
-      setLoading(false);
-      setAutoActivating(false);
-    }
-  };
-
-  // Retrieve subscription email: prioritize user's existing email, then URL param, then subscriptionEmail
+  // Confirm payment using context_id from URL
   useEffect(() => {
-    // Priority 1: User's existing email (from before payment)
-    const userEmail = localStorage.getItem('userEmail');
-    
-    // Priority 2: URL query param
-    const emailFromUrl = searchParams.get('email');
-    
-    // Priority 3: Subscription email from /subscribe page
-    const subscriptionEmail = localStorage.getItem('subscriptionEmail');
-    
-    // Use user's existing email if available, otherwise use subscription email or URL param
-    const finalEmail = userEmail || emailFromUrl || subscriptionEmail;
-    
-    if (finalEmail) {
-      // Skip temp emails (placeholders)
-      if (!finalEmail.startsWith('temp_')) {
-        const normalizedEmail = finalEmail.trim().toLowerCase();
-        setEmail(normalizedEmail);
-        
-        // Auto-activate if user has existing email (they already entered it before payment)
-        if (userEmail && !userEmail.startsWith('temp_')) {
-          setAutoActivating(true);
-          // Auto-activate after a short delay
-          setTimeout(() => {
-            handleSubmit();
-          }, 1000);
-        }
-      }
+    // Read context_id from URL (Stripe passes it as client_reference_id)
+    const contextId = searchParams.get('client_reference_id') || 
+                      searchParams.get('ctx') || 
+                      searchParams.get('context_id');
+
+    if (!contextId) {
+      setError('Payment context ID not found. Please contact support.');
+      return;
     }
-  }, [searchParams]);
+
+    // Auto-confirm payment
+    const confirmPayment = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch('/api/payment/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ context_id: contextId }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.error || 'Failed to confirm payment. Please try again.');
+          setLoading(false);
+          return;
+        }
+
+        // Success - payment confirmed and account upgraded
+        const normalizedEmail = data.email;
+        
+        // Update userEmail to confirmed email (becomes authoritative)
+        localStorage.setItem('userEmail', normalizedEmail);
+        
+        setConfirmedEmail(normalizedEmail);
+        setSuccess(true);
+        setLoading(false);
+        
+        // Redirect to questions page with success parameter
+        setTimeout(() => {
+          router.push('/questions?activated=true');
+        }, 2000);
+      } catch (err) {
+        console.error('Error confirming payment:', err);
+        setError('An unexpected error occurred. Please try again.');
+        setLoading(false);
+      }
+    };
+
+    confirmPayment();
+  }, [searchParams, router]);
 
 
   return (
@@ -117,59 +78,37 @@ function PaidPageContent() {
         
         {!success ? (
           <>
-            <p className={styles.subtitle}>
-              Your subscription email will be used as your paid account identity.
-            </p>
-            {autoActivating && (
-              <div className={styles.autoActivatingBox}>
-                <strong>🔄 Auto-activating...</strong> Using your email: {email}
-              </div>
-            )}
-            
-            {!email && !autoActivating && (
-              <div className={styles.infoBox}>
-                <strong>Note:</strong> Please enter the email you used during subscription.
-              </div>
-            )}
-
-            <form onSubmit={(e) => handleSubmit(e)} className={styles.form}>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setError(null);
-                }}
-                placeholder="your.email@example.com"
-                className={styles.input}
-                required
-                disabled={loading}
-              />
-
-              {error && (
-                <div className={styles.error}>
-                  {error}
-                  {error.includes('wrong email') && (
-                    <p className={styles.errorHint}>
-                      If you entered the wrong email, please try again.
-                    </p>
-                  )}
+            {loading ? (
+              <>
+                <p className={styles.subtitle}>
+                  Confirming your payment and upgrading your account...
+                </p>
+                <div className={styles.loadingSpinner}>
+                  <div className={styles.spinner}></div>
+                  <p>Please wait...</p>
                 </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className={styles.button}
-              >
-                {loading ? 'Activating...' : 'Activate Access'}
-              </button>
-            </form>
+              </>
+            ) : (
+              <>
+                <p className={styles.subtitle}>
+                  Processing your payment confirmation...
+                </p>
+                {error && (
+                  <div className={styles.error}>
+                    {error}
+                    <p className={styles.errorHint}>
+                      If this problem persists, please contact support with your payment reference.
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
           </>
         ) : (
           <div className={styles.successMessage}>
-            <p className={styles.successText}>Access activated successfully!</p>
-            <p className={styles.redirectText}>Redirecting to question bank...</p>
+            <p className={styles.successText}>Payment confirmed successfully!</p>
+            <p className={styles.confirmedEmail}>Account: {confirmedEmail}</p>
+            <p className={styles.redirectText}>Upgrading to Premium and redirecting...</p>
             <Link href="/questions" className={styles.link}>
               Go to Question Bank →
             </Link>

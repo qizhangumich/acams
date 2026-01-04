@@ -36,16 +36,35 @@ export default function SubscribePage() {
     setLoading(true);
     setError(null);
 
-    // Store email temporarily in localStorage for /paid page
-    const normalizedEmail = email.trim().toLowerCase();
-    localStorage.setItem('subscriptionEmail', normalizedEmail);
+    try {
+      // Step 1: Create payment context
+      const response = await fetch('/api/payment/create-context', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
 
-    // Redirect to Stripe Payment Link with email prefilled
-    const paymentUrl = 
-      'https://buy.stripe.com/bJe7sMcZ4bvC6954grcV200' +
-      '?prefilled_email=' + encodeURIComponent(normalizedEmail);
+      const data = await response.json();
 
-    window.location.href = paymentUrl;
+      if (!response.ok) {
+        setError(data.error || 'Failed to create payment context. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Redirect to Stripe Payment Link with context_id
+      const normalizedEmail = email.trim().toLowerCase();
+      const paymentUrl = 
+        'https://buy.stripe.com/bJe7sMcZ4bvC6954grcV200' +
+        '?prefilled_email=' + encodeURIComponent(normalizedEmail) +
+        '&client_reference_id=' + encodeURIComponent(data.context_id);
+
+      window.location.href = paymentUrl;
+    } catch (err) {
+      console.error('Error creating payment context:', err);
+      setError('An unexpected error occurred. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (

@@ -38,4 +38,5 @@ next-env.d.ts
 
 # subscription storage
 /subscription-data.json
+/payment-context-data.json
 

@@ -81,7 +81,7 @@ export default function QuestionsPage() {
     loadProgress();
   }, [email]);
 
-  // Check payment status
+  // Check payment status (state-driven, no assumptions)
   useEffect(() => {
     if (!email) return;
 
@@ -96,21 +96,23 @@ export default function QuestionsPage() {
           const paid = data.is_paid || data.subscribed || false;
           setIsSubscribed(paid);
           
-          // Show activation prompt if user is not paid (they might have paid but not activated)
-          // Check URL params to see if they came from payment or activation
+          // Check URL params for activation signal
           if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
-            const fromPayment = params.get('paid') === 'true' || 
-                               params.get('payment') === 'success' ||
-                               params.get('activated') === 'true';
-            if (fromPayment && !paid) {
-              setShowActivationPrompt(true);
+            const fromActivation = params.get('activated') === 'true';
+            
+            if (fromActivation) {
+              // User just activated, refresh state
               // Clean up URL params
               window.history.replaceState({}, '', window.location.pathname);
-            } else if (fromPayment && paid) {
-              // User just activated, refresh to show premium status
-              // Clean up URL params
-              window.history.replaceState({}, '', window.location.pathname);
+              
+              // Force refresh payment status
+              if (!paid) {
+                // Re-check after a short delay (state might not be updated yet)
+                setTimeout(() => {
+                  checkPaymentStatus();
+                }, 1000);
+              }
             }
           }
         }
@@ -118,12 +120,13 @@ export default function QuestionsPage() {
         console.error('Failed to check payment status:', error);
       }
     }
+    
     checkPaymentStatus();
     
-    // Re-check payment status when URL changes (e.g., after activation)
+    // Re-check payment status periodically (for state synchronization)
     const interval = setInterval(() => {
       checkPaymentStatus();
-    }, 2000);
+    }, 3000);
     
     return () => clearInterval(interval);
   }, [email]);
