@@ -1,28 +1,49 @@
 import { UserProgress, QuestionProgress } from '@/types';
-import { kvGet, kvSet, kvDel } from './kv-client';
+import { neon } from '@neondatabase/serverless';
+
+/**
+ * Get database client
+ */
+function getDb() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL environment variable is required');
+  }
+  return neon(process.env.DATABASE_URL);
+}
 
 /**
  * Progress Store
  * 
  * Manages user learning progress.
- * Uses Vercel KV for persistent storage.
+ * Uses Neon PostgreSQL for persistent storage.
  */
 class ProgressStore {
-  /**
-   * Get KV key for user progress
-   */
-  private getProgressKey(email: string): string {
-    const normalizedEmail = email.trim().toLowerCase();
-    return `progress:${normalizedEmail}`;
-  }
-
   /**
    * Get progress for a user
    */
   async getProgress(email: string): Promise<UserProgress | null> {
-    const key = this.getProgressKey(email);
-    const progress = await kvGet<UserProgress>(key);
-    return progress || null;
+    const normalizedEmail = email.trim().toLowerCase();
+    const db = getDb();
+    const result = await db`
+      SELECT email, progress, last_active_at
+      FROM user_progress
+      WHERE email = ${normalizedEmail}
+    ` as Array<{
+      email: string;
+      progress: any; // JSONB from database
+      last_active_at: Date;
+    }>;
+
+    if (result.length === 0) {
+      return null;
+    }
+
+    const row = result[0];
+    return {
+      email: row.email,
+      progress: row.progress as Record<number, QuestionProgress>,
+      lastActiveAt: row.last_active_at.toISOString(),
+    };
   }
 
   /**
@@ -30,7 +51,6 @@ class ProgressStore {
    */
   async saveProgress(email: string, questionId: number, correct: boolean, userAnswers?: string[]): Promise<void> {
     const normalizedEmail = email.trim().toLowerCase();
-    const key = this.getProgressKey(normalizedEmail);
 
     // Get existing progress
     let userProgress = await this.getProgress(normalizedEmail);
@@ -53,8 +73,14 @@ class ProgressStore {
 
     userProgress.lastActiveAt = new Date().toISOString();
     
-    // Save to KV
-    await kvSet<UserProgress>(key, userProgress);
+    // Save to database using UPSERT
+    const db = getDb();
+    await db`
+      INSERT INTO user_progress (email, progress, last_active_at)
+      VALUES (${normalizedEmail}, ${JSON.stringify(userProgress.progress)}::jsonb, ${userProgress.lastActiveAt})
+      ON CONFLICT (email)
+      DO UPDATE SET progress = ${JSON.stringify(userProgress.progress)}::jsonb, last_active_at = ${userProgress.lastActiveAt}
+    `;
   }
 
   /**
@@ -69,8 +95,11 @@ class ProgressStore {
    * Reset progress for a user
    */
   async resetProgress(email: string): Promise<void> {
-    const key = this.getProgressKey(email);
-    await kvDel(key);
+    const normalizedEmail = email.trim().toLowerCase();
+    const db = getDb();
+    await db`
+      DELETE FROM user_progress WHERE email = ${normalizedEmail}
+    `;
   }
 }
 

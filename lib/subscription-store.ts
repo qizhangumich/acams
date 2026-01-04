@@ -1,10 +1,20 @@
-import { kvGet, kvSet, kvDel, kvKeys } from './kv-client';
+import { neon } from '@neondatabase/serverless';
+
+/**
+ * Get database client
+ */
+function getDb() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL environment variable is required');
+  }
+  return neon(process.env.DATABASE_URL);
+}
 
 /**
  * Subscription Store
  * 
  * Manages user subscription/payment status.
- * Uses Vercel KV for persistent storage.
+ * Uses Neon PostgreSQL for persistent storage.
  */
 interface SubscriptionRecord {
   email: string;
@@ -14,20 +24,15 @@ interface SubscriptionRecord {
 
 class SubscriptionStore {
   /**
-   * Get KV key for a user subscription
-   */
-  private getUserKey(email: string): string {
-    const normalizedEmail = email.trim().toLowerCase();
-    return `user:${normalizedEmail}`;
-  }
-
-  /**
    * Check if user is paid
    */
   async isPaid(email: string): Promise<boolean> {
-    const key = this.getUserKey(email);
-    const record = await kvGet<SubscriptionRecord>(key);
-    return record?.is_paid || false;
+    const normalizedEmail = email.trim().toLowerCase();
+    const db = getDb();
+    const result = await db`
+      SELECT is_paid FROM subscriptions WHERE email = ${normalizedEmail}
+    ` as Array<{ is_paid: boolean }>;
+    return result.length > 0 ? result[0].is_paid : false;
   }
 
   /**
@@ -35,27 +40,50 @@ class SubscriptionStore {
    */
   async setPaid(email: string): Promise<void> {
     const normalizedEmail = email.trim().toLowerCase();
-    const key = this.getUserKey(normalizedEmail);
+    const db = getDb();
 
     // Get existing record to preserve paid_at if already set
-    const existingRecord = await kvGet<SubscriptionRecord>(key);
+    const existing = await db`
+      SELECT paid_at FROM subscriptions WHERE email = ${normalizedEmail}
+    ` as Array<{ paid_at: Date | null }>;
 
-    const record: SubscriptionRecord = {
-      email: normalizedEmail,
-      is_paid: true,
-      paid_at: existingRecord?.paid_at || new Date().toISOString(),
-    };
+    const paidAt = existing.length > 0 && existing[0].paid_at
+      ? existing[0].paid_at.toISOString()
+      : new Date().toISOString();
 
-    await kvSet<SubscriptionRecord>(key, record);
+    // Use INSERT ... ON CONFLICT to handle upsert
+    await db`
+      INSERT INTO subscriptions (email, is_paid, paid_at)
+      VALUES (${normalizedEmail}, ${true}, ${paidAt})
+      ON CONFLICT (email)
+      DO UPDATE SET is_paid = ${true}, paid_at = COALESCE(subscriptions.paid_at, ${paidAt})
+    `;
   }
 
   /**
    * Get user record
    */
   async getUser(email: string): Promise<SubscriptionRecord | null> {
-    const key = this.getUserKey(email);
-    const record = await kvGet<SubscriptionRecord>(key);
-    return record || null;
+    const normalizedEmail = email.trim().toLowerCase();
+    const db = getDb();
+    const result = await db`
+      SELECT email, is_paid, paid_at FROM subscriptions WHERE email = ${normalizedEmail}
+    ` as Array<{
+      email: string;
+      is_paid: boolean;
+      paid_at: Date | null;
+    }>;
+
+    if (result.length === 0) {
+      return null;
+    }
+
+    const row = result[0];
+    return {
+      email: row.email,
+      is_paid: row.is_paid,
+      paid_at: row.paid_at ? row.paid_at.toISOString() : undefined,
+    };
   }
 
   /**
@@ -63,17 +91,23 @@ class SubscriptionStore {
    */
   async getAllPaidUsers(): Promise<SubscriptionRecord[]> {
     try {
-      const keys = await kvKeys('user:*');
-      const paidUsers: SubscriptionRecord[] = [];
+      const db = getDb();
+      const results = await db`
+        SELECT email, is_paid, paid_at
+        FROM subscriptions
+        WHERE is_paid = TRUE
+        ORDER BY paid_at DESC
+      ` as Array<{
+        email: string;
+        is_paid: boolean;
+        paid_at: Date | null;
+      }>;
 
-      for (const key of keys) {
-        const record = await kvGet<SubscriptionRecord>(key);
-        if (record && record.is_paid) {
-          paidUsers.push(record);
-        }
-      }
-
-      return paidUsers;
+      return results.map(result => ({
+        email: result.email,
+        is_paid: result.is_paid,
+        paid_at: result.paid_at ? result.paid_at.toISOString() : undefined,
+      }));
     } catch (error) {
       console.error('Error getting all paid users:', error);
       return [];

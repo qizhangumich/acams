@@ -1,5 +1,15 @@
 import { randomUUID } from 'crypto';
-import { kvGet, kvSet, kvDel, kvKeys } from './kv-client';
+import { neon } from '@neondatabase/serverless';
+
+/**
+ * Get database client
+ */
+function getDb() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL environment variable is required');
+  }
+  return neon(process.env.DATABASE_URL);
+}
 
 /**
  * Payment Context Store
@@ -9,7 +19,7 @@ import { kvGet, kvSet, kvDel, kvKeys } from './kv-client';
  * - Stripe Payment Link payment
  * - Account upgrade + Premium UI activation
  * 
- * Uses Vercel KV for persistent storage.
+ * Uses Neon PostgreSQL for persistent storage.
  */
 export interface PaymentContext {
   id: string;                // UUID
@@ -20,13 +30,6 @@ export interface PaymentContext {
 }
 
 class PaymentContextStore {
-  /**
-   * Get KV key for a payment context
-   */
-  private getContextKey(contextId: string): string {
-    return `context:${contextId}`;
-  }
-
   /**
    * Create a new payment context
    */
@@ -40,8 +43,11 @@ class PaymentContextStore {
       created_at: new Date().toISOString(),
     };
 
-    const key = this.getContextKey(context.id);
-    await kvSet<PaymentContext>(key, context);
+    const db = getDb();
+    await db`
+      INSERT INTO payment_contexts (id, email, status, created_at)
+      VALUES (${context.id}, ${context.email}, ${context.status}, ${context.created_at})
+    `;
 
     return context;
   }
@@ -50,9 +56,31 @@ class PaymentContextStore {
    * Get payment context by ID
    */
   async getContext(contextId: string): Promise<PaymentContext | null> {
-    const key = this.getContextKey(contextId);
-    const context = await kvGet<PaymentContext>(key);
-    return context || null;
+    const db = getDb();
+    const result = await db`
+      SELECT id, email, status, created_at, paid_at
+      FROM payment_contexts
+      WHERE id = ${contextId}
+    ` as Array<{
+      id: string;
+      email: string;
+      status: string;
+      created_at: Date;
+      paid_at: Date | null;
+    }>;
+
+    if (!result || result.length === 0) {
+      return null;
+    }
+
+    const row = result[0];
+    return {
+      id: row.id,
+      email: row.email,
+      status: row.status as 'pending' | 'paid',
+      created_at: row.created_at.toISOString(),
+      paid_at: row.paid_at ? row.paid_at.toISOString() : undefined,
+    };
   }
 
   /**
@@ -70,13 +98,19 @@ class PaymentContextStore {
     }
 
     // Mark as paid
-    context.status = 'paid';
-    context.paid_at = new Date().toISOString();
+    const paidAt = new Date().toISOString();
+    const db = getDb();
+    await db`
+      UPDATE payment_contexts
+      SET status = 'paid', paid_at = ${paidAt}
+      WHERE id = ${contextId}
+    `;
 
-    const key = this.getContextKey(contextId);
-    await kvSet<PaymentContext>(key, context);
-
-    return context;
+    return {
+      ...context,
+      status: 'paid',
+      paid_at: paidAt,
+    };
   }
 
   /**
@@ -84,17 +118,26 @@ class PaymentContextStore {
    */
   async getAllContexts(): Promise<PaymentContext[]> {
     try {
-      const keys = await kvKeys('context:*');
-      const contexts: PaymentContext[] = [];
+      const db = getDb();
+      const results = await db`
+        SELECT id, email, status, created_at, paid_at
+        FROM payment_contexts
+        ORDER BY created_at DESC
+      ` as Array<{
+        id: string;
+        email: string;
+        status: string;
+        created_at: Date;
+        paid_at: Date | null;
+      }>;
 
-      for (const key of keys) {
-        const context = await kvGet<PaymentContext>(key);
-        if (context) {
-          contexts.push(context);
-        }
-      }
-
-      return contexts;
+      return results.map(result => ({
+        id: result.id,
+        email: result.email,
+        status: result.status as 'pending' | 'paid',
+        created_at: result.created_at.toISOString(),
+        paid_at: result.paid_at ? result.paid_at.toISOString() : undefined,
+      }));
     } catch (error) {
       console.error('Error getting all contexts:', error);
       return [];

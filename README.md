@@ -50,10 +50,10 @@ A clean, minimal question bank application for ACAMS certification practice.
 │   └── page.tsx                  # Landing page (email input)
 ├── lib/
 │   ├── data-service.ts           # Load questions.json
-│   ├── kv-client.ts              # Vercel KV client wrapper
-│   ├── progress-store.ts         # Progress persistence (KV)
-│   ├── subscription-store.ts     # Payment status storage (KV)
-│   ├── payment-context-store.ts  # Payment context storage (KV)
+│   ├── db-client.ts              # Neon PostgreSQL client wrapper
+│   ├── progress-store.ts         # Progress persistence (PostgreSQL)
+│   ├── subscription-store.ts     # Payment status storage (PostgreSQL)
+│   ├── payment-context-store.ts  # Payment context storage (PostgreSQL)
 │   └── ai-cache.ts               # AI explanation cache & rate limiting
 ├── types/
 │   └── index.ts                  # TypeScript types
@@ -146,19 +146,17 @@ Create a `.env.local` file in the root directory with:
 
 ```
 OPENAI_API_KEY=your_api_key_here
-KV_REST_API_URL=your_vercel_kv_rest_api_url
-KV_REST_API_TOKEN=your_vercel_kv_rest_api_token
+DATABASE_URL=postgresql://user:password@host/database
 ```
 
 **Required Keys:**
 - `OPENAI_API_KEY`: Get from [OpenAI Platform](https://platform.openai.com/api-keys)
-- `KV_REST_API_URL`: Get from Vercel Dashboard → Storage → KV → REST API URL
-- `KV_REST_API_TOKEN`: Get from Vercel Dashboard → Storage → KV → REST API Token
+- `DATABASE_URL`: Get from Neon Dashboard → Connection String (PostgreSQL connection string)
 
 **Note**: 
 - The AI explanation feature requires a valid OpenAI API key. Without it, the AI explanation button will show an error when clicked.
 - Payment functionality uses Stripe Payment Links - no API keys needed. Apple Pay and other payment methods are automatically supported by Stripe.
-- **Vercel KV is required** for data persistence. See `VERCEL_KV_SETUP.md` for setup instructions.
+- **Neon PostgreSQL is required** for data persistence. See `NEON_SETUP.md` for setup instructions.
 
 ### Payment Flow
 
@@ -180,15 +178,16 @@ KV_REST_API_TOKEN=your_vercel_kv_rest_api_token
 
 ### Important Notes for Vercel
 
-The application uses **Vercel KV** for data persistence:
-- User progress is stored in KV
-- Payment/subscription status is stored in KV
-- Payment contexts are stored in KV
+The application uses **Neon PostgreSQL** for data persistence:
+- User progress is stored in PostgreSQL
+- Payment/subscription status is stored in PostgreSQL
+- Payment contexts are stored in PostgreSQL
 
 **Setup Required:**
-1. Create a KV database in Vercel Dashboard
-2. Add environment variables: `KV_REST_API_URL` and `KV_REST_API_TOKEN`
-3. See `VERCEL_KV_SETUP.md` for detailed setup instructions
+1. Create a Neon database (or use existing one)
+2. Add environment variable: `DATABASE_URL` (PostgreSQL connection string)
+3. Run database initialization (see `NEON_SETUP.md`)
+4. See `NEON_SETUP.md` for detailed setup instructions
 
 All data is now persistent across serverless function invocations.
 
