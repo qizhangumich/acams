@@ -50,8 +50,10 @@ A clean, minimal question bank application for ACAMS certification practice.
 │   └── page.tsx                  # Landing page (email input)
 ├── lib/
 │   ├── data-service.ts           # Load questions.json
-│   ├── progress-store.ts         # Progress persistence
-│   ├── subscription-store.ts     # Payment status storage
+│   ├── kv-client.ts              # Vercel KV client wrapper
+│   ├── progress-store.ts         # Progress persistence (KV)
+│   ├── subscription-store.ts     # Payment status storage (KV)
+│   ├── payment-context-store.ts  # Payment context storage (KV)
 │   └── ai-cache.ts               # AI explanation cache & rate limiting
 ├── types/
 │   └── index.ts                  # TypeScript types
@@ -67,9 +69,9 @@ A clean, minimal question bank application for ACAMS certification practice.
 - Questions are immutable after loading
 
 ### 2. Progress Store (`lib/progress-store.ts`)
-- File-based storage for user progress
+- Vercel KV storage for user progress
 - Maps email → progress data
-- **Note**: For Vercel production, consider using a database (Vercel KV, Postgres, etc.)
+- Persistent across serverless function invocations
 
 ### 3. Landing Page (`app/page.tsx`)
 - Simple email input form
@@ -144,16 +146,19 @@ Create a `.env.local` file in the root directory with:
 
 ```
 OPENAI_API_KEY=your_api_key_here
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-STRIPE_SECRET_KEY=your_stripe_secret_key
+KV_REST_API_URL=your_vercel_kv_rest_api_url
+KV_REST_API_TOKEN=your_vercel_kv_rest_api_token
 ```
 
 **Required Keys:**
 - `OPENAI_API_KEY`: Get from [OpenAI Platform](https://platform.openai.com/api-keys)
+- `KV_REST_API_URL`: Get from Vercel Dashboard → Storage → KV → REST API URL
+- `KV_REST_API_TOKEN`: Get from Vercel Dashboard → Storage → KV → REST API Token
 
 **Note**: 
 - The AI explanation feature requires a valid OpenAI API key. Without it, the AI explanation button will show an error when clicked.
 - Payment functionality uses Stripe Payment Links - no API keys needed. Apple Pay and other payment methods are automatically supported by Stripe.
+- **Vercel KV is required** for data persistence. See `VERCEL_KV_SETUP.md` for setup instructions.
 
 ### Payment Flow
 
@@ -175,13 +180,17 @@ STRIPE_SECRET_KEY=your_stripe_secret_key
 
 ### Important Notes for Vercel
 
-The current progress store uses file-based storage, which **will not persist** across serverless function invocations on Vercel. For production:
+The application uses **Vercel KV** for data persistence:
+- User progress is stored in KV
+- Payment/subscription status is stored in KV
+- Payment contexts are stored in KV
 
-1. **Option 1**: Use Vercel KV (Redis)
-2. **Option 2**: Use Vercel Postgres
-3. **Option 3**: Use a third-party database (Supabase, PlanetScale, etc.)
+**Setup Required:**
+1. Create a KV database in Vercel Dashboard
+2. Add environment variables: `KV_REST_API_URL` and `KV_REST_API_TOKEN`
+3. See `VERCEL_KV_SETUP.md` for detailed setup instructions
 
-The code structure is ready - just replace `lib/progress-store.ts` with a database-backed implementation.
+All data is now persistent across serverless function invocations.
 
 ## Constraints Met
 

@@ -1,14 +1,11 @@
-import { promises as fs } from 'fs';
-import path from 'path';
+import { kvGet, kvSet, kvDel, kvKeys } from './kv-client';
 
 /**
- * Simple file-based subscription store
+ * Subscription Store
  * 
- * NOTE: For Vercel serverless functions, file writes are ephemeral.
- * For production, consider using a database.
+ * Manages user subscription/payment status.
+ * Uses Vercel KV for persistent storage.
  */
-const SUBSCRIPTION_FILE = path.join(process.cwd(), 'subscription-data.json');
-
 interface SubscriptionRecord {
   email: string;
   is_paid: boolean;
@@ -16,52 +13,20 @@ interface SubscriptionRecord {
 }
 
 class SubscriptionStore {
-  private cache: Map<string, SubscriptionRecord> = new Map();
-  private cacheLoaded = false;
-
   /**
-   * Load subscription data from file
+   * Get KV key for a user subscription
    */
-  private async loadCache(): Promise<void> {
-    if (this.cacheLoaded) return;
-
-    try {
-      const data = await fs.readFile(SUBSCRIPTION_FILE, 'utf-8');
-      const subscriptionData: SubscriptionRecord[] = JSON.parse(data);
-      
-      subscriptionData.forEach(record => {
-        this.cache.set(record.email, record);
-      });
-    } catch (error) {
-      // File doesn't exist yet, start with empty cache
-      this.cache.clear();
-    }
-    
-    this.cacheLoaded = true;
-  }
-
-  /**
-   * Save subscription data to file
-   */
-  private async saveCache(): Promise<void> {
-    const subscriptionData: SubscriptionRecord[] = Array.from(this.cache.values());
-    
-    try {
-      const dir = path.dirname(SUBSCRIPTION_FILE);
-      await fs.mkdir(dir, { recursive: true });
-      
-      await fs.writeFile(SUBSCRIPTION_FILE, JSON.stringify(subscriptionData, null, 2), 'utf-8');
-    } catch (error) {
-      console.error('Failed to save subscription data:', error);
-    }
+  private getUserKey(email: string): string {
+    const normalizedEmail = email.trim().toLowerCase();
+    return `user:${normalizedEmail}`;
   }
 
   /**
    * Check if user is paid
    */
   async isPaid(email: string): Promise<boolean> {
-    await this.loadCache();
-    const record = this.cache.get(email);
+    const key = this.getUserKey(email);
+    const record = await kvGet<SubscriptionRecord>(key);
     return record?.is_paid || false;
   }
 
@@ -69,10 +34,11 @@ class SubscriptionStore {
    * Set payment status for a user (idempotent)
    */
   async setPaid(email: string): Promise<void> {
-    await this.loadCache();
-
     const normalizedEmail = email.trim().toLowerCase();
-    const existingRecord = this.cache.get(normalizedEmail);
+    const key = this.getUserKey(normalizedEmail);
+
+    // Get existing record to preserve paid_at if already set
+    const existingRecord = await kvGet<SubscriptionRecord>(key);
 
     const record: SubscriptionRecord = {
       email: normalizedEmail,
@@ -80,28 +46,40 @@ class SubscriptionStore {
       paid_at: existingRecord?.paid_at || new Date().toISOString(),
     };
 
-    this.cache.set(normalizedEmail, record);
-    await this.saveCache();
+    await kvSet<SubscriptionRecord>(key, record);
   }
 
   /**
    * Get user record
    */
   async getUser(email: string): Promise<SubscriptionRecord | null> {
-    await this.loadCache();
-    const normalizedEmail = email.trim().toLowerCase();
-    return this.cache.get(normalizedEmail) || null;
+    const key = this.getUserKey(email);
+    const record = await kvGet<SubscriptionRecord>(key);
+    return record || null;
   }
 
   /**
    * Get all paid users (for admin purposes)
    */
   async getAllPaidUsers(): Promise<SubscriptionRecord[]> {
-    await this.loadCache();
-    return Array.from(this.cache.values()).filter(r => r.is_paid);
+    try {
+      const keys = await kvKeys('user:*');
+      const paidUsers: SubscriptionRecord[] = [];
+
+      for (const key of keys) {
+        const record = await kvGet<SubscriptionRecord>(key);
+        if (record && record.is_paid) {
+          paidUsers.push(record);
+        }
+      }
+
+      return paidUsers;
+    } catch (error) {
+      console.error('Error getting all paid users:', error);
+      return [];
+    }
   }
 }
 
 // Singleton instance
 export const subscriptionStore = new SubscriptionStore();
-

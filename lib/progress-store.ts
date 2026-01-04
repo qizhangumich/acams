@@ -1,89 +1,49 @@
 import { UserProgress, QuestionProgress } from '@/types';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { kvGet, kvSet, kvDel } from './kv-client';
 
 /**
- * Simple file-based progress store
+ * Progress Store
  * 
- * NOTE: For Vercel serverless functions, file writes are ephemeral.
- * For production, consider:
- * - Vercel KV (Redis)
- * - Vercel Postgres
- * - Supabase
- * - Other database solutions
- * 
- * This implementation works for development and single-instance deployments.
+ * Manages user learning progress.
+ * Uses Vercel KV for persistent storage.
  */
-const PROGRESS_FILE = path.join(process.cwd(), 'progress-data.json');
-
 class ProgressStore {
-  private cache: Map<string, UserProgress> = new Map();
-  private cacheLoaded = false;
-
   /**
-   * Load progress data from file
+   * Get KV key for user progress
    */
-  private async loadCache(): Promise<void> {
-    if (this.cacheLoaded) return;
-
-    try {
-      const data = await fs.readFile(PROGRESS_FILE, 'utf-8');
-      const progressData: UserProgress[] = JSON.parse(data);
-      
-      progressData.forEach(userProgress => {
-        this.cache.set(userProgress.email, userProgress);
-      });
-    } catch (error) {
-      // File doesn't exist yet, start with empty cache
-      this.cache.clear();
-    }
-    
-    this.cacheLoaded = true;
-  }
-
-  /**
-   * Save progress data to file
-   */
-  private async saveCache(): Promise<void> {
-    const progressData: UserProgress[] = Array.from(this.cache.values());
-    
-    try {
-      // Create directory if it doesn't exist
-      const dir = path.dirname(PROGRESS_FILE);
-      await fs.mkdir(dir, { recursive: true });
-      
-      await fs.writeFile(PROGRESS_FILE, JSON.stringify(progressData, null, 2), 'utf-8');
-    } catch (error) {
-      console.error('Failed to save progress:', error);
-      // Don't throw - allow the operation to continue even if file write fails
-      // In production, this should use a proper database
-    }
+  private getProgressKey(email: string): string {
+    const normalizedEmail = email.trim().toLowerCase();
+    return `progress:${normalizedEmail}`;
   }
 
   /**
    * Get progress for a user
    */
   async getProgress(email: string): Promise<UserProgress | null> {
-    await this.loadCache();
-    return this.cache.get(email) || null;
+    const key = this.getProgressKey(email);
+    const progress = await kvGet<UserProgress>(key);
+    return progress || null;
   }
 
   /**
    * Create or update user progress
    */
   async saveProgress(email: string, questionId: number, correct: boolean, userAnswers?: string[]): Promise<void> {
-    await this.loadCache();
+    const normalizedEmail = email.trim().toLowerCase();
+    const key = this.getProgressKey(normalizedEmail);
 
-    let userProgress = this.cache.get(email);
+    // Get existing progress
+    let userProgress = await this.getProgress(normalizedEmail);
     
     if (!userProgress) {
       userProgress = {
-        email,
+        email: normalizedEmail,
         progress: {},
         lastActiveAt: new Date().toISOString(),
       };
     }
 
+    // Update progress for the question
     userProgress.progress[questionId] = {
       answered: true,
       correct,
@@ -93,8 +53,8 @@ class ProgressStore {
 
     userProgress.lastActiveAt = new Date().toISOString();
     
-    this.cache.set(email, userProgress);
-    await this.saveCache();
+    // Save to KV
+    await kvSet<UserProgress>(key, userProgress);
   }
 
   /**
@@ -109,12 +69,10 @@ class ProgressStore {
    * Reset progress for a user
    */
   async resetProgress(email: string): Promise<void> {
-    await this.loadCache();
-    this.cache.delete(email);
-    await this.saveCache();
+    const key = this.getProgressKey(email);
+    await kvDel(key);
   }
 }
 
 // Singleton instance
 export const progressStore = new ProgressStore();
-
