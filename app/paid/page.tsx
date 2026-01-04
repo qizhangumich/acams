@@ -13,19 +13,35 @@ function PaidPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Retrieve subscription email from URL query param or localStorage
+  // Retrieve subscription email: prioritize user's existing email, then URL param, then subscriptionEmail
   useEffect(() => {
-    // Try URL query param first
+    // Priority 1: User's existing email (from before payment)
+    const userEmail = localStorage.getItem('userEmail');
+    
+    // Priority 2: URL query param
     const emailFromUrl = searchParams.get('email');
     
-    // Fallback to localStorage
-    const emailFromStorage = localStorage.getItem('subscriptionEmail');
+    // Priority 3: Subscription email from /subscribe page
+    const subscriptionEmail = localStorage.getItem('subscriptionEmail');
     
-    // Use whichever is available
-    const subscriptionEmail = emailFromUrl || emailFromStorage;
+    // Use user's existing email if available, otherwise use subscription email or URL param
+    const finalEmail = userEmail || emailFromUrl || subscriptionEmail;
     
-    if (subscriptionEmail) {
-      setEmail(subscriptionEmail);
+    if (finalEmail) {
+      // Skip temp emails (placeholders)
+      if (!finalEmail.startsWith('temp_')) {
+        const normalizedEmail = finalEmail.trim().toLowerCase();
+        setEmail(normalizedEmail);
+        
+        // Auto-activate if user has existing email (they already entered it before payment)
+        if (userEmail && !userEmail.startsWith('temp_')) {
+          // Auto-activate after a short delay
+          setTimeout(() => {
+            const fakeEvent = { preventDefault: () => {} } as React.FormEvent;
+            handleSubmit(fakeEvent);
+          }, 800);
+        }
+      }
     }
   }, [searchParams]);
 

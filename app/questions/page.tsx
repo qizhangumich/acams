@@ -333,7 +333,15 @@ export default function QuestionsPage() {
           {wrongCount > 0 && <span>Wrong: {wrongCount}</span>}
         </div>
         <div className={styles.headerActions}>
-          <span className={styles.email}>{email}</span>
+          <div className={styles.userInfo}>
+            <span className={styles.email}>{email}</span>
+            {isSubscribed && (
+              <span className={styles.premiumBadge}>
+                <span className={styles.premiumIcon}>✨</span>
+                Premium
+              </span>
+            )}
+          </div>
           {!isSubscribed && (
             <Link href="/paid" className={styles.activateLink}>
               Activate Access
@@ -342,17 +350,19 @@ export default function QuestionsPage() {
           <Link href="/wrong-answers" className={styles.wrongAnswersLink}>
             Wrong Answers ({wrongCount})
           </Link>
-          <div className={styles.paymentSection}>
-            <Link
-              href="/subscribe"
-              className={styles.paymentButton}
-            >
-              💳 Subscribe
-            </Link>
-            <p className={styles.paymentHint}>
-              ⚠️ After payment, please enter your email as proof of purchase
-            </p>
-          </div>
+          {!isSubscribed && (
+            <div className={styles.paymentSection}>
+              <Link
+                href="/subscribe"
+                className={styles.paymentButton}
+              >
+                💳 Subscribe
+              </Link>
+              <p className={styles.paymentHint}>
+                ⚠️ After payment, please enter your email as proof of purchase
+              </p>
+            </div>
+          )}
           <button onClick={handleReset} className={styles.resetButton}>
             Reset Progress
           </button>

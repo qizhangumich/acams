@@ -96,10 +96,32 @@
   color: #666;
 }
 
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .email {
   font-size: 14px;
   color: #666;
-  margin-right: 16px;
+}
+
+.premiumBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.premiumIcon {
+  font-size: 14px;
 }
 
 .headerActions {
@@ -376,6 +398,25 @@
 }
 
 .subscribedBadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+}
+
+.subscribedBadge .premiumIcon {
+  font-size: 16px;
+}
+
+/* Legacy - keeping for compatibility */
+.subscribedBadgeOld {
   padding: 8px 12px;
   background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
   color: white;
