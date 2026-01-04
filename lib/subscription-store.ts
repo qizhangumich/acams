@@ -11,9 +11,8 @@ const SUBSCRIPTION_FILE = path.join(process.cwd(), 'subscription-data.json');
 
 interface SubscriptionRecord {
   email: string;
-  subscribed: boolean;
-  subscribedAt?: string;
-  lastCheckedAt: string;
+  is_paid: boolean;
+  paid_at?: string;
 }
 
 class SubscriptionStore {
@@ -58,37 +57,48 @@ class SubscriptionStore {
   }
 
   /**
-   * Check if user is subscribed
+   * Check if user is paid
    */
-  async isSubscribed(email: string): Promise<boolean> {
+  async isPaid(email: string): Promise<boolean> {
     await this.loadCache();
     const record = this.cache.get(email);
-    return record?.subscribed || false;
+    return record?.is_paid || false;
   }
 
   /**
-   * Set subscription status for a user
+   * Set payment status for a user (idempotent)
    */
-  async setSubscription(email: string, subscribed: boolean): Promise<void> {
+  async setPaid(email: string): Promise<void> {
     await this.loadCache();
 
+    const normalizedEmail = email.trim().toLowerCase();
+    const existingRecord = this.cache.get(normalizedEmail);
+
     const record: SubscriptionRecord = {
-      email,
-      subscribed,
-      subscribedAt: subscribed ? new Date().toISOString() : undefined,
-      lastCheckedAt: new Date().toISOString(),
+      email: normalizedEmail,
+      is_paid: true,
+      paid_at: existingRecord?.paid_at || new Date().toISOString(),
     };
 
-    this.cache.set(email, record);
+    this.cache.set(normalizedEmail, record);
     await this.saveCache();
   }
 
   /**
-   * Get all subscribed users (for admin purposes)
+   * Get user record
    */
-  async getAllSubscriptions(): Promise<SubscriptionRecord[]> {
+  async getUser(email: string): Promise<SubscriptionRecord | null> {
     await this.loadCache();
-    return Array.from(this.cache.values()).filter(r => r.subscribed);
+    const normalizedEmail = email.trim().toLowerCase();
+    return this.cache.get(normalizedEmail) || null;
+  }
+
+  /**
+   * Get all paid users (for admin purposes)
+   */
+  async getAllPaidUsers(): Promise<SubscriptionRecord[]> {
+    await this.loadCache();
+    return Array.from(this.cache.values()).filter(r => r.is_paid);
   }
 }
 

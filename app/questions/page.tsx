@@ -80,23 +80,23 @@ export default function QuestionsPage() {
     loadProgress();
   }, [email]);
 
-  // Check subscription status
+  // Check payment status
   useEffect(() => {
     if (!email) return;
 
     const userEmail = email; // Store in local variable for type narrowing
-    async function checkSubscription() {
+    async function checkPaymentStatus() {
       try {
         const response = await fetch(`/api/subscription/check?email=${encodeURIComponent(userEmail)}`);
         if (response.ok) {
           const data = await response.json();
-          setIsSubscribed(data.subscribed || false);
+          setIsSubscribed(data.is_paid || data.subscribed || false);
         }
       } catch (error) {
-        console.error('Failed to check subscription:', error);
+        console.error('Failed to check payment status:', error);
       }
     }
-    checkSubscription();
+    checkPaymentStatus();
   }, [email]);
 
   // Restore selected answers when question changes
@@ -381,7 +381,7 @@ export default function QuestionsPage() {
                 )}
                 {!isSubscribed && (
                   <div className={styles.freeUserNote}>
-                    Free: 1 AI explanation per day. <a href="https://buy.stripe.com/bJe7sMcZ4bvC6954grcV200" target="_blank" rel="noopener noreferrer" className={styles.subscribeLink}>Subscribe for unlimited</a>
+                    Free: 1 AI explanation per day. <a href="https://buy.stripe.com/bJe7sMcZ4bvC6954grcV200" target="_blank" rel="noopener noreferrer" className={styles.subscribeLink}>Unlock full access</a>
                   </div>
                 )}
                 <button

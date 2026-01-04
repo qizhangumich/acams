@@ -6,25 +6,29 @@ export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/subscription/set
- * Set subscription status for a user
- * Body: { email: string, subscribed: boolean }
+ * Set payment status for a user
+ * Body: { email: string, is_paid: boolean }
  * 
- * Note: In production, this should be called via Stripe webhook
- * For now, it can be called from a success page after payment
+ * Note: This is a legacy endpoint. Use /api/payment/activate instead.
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, subscribed } = body;
+    const { email, is_paid, subscribed } = body;
 
-    if (!email || typeof subscribed !== 'boolean') {
+    if (!email) {
       return NextResponse.json(
-        { error: 'Email and subscribed (boolean) are required' },
+        { error: 'Email is required' },
         { status: 400 }
       );
     }
 
-    await subscriptionStore.setSubscription(email, subscribed);
+    const normalizedEmail = email.trim().toLowerCase();
+    const shouldBePaid = is_paid !== undefined ? is_paid : subscribed;
+
+    if (shouldBePaid) {
+      await subscriptionStore.setPaid(normalizedEmail);
+    }
     
     return NextResponse.json({ success: true });
   } catch (error) {

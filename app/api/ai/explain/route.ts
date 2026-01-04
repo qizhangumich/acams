@@ -79,13 +79,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ explanation: cachedExplanation });
     }
 
-    // Check if user is subscribed (subscribed users have unlimited access)
-    const isSubscribed = await subscriptionStore.isSubscribed(email);
+    // Normalize email
+    const normalizedEmail = email.trim().toLowerCase();
 
-    // Check rate limit only for non-subscribed users
-    if (!isSubscribed && !aiCache.checkRateLimit(email)) {
+    // Check if user has paid access (paid users have unlimited access)
+    const isPaid = await subscriptionStore.isPaid(normalizedEmail);
+
+    // Check rate limit only for non-paid users
+    if (!isPaid && !aiCache.checkRateLimit(normalizedEmail)) {
       return NextResponse.json(
-        { error: 'Rate limit exceeded. You can request 1 AI explanation per day. Subscribe for unlimited access!' },
+        { error: 'Rate limit exceeded. You can request 1 AI explanation per day. Unlock full access to get unlimited AI explanations!' },
         { status: 429 }
       );
     }
@@ -151,9 +154,9 @@ ${topic}`;
     // Cache the explanation
     aiCache.setCachedExplanation(question_id, language, explanation);
 
-    // Increment rate limit only for non-subscribed users
-    if (!isSubscribed) {
-      aiCache.incrementRateLimit(email);
+    // Increment rate limit only for non-paid users
+    if (!isPaid) {
+      aiCache.incrementRateLimit(normalizedEmail);
     }
 
     return NextResponse.json({ explanation });

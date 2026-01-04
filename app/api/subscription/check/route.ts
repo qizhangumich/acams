@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/subscription/check?email=user@example.com
- * Check if a user is subscribed
+ * Check if a user has paid access
  */
 export async function GET(request: NextRequest) {
   try {
@@ -19,9 +19,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const isSubscribed = await subscriptionStore.isSubscribed(email);
+    const normalizedEmail = email.trim().toLowerCase();
+    const isPaid = await subscriptionStore.isPaid(normalizedEmail);
     
-    return NextResponse.json({ subscribed: isSubscribed });
+    return NextResponse.json({ is_paid: isPaid, subscribed: isPaid });
   } catch (error) {
     console.error('Error checking subscription:', error);
     return NextResponse.json(

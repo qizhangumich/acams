@@ -31,9 +31,17 @@ A clean, minimal question bank application for ACAMS certification practice.
 │   │   │   ├── route.ts          # GET/POST progress
 │   │   │   └── reset/
 │   │   │       └── route.ts      # Reset progress
-│   │   └── ai/
-│   │       └── explain/
-│   │           └── route.ts      # POST AI explanation
+│   │   ├── ai/
+│   │   │   └── explain/
+│   │   │       └── route.ts      # POST AI explanation
+│   │   ├── payment/
+│   │   │   └── activate/
+│   │   │       └── route.ts      # POST Activate paid access
+│   │   └── subscription/
+│   │       ├── check/
+│   │       │   └── route.ts      # GET Check payment status
+│   │       └── set/
+│   │           └── route.ts      # POST Set payment status
 │   ├── questions/
 │   │   ├── page.tsx              # Question practice page
 │   │   └── page.module.css
@@ -43,6 +51,7 @@ A clean, minimal question bank application for ACAMS certification practice.
 ├── lib/
 │   ├── data-service.ts           # Load questions.json
 │   ├── progress-store.ts         # Progress persistence
+│   ├── subscription-store.ts     # Payment status storage
 │   └── ai-cache.ts               # AI explanation cache & rate limiting
 ├── types/
 │   └── index.ts                  # TypeScript types
@@ -106,9 +115,21 @@ Resets all progress for a user
 ### `POST /api/ai/explain`
 Body: `{ question_id, question, options, correct_answers, user_answers, topic, language, email }`
 Generates AI-powered explanation for an incorrectly answered question
-- Rate limited: 1 explanation per day per email
+- Free users: 1 explanation per day per email
+- Paid users: Unlimited explanations
 - Cached per question and language combination
 - Supports English and Chinese languages
+
+### `POST /api/payment/activate`
+Body: `{ email: string }`
+Activates paid access for a user after payment
+- Idempotent operation (safe to call multiple times)
+- Normalizes email (trim, lowercase)
+- No Stripe verification required (payment handled by Stripe)
+
+### `GET /api/subscription/check?email=user@example.com`
+Returns payment status for a user
+- Returns: `{ is_paid: boolean, subscribed: boolean }`
 
 ## Development
 
@@ -133,6 +154,18 @@ STRIPE_SECRET_KEY=your_stripe_secret_key
 **Note**: 
 - The AI explanation feature requires a valid OpenAI API key. Without it, the AI explanation button will show an error when clicked.
 - Payment functionality uses Stripe Payment Links - no API keys needed. Apple Pay and other payment methods are automatically supported by Stripe.
+
+### Payment Flow
+
+1. User clicks "Subscribe" button → Redirects to Stripe Payment Link
+2. User completes payment on Stripe
+3. Stripe redirects to `/paid` page
+4. User enters their email address
+5. System activates paid access for that email
+6. User gains unlimited AI explanations
+
+**Important**: Configure your Stripe Payment Link to redirect to:
+- Success URL: `https://your-domain.com/paid`
 
 ## Deployment to Vercel
 
