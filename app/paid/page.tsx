@@ -46,12 +46,13 @@ export default function PaidPage() {
       }
 
       // Success - store email and redirect
-      localStorage.setItem('userEmail', email);
+      const normalizedEmail = email.trim().toLowerCase();
+      localStorage.setItem('userEmail', normalizedEmail);
       setSuccess(true);
       
-      // Redirect to questions page after a short delay
+      // Redirect to questions page with success parameter
       setTimeout(() => {
-        router.push('/questions');
+        router.push('/questions?activated=true');
       }, 2000);
     } catch (err) {
       console.error('Error activating access:', err);

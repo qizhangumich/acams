@@ -14,6 +14,72 @@
   color: #666;
 }
 
+.activationBanner {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.activationContent {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.activationIcon {
+  font-size: 24px;
+}
+
+.activationText {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.activationText strong {
+  font-weight: 600;
+}
+
+.activationButton {
+  padding: 8px 20px;
+  background: white;
+  color: #4caf50;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+}
+
+.activationButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.activationClose {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.activationClose:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 .header {
   display: flex;
   justify-content: space-between;
@@ -41,6 +107,24 @@
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.activateLink {
+  padding: 8px 16px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: inline-block;
+  font-weight: 500;
+}
+
+.activateLink:hover {
+  background-color: #45a049;
 }
 
 .wrongAnswersLink {

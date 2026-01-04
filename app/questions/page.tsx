@@ -20,6 +20,7 @@ export default function QuestionsPage() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
+  const [showActivationPrompt, setShowActivationPrompt] = useState(false);
 
   // Load email from localStorage
   useEffect(() => {
@@ -90,7 +91,22 @@ export default function QuestionsPage() {
         const response = await fetch(`/api/subscription/check?email=${encodeURIComponent(userEmail)}`);
         if (response.ok) {
           const data = await response.json();
-          setIsSubscribed(data.is_paid || data.subscribed || false);
+          const paid = data.is_paid || data.subscribed || false;
+          setIsSubscribed(paid);
+          
+          // Show activation prompt if user is not paid (they might have paid but not activated)
+          // Check URL params to see if they came from payment or activation
+          if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const fromPayment = params.get('paid') === 'true' || 
+                               params.get('payment') === 'success' ||
+                               params.get('activated') === 'true';
+            if (fromPayment && !paid) {
+              setShowActivationPrompt(true);
+              // Clean up URL params
+              window.history.replaceState({}, '', window.location.pathname);
+            }
+          }
         }
       } catch (error) {
         console.error('Failed to check payment status:', error);
@@ -289,6 +305,26 @@ export default function QuestionsPage() {
 
   return (
     <div className={styles.container}>
+      {showActivationPrompt && !isSubscribed && (
+        <div className={styles.activationBanner}>
+          <div className={styles.activationContent}>
+            <span className={styles.activationIcon}>🎉</span>
+            <div className={styles.activationText}>
+              <strong>Payment successful!</strong> Please activate your access to unlock unlimited AI explanations.
+            </div>
+            <Link href="/paid" className={styles.activationButton}>
+              Activate Access
+            </Link>
+            <button
+              onClick={() => setShowActivationPrompt(false)}
+              className={styles.activationClose}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className={styles.header}>
         <div className={styles.stats}>
           <span>Question {currentIndex + 1} of {questions.length}</span>
@@ -298,11 +334,16 @@ export default function QuestionsPage() {
         </div>
         <div className={styles.headerActions}>
           <span className={styles.email}>{email}</span>
+          {!isSubscribed && (
+            <Link href="/paid" className={styles.activateLink}>
+              Activate Access
+            </Link>
+          )}
           <Link href="/wrong-answers" className={styles.wrongAnswersLink}>
             Wrong Answers ({wrongCount})
           </Link>
           <a
-            href={`https://buy.stripe.com/bJe7sMcZ4bvC6954grcV200?client_reference_id=${encodeURIComponent(email || '')}`}
+            href="https://buy.stripe.com/bJe7sMcZ4bvC6954grcV200"
             target="_blank"
             rel="noopener noreferrer"
             className={styles.paymentButton}
