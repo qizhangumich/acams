@@ -342,14 +342,19 @@ export default function QuestionsPage() {
           <Link href="/wrong-answers" className={styles.wrongAnswersLink}>
             Wrong Answers ({wrongCount})
           </Link>
-          <a
-            href="https://buy.stripe.com/bJe7sMcZ4bvC6954grcV200"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.paymentButton}
-          >
-            💳 Subscribe
-          </a>
+          <div className={styles.paymentSection}>
+            <a
+              href="https://buy.stripe.com/bJe7sMcZ4bvC6954grcV200"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.paymentButton}
+            >
+              💳 Subscribe
+            </a>
+            <p className={styles.paymentHint}>
+              ⚠️ After payment, please enter your email as proof of purchase
+            </p>
+          </div>
           <button onClick={handleReset} className={styles.resetButton}>
             Reset Progress
           </button>

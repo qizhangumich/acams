@@ -45,11 +45,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Set user as paid (idempotent - safe to call multiple times)
+    // Email is the only proof of purchase - no Stripe verification needed
     await subscriptionStore.setPaid(normalizedEmail);
 
     return NextResponse.json({
       success: true,
       message: 'Access activated successfully',
+      email: normalizedEmail,
     });
   } catch (error) {
     console.error('Error activating payment:', error);

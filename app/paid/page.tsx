@@ -78,8 +78,11 @@ export default function PaidPage() {
         {!success ? (
           <>
             <p className={styles.subtitle}>
-              Please enter the email you use on ACAMS to activate full access.
+              Please enter your email address as proof of purchase to activate full access.
             </p>
+            <div className={styles.infoBox}>
+              <strong>Important:</strong> Your email is the only proof of purchase. Make sure to enter the same email you use on ACAMS.
+            </div>
 
             <form onSubmit={handleSubmit} className={styles.form}>
               <input

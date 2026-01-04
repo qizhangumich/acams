@@ -144,6 +144,13 @@
   background-color: #f57c00;
 }
 
+.paymentSection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
 .paymentButton {
   padding: 8px 16px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -157,11 +164,21 @@
   transition: transform 0.2s, box-shadow 0.2s;
   display: inline-block;
   box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+  white-space: nowrap;
 }
 
 .paymentButton:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+}
+
+.paymentHint {
+  font-size: 11px;
+  color: #ff9800;
+  margin: 0;
+  text-align: right;
+  line-height: 1.3;
+  max-width: 200px;
 }
 
 .navTabs {

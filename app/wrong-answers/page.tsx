@@ -124,14 +124,19 @@ export default function WrongAnswersPage() {
           <Link href="/questions" className={styles.backButton}>
             ← Back to Practice
           </Link>
-          <a
-            href="https://buy.stripe.com/bJe7sMcZ4bvC6954grcV200"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.paymentButton}
-          >
-            💳 Subscribe
-          </a>
+          <div className={styles.paymentSection}>
+            <a
+              href="https://buy.stripe.com/bJe7sMcZ4bvC6954grcV200"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.paymentButton}
+            >
+              💳 Subscribe
+            </a>
+            <p className={styles.paymentHint}>
+              ⚠️ After payment, please enter your email as proof of purchase
+            </p>
+          </div>
         </div>
       </div>
 
