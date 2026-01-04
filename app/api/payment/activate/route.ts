@@ -6,12 +6,20 @@ export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/payment/activate
- * Activate paid access for a user
+ * Upgrade account to paid status
  * 
  * Body: { email: string }
  * 
- * This is an idempotent operation - calling it multiple times is safe.
- * Payment verification is handled by Stripe, we just record that the user is paid.
+ * This is an account upgrade operation:
+ * - The subscription email becomes the authoritative identity
+ * - Sets is_paid = true
+ * - Sets paid_at timestamp
+ * - Idempotent - safe to call multiple times
+ * 
+ * Rules:
+ * - Do NOT create a second user
+ * - This is an upgrade, not a merge
+ * - Subscription email overwrites any previous email
  */
 export async function POST(request: NextRequest) {
   try {
@@ -44,19 +52,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Set user as paid (idempotent - safe to call multiple times)
-    // Email is the only proof of purchase - no Stripe verification needed
+    // Upgrade account: set email as authoritative and mark as paid
+    // This overwrites any previous email (temporary or placeholder)
     await subscriptionStore.setPaid(normalizedEmail);
 
     return NextResponse.json({
       success: true,
-      message: 'Access activated successfully',
+      message: 'Account upgraded successfully',
       email: normalizedEmail,
     });
   } catch (error) {
-    console.error('Error activating payment:', error);
+    console.error('Error upgrading account:', error);
     return NextResponse.json(
-      { error: 'Failed to activate access. Please try again.' },
+      { error: 'Failed to upgrade account. Please try again.' },
       { status: 500 }
     );
   }

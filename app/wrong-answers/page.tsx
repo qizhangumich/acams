@@ -125,14 +125,12 @@ export default function WrongAnswersPage() {
             ← Back to Practice
           </Link>
           <div className={styles.paymentSection}>
-            <a
-              href="https://buy.stripe.com/bJe7sMcZ4bvC6954grcV200"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/subscribe"
               className={styles.paymentButton}
             >
               💳 Subscribe
-            </a>
+            </Link>
             <p className={styles.paymentHint}>
               ⚠️ After payment, please enter your email as proof of purchase
             </p>

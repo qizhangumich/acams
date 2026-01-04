@@ -12,15 +12,20 @@ export default function Home() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simple email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRegex.test(email)) {
-      setError('Please enter a valid email address');
-      return;
+    // Email is optional - allow placeholder or empty
+    // Only validate if provided
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        setError('Please enter a valid email address or leave it empty');
+        return;
+      }
+      // Store email in localStorage (not authoritative)
+      localStorage.setItem('userEmail', email);
+    } else {
+      // Use placeholder for progress tracking
+      localStorage.setItem('userEmail', 'temp_' + Date.now());
     }
-
-    // Store email in localStorage
-    localStorage.setItem('userEmail', email);
     
     // Navigate to questions
     router.push('/questions');
@@ -30,19 +35,22 @@ export default function Home() {
     <div className={styles.container}>
       <div className={styles.card}>
         <h1 className={styles.title}>ACAMS Question Bank</h1>
-        <p className={styles.subtitle}>Enter your email to begin practicing</p>
+        <p className={styles.subtitle}>You can start learning right away</p>
         
         <form onSubmit={handleSubmit} className={styles.form}>
+          <label htmlFor="email" className={styles.label}>
+            Email (optional - for progress tracking)
+          </label>
           <input
+            id="email"
             type="email"
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
               setError('');
             }}
-            placeholder="your.email@example.com"
+            placeholder="your.email@example.com (optional)"
             className={styles.input}
-            required
           />
           
           {error && <p className={styles.error}>{error}</p>}

@@ -1,24 +1,33 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import styles from './page.module.css';
 
-export default function PaidPage() {
+function PaidPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Pre-fill email from localStorage if available
+  // Retrieve subscription email from URL query param or localStorage
   useEffect(() => {
-    const storedEmail = localStorage.getItem('userEmail');
-    if (storedEmail) {
-      setEmail(storedEmail);
+    // Try URL query param first
+    const emailFromUrl = searchParams.get('email');
+    
+    // Fallback to localStorage
+    const emailFromStorage = localStorage.getItem('subscriptionEmail');
+    
+    // Use whichever is available
+    const subscriptionEmail = emailFromUrl || emailFromStorage;
+    
+    if (subscriptionEmail) {
+      setEmail(subscriptionEmail);
     }
-  }, []);
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,9 +62,15 @@ export default function PaidPage() {
         return;
       }
 
-      // Success - store email and redirect
+      // Success - upgrade account with subscription email
       const normalizedEmail = email.trim().toLowerCase();
+      
+      // Update userEmail to subscription email (becomes authoritative)
       localStorage.setItem('userEmail', normalizedEmail);
+      
+      // Clear temporary subscription email
+      localStorage.removeItem('subscriptionEmail');
+      
       setSuccess(true);
       
       // Redirect to questions page with success parameter
@@ -78,11 +93,13 @@ export default function PaidPage() {
         {!success ? (
           <>
             <p className={styles.subtitle}>
-              Please enter your email address as proof of purchase to activate full access.
+              Your subscription email will be used as your paid account identity.
             </p>
-            <div className={styles.infoBox}>
-              <strong>Important:</strong> Your email is the only proof of purchase. Make sure to enter the same email you use on ACAMS.
-            </div>
+            {!email && (
+              <div className={styles.infoBox}>
+                <strong>Note:</strong> Please enter the email you used during subscription.
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className={styles.form}>
               <input
@@ -129,6 +146,20 @@ export default function PaidPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function PaidPage() {
+  return (
+    <Suspense fallback={
+      <div className={styles.container}>
+        <div className={styles.card}>
+          <div className={styles.loading}>Loading...</div>
+        </div>
+      </div>
+    }>
+      <PaidPageContent />
+    </Suspense>
   );
 }
 
