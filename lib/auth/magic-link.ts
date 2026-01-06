@@ -89,13 +89,38 @@ export async function verifyMagicLinkToken(
   email?: string
 ): Promise<{ success: boolean; userId?: string; error?: string }> {
   try {
+    // Normalize token: trim whitespace and ensure it's a valid hex string
+    const normalizedToken = token.trim()
+    
+    // Validate token format (should be 64 hex characters from randomBytes(32).toString('hex'))
+    if (!normalizedToken || normalizedToken.length !== 64) {
+      console.error('Invalid token format:', {
+        tokenLength: normalizedToken.length,
+        tokenPrefix: normalizedToken.substring(0, 10) + '...',
+      })
+      return { success: false, error: 'Invalid magic link' }
+    }
+
+    // Validate hex format
+    if (!/^[0-9a-f]{64}$/i.test(normalizedToken)) {
+      console.error('Token contains invalid characters:', {
+        tokenPrefix: normalizedToken.substring(0, 10) + '...',
+      })
+      return { success: false, error: 'Invalid magic link' }
+    }
+
     // Find token (email is stored with token in database)
+    // Token is stored as raw (not hashed) - direct lookup
     const magicLinkToken = await prisma.magicLinkToken.findUnique({
-      where: { token },
+      where: { token: normalizedToken },
     })
 
     // Check if token exists
     if (!magicLinkToken) {
+      console.error('Token not found in database:', {
+        tokenPrefix: normalizedToken.substring(0, 10) + '...',
+        tokenLength: normalizedToken.length,
+      })
       return { success: false, error: 'Invalid magic link' }
     }
 
