@@ -38,21 +38,24 @@ export default function VerifyPage() {
         const response = await fetch(apiUrl, {
           method: 'GET',
           credentials: 'include', // Important: include cookies
+          cache: 'no-store', // Ensure fresh request
         })
 
         const data = await response.json()
 
+        // Parse JSON response and handle redirects in PAGE (not API)
         if (!response.ok || !data.success) {
           // Verification failed - redirect to login with error
           const error = data.error || 'verification_failed'
-          router.push(`/login?error=${encodeURIComponent(error)}`)
           setStatus('error')
+          router.replace(`/login?error=${encodeURIComponent(error)}`)
           return
         }
 
-        // Verification successful - redirect to questions page
+        // Verification successful - cookie is already set by API
+        // Now redirect to questions page
         setStatus('success')
-        router.push('/questions')
+        router.replace('/questions')
       } catch (error) {
         // Log error and redirect to login
         console.error('Error verifying magic link:', error)

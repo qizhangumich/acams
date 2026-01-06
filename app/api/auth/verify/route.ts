@@ -70,17 +70,16 @@ export async function GET(request: NextRequest) {
     })
 
     // Create response with session token in cookie
-    const response = NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        last_active_at: user.last_active_at,
-        last_question_id: user.last_question_id,
+    // API returns JSON only - page component handles redirects
+    const response = NextResponse.json(
+      {
+        success: true,
       },
-    })
+      { status: 200 }
+    )
 
     // Set HTTP-only cookie (this is allowed in Route Handlers)
+    // Cookie is set BEFORE redirect happens in page component
     response.cookies.set('session_token', sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
