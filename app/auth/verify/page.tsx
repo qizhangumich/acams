@@ -20,12 +20,16 @@ export default async function VerifyPage({
   searchParams: { token?: string; email?: string }
 }) {
   // Token-only verification (email is derived from token in database)
-  const token = searchParams.token
+  // Next.js automatically decodes URL params, but ensure token is properly extracted
+  let token = searchParams.token
 
   // Missing token - redirect to login
   if (!token) {
     redirect('/login?error=missing_token')
   }
+
+  // Normalize token: trim and decode if needed (Next.js should auto-decode, but be defensive)
+  token = token.trim()
 
   try {
     // Verify magic link token (email is optional for backwards compatibility)
