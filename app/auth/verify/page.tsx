@@ -1,93 +1,93 @@
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
+'use client'
 
 /**
  * GET /auth/verify
  * 
  * Magic link verification page
- * Verifies token and redirects to questions page
+ * Calls API to verify token and handles redirects
  */
 
-import { redirect } from 'next/navigation'
-import { cookies } from 'next/headers'
-import { verifyMagicLinkToken } from '@/lib/auth/magic-link'
-import { generateSessionToken } from '@/lib/auth/session'
-import { prisma } from '@/lib/prisma'
+import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
-export default async function VerifyPage({
-  searchParams,
-}: {
-  searchParams: { token?: string; email?: string }
-}) {
-  // Token-only verification (email is derived from token in database)
-  // Next.js automatically decodes URL params, but ensure token is properly extracted
-  let token = searchParams.token
+export default function VerifyPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [status, setStatus] = useState<'loading' | 'error' | 'success'>('loading')
 
-  // Missing token - redirect to login
-  if (!token) {
-    redirect('/login?error=missing_token')
-  }
+  useEffect(() => {
+    async function verifyToken() {
+      // Get token from URL
+      const token = searchParams.get('token')
+      const email = searchParams.get('email') // Optional
 
-  // Normalize token: trim and decode if needed (Next.js should auto-decode, but be defensive)
-  token = token.trim()
+      // Missing token - redirect to login
+      if (!token) {
+        router.push('/login?error=missing_token')
+        return
+      }
 
-  try {
-    // Verify magic link token (email is optional for backwards compatibility)
-    const email = searchParams.email ? decodeURIComponent(searchParams.email) : undefined
-    const result = await verifyMagicLinkToken(token, email)
+      // Normalize token
+      const normalizedToken = token.trim()
 
-    if (!result.success || !result.userId) {
-      // Log the specific error for debugging
-      console.error('Magic link verification failed:', {
-        error: result.error,
-        token: token.substring(0, 10) + '...',
-      })
-      // Verification failed - redirect to login with error
-      redirect(`/login?error=${encodeURIComponent(result.error || 'verification_failed')}`)
+      try {
+        // Call verification API
+        // The API will set the session cookie
+        const apiUrl = `/api/auth/verify?token=${encodeURIComponent(normalizedToken)}${email ? `&email=${encodeURIComponent(email)}` : ''}`
+        
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          credentials: 'include', // Important: include cookies
+        })
+
+        const data = await response.json()
+
+        if (!response.ok || !data.success) {
+          // Verification failed - redirect to login with error
+          const error = data.error || 'verification_failed'
+          router.push(`/login?error=${encodeURIComponent(error)}`)
+          setStatus('error')
+          return
+        }
+
+        // Verification successful - redirect to questions page
+        setStatus('success')
+        router.push('/questions')
+      } catch (error) {
+        // Log error and redirect to login
+        console.error('Error verifying magic link:', error)
+        router.push('/login?error=verification_failed')
+        setStatus('error')
+      }
     }
 
-    // Get user data
-    const user = await prisma.user.findUnique({
-      where: { id: result.userId },
-      select: {
-        id: true,
-        email: true,
-        last_active_at: true,
-        last_question_id: true,
-        created_at: true,
-      },
-    })
+    verifyToken()
+  }, [router, searchParams])
 
-    if (!user) {
-      redirect('/login?error=user_not_found')
-    }
-
-    // Generate session token
-    const sessionToken = generateSessionToken({
-      userId: user.id,
-      email: user.email,
-    })
-
-    // Set HTTP-only cookie
-    const cookieStore = await cookies()
-    cookieStore.set('session_token', sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60, // 30 days
-      path: '/',
-    })
-
-    // Verification successful - redirect to questions page
-    redirect('/questions')
-  } catch (error) {
-    // Log detailed error information
-    console.error('Error verifying magic link:', {
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      token: token?.substring(0, 10) + '...',
-    })
-    redirect('/login?error=verification_failed')
-  }
+  // Show loading state while verifying
+  return (
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      minHeight: '100vh',
+      fontFamily: 'system-ui, sans-serif'
+    }}>
+      <div style={{ textAlign: 'center' }}>
+        {status === 'loading' && (
+          <>
+            <p>Verifying magic link...</p>
+            <div style={{ marginTop: '1rem' }}>Please wait...</div>
+          </>
+        )}
+        {status === 'error' && (
+          <p>Verification failed. Redirecting...</p>
+        )}
+        {status === 'success' && (
+          <p>Verification successful. Redirecting...</p>
+        )}
+      </div>
+    </div>
+  )
 }
 

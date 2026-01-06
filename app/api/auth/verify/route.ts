@@ -2,6 +2,7 @@
  * GET /api/auth/verify
  * 
  * Verify magic link token and create/login user
+ * Sets session cookie and returns verification result
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -15,21 +16,30 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const token = searchParams.get('token')
-    const email = searchParams.get('email')
+    const email = searchParams.get('email') // Optional for backwards compatibility
 
-    if (!token || !email) {
+    // Token is required (email is optional - derived from token)
+    if (!token) {
       return NextResponse.json(
-        { success: false, message: 'Token and email are required' },
+        { success: false, error: 'missing_token', message: 'Token is required' },
         { status: 400 }
       )
     }
 
-    // Verify token
-    const result = await verifyMagicLinkToken(token, email)
+    // Normalize token
+    const normalizedToken = token.trim()
+
+    // Verify token (email is optional - token-only verification)
+    const decodedEmail = email ? decodeURIComponent(email) : undefined
+    const result = await verifyMagicLinkToken(normalizedToken, decodedEmail)
 
     if (!result.success || !result.userId) {
       return NextResponse.json(
-        { success: false, message: result.error || 'Invalid magic link' },
+        { 
+          success: false, 
+          error: result.error || 'verification_failed',
+          message: result.error || 'Invalid magic link' 
+        },
         { status: 401 }
       )
     }
@@ -48,7 +58,7 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'User not found' },
+        { success: false, error: 'user_not_found', message: 'User not found' },
         { status: 404 }
       )
     }
@@ -70,7 +80,7 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // Set HTTP-only cookie
+    // Set HTTP-only cookie (this is allowed in Route Handlers)
     response.cookies.set('session_token', sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -83,7 +93,11 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error verifying magic link:', error)
     return NextResponse.json(
-      { success: false, message: 'Failed to verify magic link' },
+      { 
+        success: false, 
+        error: 'verification_failed',
+        message: 'Failed to verify magic link' 
+      },
       { status: 500 }
     )
   }
