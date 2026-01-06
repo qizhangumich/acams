@@ -1,0 +1,149 @@
+// ACAMS Learning System - Prisma Schema
+// Production-grade schema with all required models
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// User Model
+// ============================================
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  created_at      DateTime  @default(now())
+  last_active_at  DateTime?
+  last_question_id Int?
+
+  // Relations
+  progress        UserProgress[]
+  chats           QuestionChat[]
+  wrong_book      WrongBook[]
+
+  @@index([email])
+  @@index([last_active_at])
+  @@index([last_question_id])
+}
+
+// ============================================
+// Question Model (Read-only, loaded from JSON)
+// ============================================
+model Question {
+  id                  Int      @id
+  domain              String
+  question_text       String   @db.Text
+  options             Json     // { "A": "...", "B": "..." }
+  correct_answers     String[] // ["A", "B"]
+  explanation         String   @db.Text
+  explanation_ai_en   String?  @db.Text
+  explanation_ai_ch   String?  @db.Text
+  is_complete         Boolean  @default(false)
+  normalized_question String?  @db.Text
+
+  // Relations
+  progress            UserProgress[]
+  chats               QuestionChat[]
+  wrong_book          WrongBook[]
+
+  @@index([domain])
+  @@index([is_complete])
+}
+
+// ============================================
+// User Progress Model
+// ============================================
+model UserProgress {
+  id              String    @id @default(uuid())
+  user_id         String
+  question_id     Int
+  status          ProgressStatus @default(not_started)
+  selected_answer String[]
+  updated_at      DateTime  @default(now()) @updatedAt
+  created_at      DateTime  @default(now())
+
+  // Relations
+  user            User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  question        Question  @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, question_id])
+  @@index([user_id, status])
+  @@index([user_id, updated_at])
+  @@index([question_id])
+}
+
+enum ProgressStatus {
+  not_started
+  correct
+  wrong
+}
+
+// ============================================
+// Question Chat Model
+// ============================================
+model QuestionChat {
+  id          String   @id @default(uuid())
+  user_id     String
+  question_id Int
+  role        ChatRole
+  content     String   @db.Text
+  created_at  DateTime @default(now())
+
+  // Relations
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  question    Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, question_id, created_at])
+  @@index([question_id])
+}
+
+enum ChatRole {
+  user
+  assistant
+}
+
+// ============================================
+// Wrong Book Model
+// ============================================
+model WrongBook {
+  id            String   @id @default(uuid())
+  user_id       String
+  question_id   Int
+  wrong_count   Int      @default(1)
+  last_wrong_at DateTime @default(now())
+  created_at    DateTime @default(now())
+
+  // Relations
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  question      Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, question_id])
+  @@index([user_id, wrong_count(sort: Desc), last_wrong_at(sort: Desc)])
+  @@index([question_id])
+}
+
+// ============================================
+// Magic Link Token Model
+// ============================================
+model MagicLinkToken {
+  id         String   @id @default(uuid())
+  email      String
+  token      String   @unique
+  expires_at DateTime
+  used       Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  // Note: No direct relation to User.email (Prisma limitation)
+  // We'll query by email string instead
+
+  @@index([email])
+  @@index([token])
+  @@index([expires_at])
+  @@index([used])
+  @@index([email, used])
+}
+

@@ -1,0 +1,91 @@
+/**
+ * GET /api/auth/verify
+ * 
+ * Verify magic link token and create/login user
+ */
+
+import { NextRequest, NextResponse } from 'next/server'
+import { verifyMagicLinkToken } from '@/lib/auth/magic-link'
+import { generateSessionToken } from '@/lib/auth/session'
+import { prisma } from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
+
+export async function GET(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams
+    const token = searchParams.get('token')
+    const email = searchParams.get('email')
+
+    if (!token || !email) {
+      return NextResponse.json(
+        { success: false, message: 'Token and email are required' },
+        { status: 400 }
+      )
+    }
+
+    // Verify token
+    const result = await verifyMagicLinkToken(token, email)
+
+    if (!result.success || !result.userId) {
+      return NextResponse.json(
+        { success: false, message: result.error || 'Invalid magic link' },
+        { status: 401 }
+      )
+    }
+
+    // Get user data
+    const user = await prisma.user.findUnique({
+      where: { id: result.userId },
+      select: {
+        id: true,
+        email: true,
+        last_active_at: true,
+        last_question_id: true,
+        created_at: true,
+      },
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: 'User not found' },
+        { status: 404 }
+      )
+    }
+
+    // Generate session token
+    const sessionToken = generateSessionToken({
+      userId: user.id,
+      email: user.email,
+    })
+
+    // Create response with session token in cookie
+    const response = NextResponse.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        last_active_at: user.last_active_at,
+        last_question_id: user.last_question_id,
+      },
+    })
+
+    // Set HTTP-only cookie
+    response.cookies.set('session_token', sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      path: '/',
+    })
+
+    return response
+  } catch (error) {
+    console.error('Error verifying magic link:', error)
+    return NextResponse.json(
+      { success: false, message: 'Failed to verify magic link' },
+      { status: 500 }
+    )
+  }
+}
+
