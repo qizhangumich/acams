@@ -218,7 +218,7 @@ export default function ReviewModePage() {
 
         {/* Options (Read-only, showing correct answers) */}
         <div className={styles.optionsContainer}>
-          {Object.entries(question.options).map(([key, value]) => {
+          {question.options && Object.entries(question.options).map(([key, value]) => {
             const isCorrectAnswer = question.correct_answers.includes(key)
             const wasSelected = progress?.selected_answer?.includes(key)
 
