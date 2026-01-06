@@ -23,6 +23,7 @@ export default function LoginPage() {
     const error = searchParams.get('error')
     if (error) {
       const errorMessages: Record<string, string> = {
+        missing_token: 'Missing token. Please request a new magic link.',
         missing_parameters: 'Missing token or email. Please request a new magic link.',
         verification_failed: 'Verification failed. The link may be invalid or expired.',
         invalid_magic_link: 'Invalid magic link. Please request a new one.',
