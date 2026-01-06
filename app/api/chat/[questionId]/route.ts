@@ -136,10 +136,13 @@ IMPORTANT RULES:
         role: 'system',
         content: systemPrompt,
       },
-      ...chatHistory.map((msg) => ({
-        role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.content,
-      })),
+      ...chatHistory.map((msg) => {
+        const role = msg.role === 'user' ? ('user' as const) : ('assistant' as const)
+        return {
+          role,
+          content: msg.content,
+        } as OpenAI.Chat.Completions.ChatCompletionMessageParam
+      }),
       {
         role: 'user',
         content: message,
