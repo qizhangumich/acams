@@ -88,66 +88,86 @@ export async function verifyMagicLinkToken(
   token: string,
   email: string
 ): Promise<{ success: boolean; userId?: string; error?: string }> {
-  const normalizedEmail = email.trim().toLowerCase()
+  try {
+    const normalizedEmail = email.trim().toLowerCase()
 
-  // Find token
-  const magicLinkToken = await prisma.magicLinkToken.findUnique({
-    where: { token },
-  })
+    // Find token
+    const magicLinkToken = await prisma.magicLinkToken.findUnique({
+      where: { token },
+    })
 
-  // Check if token exists
-  if (!magicLinkToken) {
-    return { success: false, error: 'Invalid magic link' }
-  }
+    // Check if token exists
+    if (!magicLinkToken) {
+      return { success: false, error: 'Invalid magic link' }
+    }
 
-  // Check if email matches
-  if (magicLinkToken.email !== normalizedEmail) {
-    return { success: false, error: 'Invalid magic link' }
-  }
+    // Check if email matches
+    if (magicLinkToken.email !== normalizedEmail) {
+      return { success: false, error: 'Invalid magic link' }
+    }
 
-  // Check if token is expired
-  if (magicLinkToken.expires_at < new Date()) {
-    // Mark as used (cleanup)
+    // Check if token is expired
+    if (magicLinkToken.expires_at < new Date()) {
+      // Mark as used (cleanup)
+      try {
+        await prisma.magicLinkToken.update({
+          where: { id: magicLinkToken.id },
+          data: { used: true },
+        })
+      } catch (updateError) {
+        // Ignore update errors during cleanup
+        console.error('Error marking expired token as used:', updateError)
+      }
+      return { success: false, error: 'Magic link expired' }
+    }
+
+    // Check if token already used
+    if (magicLinkToken.used) {
+      return { success: false, error: 'Magic link already used' }
+    }
+
+    // Mark token as used
     await prisma.magicLinkToken.update({
       where: { id: magicLinkToken.id },
       data: { used: true },
     })
-    return { success: false, error: 'Magic link expired' }
-  }
 
-  // Check if token already used
-  if (magicLinkToken.used) {
-    return { success: false, error: 'Magic link already used' }
-  }
-
-  // Mark token as used
-  await prisma.magicLinkToken.update({
-    where: { id: magicLinkToken.id },
-    data: { used: true },
-  })
-
-  // Find or create user
-  let user = await prisma.user.findUnique({
-    where: { email: normalizedEmail },
-  })
-
-  if (!user) {
-    // Create new user
-    user = await prisma.user.create({
-      data: {
-        email: normalizedEmail,
-        last_active_at: new Date(),
-      },
+    // Find or create user
+    let user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
     })
-  } else {
-    // Update last active
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { last_active_at: new Date() },
-    })
-  }
 
-  return { success: true, userId: user.id }
+    if (!user) {
+      // Create new user
+      user = await prisma.user.create({
+        data: {
+          email: normalizedEmail,
+          last_active_at: new Date(),
+        },
+      })
+    } else {
+      // Update last active
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { last_active_at: new Date() },
+      })
+    }
+
+    return { success: true, userId: user.id }
+  } catch (error) {
+    // Log database or other errors
+    console.error('Error in verifyMagicLinkToken:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      token: token.substring(0, 10) + '...',
+      email: email,
+    })
+    // Return error instead of throwing
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Database error during verification' 
+    }
+  }
 }
 
 /**
