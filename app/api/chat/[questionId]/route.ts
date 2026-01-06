@@ -131,18 +131,26 @@ IMPORTANT RULES:
 - You MUST keep responses concise and focused`
 
     // 7. Build messages for OpenAI
+    const historyMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = chatHistory.map((msg) => {
+      if (msg.role === 'user') {
+        return {
+          role: 'user' as const,
+          content: msg.content,
+        }
+      } else {
+        return {
+          role: 'assistant' as const,
+          content: msg.content,
+        }
+      }
+    })
+
     const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       {
         role: 'system',
         content: systemPrompt,
       },
-      ...chatHistory.map((msg) => {
-        const role = msg.role === 'user' ? ('user' as const) : ('assistant' as const)
-        return {
-          role,
-          content: msg.content,
-        } as OpenAI.Chat.Completions.ChatCompletionMessageParam
-      }),
+      ...historyMessages,
       {
         role: 'user',
         content: message,
