@@ -26,7 +26,7 @@ async function apiRequest(
   endpoint: string,
   options: RequestInit = {},
   cookies?: string
-): Promise<{ data: any; cookies: string[] }> {
+): Promise<{ data: any; cookies: string }> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string> || {}),
