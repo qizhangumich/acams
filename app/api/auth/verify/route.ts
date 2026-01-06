@@ -20,10 +20,8 @@ export async function GET(request: NextRequest) {
 
     // Token is required (email is optional - derived from token)
     if (!token) {
-      return NextResponse.json(
-        { success: false, error: 'missing_token', message: 'Token is required' },
-        { status: 400 }
-      )
+      const redirectUrl = new URL('/login?error=missing_token', request.url)
+      return NextResponse.redirect(redirectUrl)
     }
 
     // Normalize token
@@ -34,14 +32,9 @@ export async function GET(request: NextRequest) {
     const result = await verifyMagicLinkToken(normalizedToken, decodedEmail)
 
     if (!result.success || !result.userId) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: result.error || 'verification_failed',
-          message: result.error || 'Invalid magic link' 
-        },
-        { status: 401 }
-      )
+      const error = result.error || 'verification_failed'
+      const redirectUrl = new URL(`/login?error=${encodeURIComponent(error)}`, request.url)
+      return NextResponse.redirect(redirectUrl)
     }
 
     // Get user data
@@ -57,10 +50,8 @@ export async function GET(request: NextRequest) {
     })
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'user_not_found', message: 'User not found' },
-        { status: 404 }
-      )
+      const redirectUrl = new URL('/login?error=user_not_found', request.url)
+      return NextResponse.redirect(redirectUrl)
     }
 
     // Generate session token
@@ -69,17 +60,13 @@ export async function GET(request: NextRequest) {
       email: user.email,
     })
 
-    // Create response with session token in cookie
-    // API returns JSON only - page component handles redirects
-    const response = NextResponse.json(
-      {
-        success: true,
-      },
-      { status: 200 }
-    )
+    // Create redirect response to /questions
+    // Browser directly hits this API, receives Set-Cookie header, then redirects
+    const redirectUrl = new URL('/questions', request.url)
+    const response = NextResponse.redirect(redirectUrl)
 
     // Set HTTP-only cookie (this is allowed in Route Handlers)
-    // Cookie is set BEFORE redirect happens in page component
+    // Cookie is set in redirect response - browser receives it before redirect
     response.cookies.set('session_token', sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -91,14 +78,8 @@ export async function GET(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Error verifying magic link:', error)
-    return NextResponse.json(
-      { 
-        success: false, 
-        error: 'verification_failed',
-        message: 'Failed to verify magic link' 
-      },
-      { status: 500 }
-    )
+    const redirectUrl = new URL('/login?error=verification_failed', request.url)
+    return NextResponse.redirect(redirectUrl)
   }
 }
 
