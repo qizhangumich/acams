@@ -2,12 +2,10 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 /**
- * GET /auth/_verify
+ * GET /auth/verify
  * 
  * Magic link verification page
  * Verifies token and redirects to questions page
- * 
- * Note: Route renamed from /auth/verify to /auth/_verify to bust Vercel routing cache
  */
 
 import { redirect } from 'next/navigation'
