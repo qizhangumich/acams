@@ -17,6 +17,8 @@ const MAGIC_LINK_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost
  * @param token Magic link token
  */
 export async function sendMagicLinkEmail(email: string, token: string): Promise<void> {
+  // Magic link URL: /auth/verify (NOT /verify)
+  // Email parameter is optional for backwards compatibility (token-only verification)
   const magicLink = `${MAGIC_LINK_BASE_URL}/auth/verify?token=${token}&email=${encodeURIComponent(email)}`
 
   try {
