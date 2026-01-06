@@ -33,6 +33,12 @@ export default async function VerifyPage({
     const result = await verifyMagicLinkToken(token, email)
 
     if (!result.success || !result.userId) {
+      // Log the specific error for debugging
+      console.error('Magic link verification failed:', {
+        error: result.error,
+        token: token.substring(0, 10) + '...',
+        email: email,
+      })
       // Verification failed - redirect to login with error
       redirect(`/login?error=${encodeURIComponent(result.error || 'verification_failed')}`)
     }
@@ -72,7 +78,13 @@ export default async function VerifyPage({
     // Verification successful - redirect to questions page
     redirect('/questions')
   } catch (error) {
-    console.error('Error verifying magic link:', error)
+    // Log detailed error information
+    console.error('Error verifying magic link:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      token: token?.substring(0, 10) + '...',
+      email: email,
+    })
     redirect('/login?error=verification_failed')
   }
 }
