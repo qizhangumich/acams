@@ -86,12 +86,10 @@ export async function createMagicLink(email: string): Promise<{ success: boolean
  */
 export async function verifyMagicLinkToken(
   token: string,
-  email: string
+  email?: string
 ): Promise<{ success: boolean; userId?: string; error?: string }> {
   try {
-    const normalizedEmail = email.trim().toLowerCase()
-
-    // Find token
+    // Find token (email is stored with token in database)
     const magicLinkToken = await prisma.magicLinkToken.findUnique({
       where: { token },
     })
@@ -101,9 +99,15 @@ export async function verifyMagicLinkToken(
       return { success: false, error: 'Invalid magic link' }
     }
 
-    // Check if email matches
-    if (magicLinkToken.email !== normalizedEmail) {
-      return { success: false, error: 'Invalid magic link' }
+    // Derive email from token (more secure - single source of truth)
+    const tokenEmail = magicLinkToken.email
+
+    // If email is provided, verify it matches (backwards compatibility)
+    if (email) {
+      const normalizedEmail = email.trim().toLowerCase()
+      if (tokenEmail !== normalizedEmail) {
+        return { success: false, error: 'Invalid magic link' }
+      }
     }
 
     // Check if token is expired
@@ -132,16 +136,16 @@ export async function verifyMagicLinkToken(
       data: { used: true },
     })
 
-    // Find or create user
+    // Find or create user (use email from token)
     let user = await prisma.user.findUnique({
-      where: { email: normalizedEmail },
+      where: { email: tokenEmail },
     })
 
     if (!user) {
       // Create new user
       user = await prisma.user.create({
         data: {
-          email: normalizedEmail,
+          email: tokenEmail,
           last_active_at: new Date(),
         },
       })
@@ -160,7 +164,7 @@ export async function verifyMagicLinkToken(
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       token: token.substring(0, 10) + '...',
-      email: email,
+      email: email || 'not provided',
     })
     // Return error instead of throwing
     return { 

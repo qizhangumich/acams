@@ -19,17 +19,17 @@ export default async function VerifyPage({
 }: {
   searchParams: { token?: string; email?: string }
 }) {
-  // Next.js automatically decodes URL parameters, but ensure it's decoded
+  // Token-only verification (email is derived from token in database)
   const token = searchParams.token
-  const email = searchParams.email ? decodeURIComponent(searchParams.email) : undefined
 
-  // Missing parameters - redirect to login
-  if (!token || !email) {
-    redirect('/login?error=missing_parameters')
+  // Missing token - redirect to login
+  if (!token) {
+    redirect('/login?error=missing_token')
   }
 
   try {
-    // Verify magic link token
+    // Verify magic link token (email is optional for backwards compatibility)
+    const email = searchParams.email ? decodeURIComponent(searchParams.email) : undefined
     const result = await verifyMagicLinkToken(token, email)
 
     if (!result.success || !result.userId) {
@@ -37,7 +37,6 @@ export default async function VerifyPage({
       console.error('Magic link verification failed:', {
         error: result.error,
         token: token.substring(0, 10) + '...',
-        email: email,
       })
       // Verification failed - redirect to login with error
       redirect(`/login?error=${encodeURIComponent(result.error || 'verification_failed')}`)
@@ -83,7 +82,6 @@ export default async function VerifyPage({
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       token: token?.substring(0, 10) + '...',
-      email: email,
     })
     redirect('/login?error=verification_failed')
   }
