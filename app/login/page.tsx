@@ -7,15 +7,32 @@
 
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import styles from './page.module.css'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+
+  // Read error from URL parameters
+  useEffect(() => {
+    const error = searchParams.get('error')
+    if (error) {
+      const errorMessages: Record<string, string> = {
+        missing_parameters: 'Missing token or email. Please request a new magic link.',
+        verification_failed: 'Verification failed. The link may be invalid or expired.',
+        invalid_magic_link: 'Invalid magic link. Please request a new one.',
+        'Magic link expired': 'Magic link expired. Please request a new one.',
+        'Magic link already used': 'This magic link has already been used. Please request a new one.',
+        user_not_found: 'User not found. Please try again.',
+      }
+      setMessage(errorMessages[error] || `Error: ${decodeURIComponent(error)}`)
+    }
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
