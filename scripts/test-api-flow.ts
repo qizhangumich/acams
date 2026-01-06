@@ -27,9 +27,9 @@ async function apiRequest(
   options: RequestInit = {},
   cookies?: string
 ): Promise<{ data: any; cookies: string[] }> {
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers || {}),
+    ...(options.headers as Record<string, string> || {}),
   }
 
   if (cookies) {
