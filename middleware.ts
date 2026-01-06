@@ -2,57 +2,76 @@
  * Next.js Middleware
  * 
  * Handles authentication for protected routes
+ * 
+ * IMPORTANT: Cookie name must match exactly: 'session_token'
  */
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifySessionToken } from '@/lib/auth/session'
 
-// Routes that require authentication
-const protectedRoutes = ['/questions', '/dashboard', '/wrong-book', '/api/progress', '/api/chat']
-
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Check if route is protected
-  const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
+  // Only protect /questions and related routes
+  // Do NOT run on /login, /api/auth/*, or /auth/verify
+  if (pathname.startsWith('/questions')) {
+    // Get session token from cookie (EXACT name: 'session_token')
+    const sessionCookie = request.cookies.get('session_token')
+    const sessionToken = sessionCookie?.value
 
-  if (!isProtectedRoute) {
+    if (!sessionToken) {
+      // No session cookie - redirect to login
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    // Verify JWT token
+    const payload = verifySessionToken(sessionToken)
+
+    if (!payload) {
+      // Invalid token - clear cookie and redirect
+      const response = NextResponse.redirect(new URL('/login', request.url))
+      response.cookies.delete('session_token')
+      return response
+    }
+
+    // Valid session - allow access
     return NextResponse.next()
   }
 
-  // Get session token from cookie
-  const sessionToken = request.cookies.get('session_token')?.value
+  // Protect API routes that require authentication
+  if (
+    pathname.startsWith('/api/progress') ||
+    pathname.startsWith('/api/chat') ||
+    pathname.startsWith('/api/dashboard') ||
+    pathname.startsWith('/api/wrong-book') ||
+    pathname.startsWith('/api/questions') ||
+    pathname.startsWith('/api/review')
+  ) {
+    // Get session token from cookie
+    const sessionCookie = request.cookies.get('session_token')
+    const sessionToken = sessionCookie?.value
 
-  if (!sessionToken) {
-    // Redirect to login if accessing protected route
-    if (pathname.startsWith('/api/')) {
+    if (!sessionToken) {
       return NextResponse.json(
         { success: false, message: 'Authentication required' },
         { status: 401 }
       )
     }
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
 
-  // Verify token
-  const payload = verifySessionToken(sessionToken)
+    // Verify token
+    const payload = verifySessionToken(sessionToken)
 
-  if (!payload) {
-    // Invalid token, clear cookie and redirect
-    const response = pathname.startsWith('/api/')
-      ? NextResponse.json(
-          { success: false, message: 'Invalid session' },
-          { status: 401 }
-        )
-      : NextResponse.redirect(new URL('/login', request.url))
+    if (!payload) {
+      const response = NextResponse.json(
+        { success: false, message: 'Invalid session' },
+        { status: 401 }
+      )
+      response.cookies.delete('session_token')
+      return response
+    }
 
-    response.cookies.delete('session_token')
-    return response
-  }
-
-  // Add user ID to request headers for API routes
-  if (pathname.startsWith('/api/')) {
+    // Add user ID to request headers for API routes
     const requestHeaders = new Headers(request.headers)
     requestHeaders.set('x-user-id', payload.userId)
     requestHeaders.set('x-user-email', payload.email)
@@ -64,6 +83,7 @@ export function middleware(request: NextRequest) {
     })
   }
 
+  // Allow all other routes (login, auth/verify, etc.)
   return NextResponse.next()
 }
 
