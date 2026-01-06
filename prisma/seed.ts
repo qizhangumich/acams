@@ -40,41 +40,46 @@ async function main() {
   let updated = 0
 
   for (const questionData of questionsData) {
-    const result = await prisma.question.upsert({
+    // Check if question already exists to determine if it's a create or update
+    const existing = await prisma.question.findUnique({
       where: { id: questionData.id },
-      update: {
-        domain: questionData.domain,
-        question_text: questionData.question,
-        options: questionData.options,
-        correct_answers: questionData.correct_answers,
-        explanation: questionData.explanation,
-        explanation_ai_en: questionData.explanation_ai_en || null,
-        explanation_ai_ch: questionData.explanation_ai_ch || null,
-        is_complete: questionData.is_complete ?? false,
-        normalized_question: questionData.normalized_question || null,
-      },
-      create: {
-        id: questionData.id,
-        domain: questionData.domain,
-        question_text: questionData.question,
-        options: questionData.options,
-        correct_answers: questionData.correct_answers,
-        explanation: questionData.explanation,
-        explanation_ai_en: questionData.explanation_ai_en || null,
-        explanation_ai_ch: questionData.explanation_ai_ch || null,
-        is_complete: questionData.is_complete ?? false,
-        normalized_question: questionData.normalized_question || null,
-      },
+      select: { id: true },
     })
 
-    if (result) {
-      // Check if it was created or updated (Prisma doesn't tell us directly)
-      const existing = await prisma.question.findUnique({ where: { id: questionData.id } })
-      if (existing && existing.created_at.getTime() === result.created_at.getTime()) {
-        created++
-      } else {
-        updated++
-      }
+    if (existing) {
+      // Update existing question
+      await prisma.question.update({
+        where: { id: questionData.id },
+        data: {
+          domain: questionData.domain,
+          question_text: questionData.question,
+          options: questionData.options,
+          correct_answers: questionData.correct_answers,
+          explanation: questionData.explanation,
+          explanation_ai_en: questionData.explanation_ai_en || null,
+          explanation_ai_ch: questionData.explanation_ai_ch || null,
+          is_complete: questionData.is_complete ?? false,
+          normalized_question: questionData.normalized_question || null,
+        },
+      })
+      updated++
+    } else {
+      // Create new question
+      await prisma.question.create({
+        data: {
+          id: questionData.id,
+          domain: questionData.domain,
+          question_text: questionData.question,
+          options: questionData.options,
+          correct_answers: questionData.correct_answers,
+          explanation: questionData.explanation,
+          explanation_ai_en: questionData.explanation_ai_en || null,
+          explanation_ai_ch: questionData.explanation_ai_ch || null,
+          is_complete: questionData.is_complete ?? false,
+          normalized_question: questionData.normalized_question || null,
+        },
+      })
+      created++
     }
   }
 
