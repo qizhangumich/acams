@@ -60,19 +60,19 @@ export async function GET(request: NextRequest) {
       email: user.email,
     })
 
-    // Create redirect response to /questions
-    // Browser directly hits this API, receives Set-Cookie header, then redirects
-    const redirectUrl = new URL('/questions', request.url)
-    const response = NextResponse.redirect(redirectUrl)
+    // CRITICAL: Create redirect response FIRST, then set cookie on it
+    // cookies().set() does NOT attach cookies to redirect responses
+    // Must use response.cookies.set() on the redirect response object
+    const response = NextResponse.redirect(new URL('/questions', request.url))
 
-    // Set HTTP-only cookie (this is allowed in Route Handlers)
-    // Cookie is set in redirect response - browser receives it before redirect
+    // Set HTTP-only cookie on the redirect response
+    // This ensures cookie is attached to the redirect response
     response.cookies.set('session_token', sessionToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60, // 30 days
       path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
     })
 
     return response
