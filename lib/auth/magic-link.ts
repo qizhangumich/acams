@@ -80,8 +80,8 @@ export async function createMagicLink(email: string): Promise<{ success: boolean
 /**
  * Verify magic link token
  * 
- * @param token Magic link token
- * @param email User email
+ * @param token Magic link token (raw, not hashed)
+ * @param email User email (optional, for backwards compatibility)
  * @returns User ID if valid, null if invalid
  */
 export async function verifyMagicLinkToken(
@@ -89,13 +89,19 @@ export async function verifyMagicLinkToken(
   email?: string
 ): Promise<{ success: boolean; userId?: string; error?: string }> {
   try {
-    // Normalize token: trim whitespace and ensure it's a valid hex string
+    // ============================================
+    // STEP 1: Normalize and validate token format
+    // ============================================
     const normalizedToken = token.trim()
+    
+    console.log('[VERIFY] Raw token received:', normalizedToken.substring(0, 20) + '...')
+    console.log('[VERIFY] Token length:', normalizedToken.length)
     
     // Validate token format (should be 64 hex characters from randomBytes(32).toString('hex'))
     if (!normalizedToken || normalizedToken.length !== 64) {
-      console.error('Invalid token format:', {
+      console.error('[VERIFY] Invalid token format - wrong length:', {
         tokenLength: normalizedToken.length,
+        expectedLength: 64,
         tokenPrefix: normalizedToken.substring(0, 10) + '...',
       })
       return { success: false, error: 'Invalid magic link' }
@@ -103,41 +109,77 @@ export async function verifyMagicLinkToken(
 
     // Validate hex format
     if (!/^[0-9a-f]{64}$/i.test(normalizedToken)) {
-      console.error('Token contains invalid characters:', {
+      console.error('[VERIFY] Token contains invalid characters:', {
         tokenPrefix: normalizedToken.substring(0, 10) + '...',
       })
       return { success: false, error: 'Invalid magic link' }
     }
 
-    // Find token (email is stored with token in database)
-    // Token is stored as raw (not hashed) - direct lookup
+    // ============================================
+    // STEP 2: Lookup token in database
+    // ============================================
+    // Token is stored as RAW (not hashed) - direct lookup
+    // No hashing needed - token from URL matches token in DB exactly
     const magicLinkToken = await prisma.magicLinkToken.findUnique({
       where: { token: normalizedToken },
     })
 
-    // Check if token exists
+    console.log('[VERIFY] Database lookup result:', {
+      found: !!magicLinkToken,
+      tokenId: magicLinkToken?.id || 'N/A',
+      tokenEmail: magicLinkToken?.email || 'N/A',
+      expiresAt: magicLinkToken?.expires_at?.toISOString() || 'N/A',
+      used: magicLinkToken?.used ?? 'N/A',
+    })
+
+    // ============================================
+    // STEP 3: Check if token exists
+    // ============================================
     if (!magicLinkToken) {
-      console.error('Token not found in database:', {
+      console.error('[VERIFY] Token not found in database:', {
         tokenPrefix: normalizedToken.substring(0, 10) + '...',
         tokenLength: normalizedToken.length,
       })
       return { success: false, error: 'Invalid magic link' }
     }
 
-    // Derive email from token (more secure - single source of truth)
-    const tokenEmail = magicLinkToken.email
+    // ============================================
+    // STEP 4: Derive email from token record
+    // ============================================
+    const tokenEmail = magicLinkToken.email.trim().toLowerCase()
+    console.log('[VERIFY] Email from token record:', tokenEmail)
 
-    // If email is provided, verify it matches (backwards compatibility)
+    // ============================================
+    // STEP 5: (Optional) Verify email matches if provided
+    // ============================================
     if (email) {
       const normalizedEmail = email.trim().toLowerCase()
+      console.log('[VERIFY] Email from URL parameter:', normalizedEmail)
       if (tokenEmail !== normalizedEmail) {
+        console.error('[VERIFY] Email mismatch:', {
+          tokenEmail,
+          providedEmail: normalizedEmail,
+        })
         return { success: false, error: 'Invalid magic link' }
       }
     }
 
-    // Check if token is expired
-    if (magicLinkToken.expires_at < new Date()) {
-      // Mark as used (cleanup)
+    // ============================================
+    // STEP 6: Check if token is expired
+    // ============================================
+    // Ensure both sides are Date objects for correct comparison
+    const now = new Date()
+    const expiresAt = new Date(magicLinkToken.expires_at)
+    
+    console.log('[VERIFY] Expiration check:', {
+      expiresAt: expiresAt.toISOString(),
+      now: now.toISOString(),
+      isExpired: expiresAt < now,
+    })
+
+    if (expiresAt < now) {
+      console.error('[VERIFY] Token expired')
+      // Mark as used (cleanup) - but don't fail the update if it errors
       try {
         await prisma.magicLinkToken.update({
           where: { id: magicLinkToken.id },
@@ -145,28 +187,42 @@ export async function verifyMagicLinkToken(
         })
       } catch (updateError) {
         // Ignore update errors during cleanup
-        console.error('Error marking expired token as used:', updateError)
+        console.error('[VERIFY] Error marking expired token as used:', updateError)
       }
       return { success: false, error: 'Magic link expired' }
     }
 
-    // Check if token already used
+    // ============================================
+    // STEP 7: Check if token already used
+    // ============================================
+    console.log('[VERIFY] Used flag check:', {
+      used: magicLinkToken.used,
+    })
+
     if (magicLinkToken.used) {
+      console.error('[VERIFY] Token already used')
       return { success: false, error: 'Magic link already used' }
     }
 
-    // Mark token as used
+    // ============================================
+    // STEP 8: Mark token as used (BEFORE user operations)
+    // ============================================
+    // This prevents race conditions - mark as used immediately after validation
     await prisma.magicLinkToken.update({
       where: { id: magicLinkToken.id },
       data: { used: true },
     })
+    console.log('[VERIFY] Token marked as used')
 
-    // Find or create user (use email from token)
+    // ============================================
+    // STEP 9: Find or create user
+    // ============================================
     let user = await prisma.user.findUnique({
       where: { email: tokenEmail },
     })
 
     if (!user) {
+      console.log('[VERIFY] Creating new user:', tokenEmail)
       // Create new user
       user = await prisma.user.create({
         data: {
@@ -175,6 +231,7 @@ export async function verifyMagicLinkToken(
         },
       })
     } else {
+      console.log('[VERIFY] Updating existing user:', user.id)
       // Update last active
       await prisma.user.update({
         where: { id: user.id },
@@ -182,13 +239,18 @@ export async function verifyMagicLinkToken(
       })
     }
 
+    console.log('[VERIFY] Verification successful:', {
+      userId: user.id,
+      email: user.email,
+    })
+
     return { success: true, userId: user.id }
   } catch (error) {
     // Log database or other errors
-    console.error('Error in verifyMagicLinkToken:', {
+    console.error('[VERIFY] Error in verifyMagicLinkToken:', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
-      token: token.substring(0, 10) + '...',
+      token: token?.substring(0, 10) + '...',
       email: email || 'not provided',
     })
     // Return error instead of throwing
