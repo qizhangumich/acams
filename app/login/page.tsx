@@ -5,10 +5,6 @@
  * Full login implementation is not part of Phase 3A scope.
  */
 
-// CRITICAL: Disable caching to ensure login page always re-evaluates auth state
-// Prevents stale login HTML from being served after authentication
-export const dynamic = 'force-dynamic'
-
 'use client'
 
 import { useState, useEffect } from 'react'
