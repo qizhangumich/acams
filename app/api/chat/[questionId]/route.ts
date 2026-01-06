@@ -12,6 +12,7 @@ import { getUserFromSession } from '@/lib/auth/session'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import OpenAI from 'openai'
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions'
 
 const requestSchema = z.object({
   message: z.string().min(1).max(2000),
@@ -131,21 +132,24 @@ IMPORTANT RULES:
 - You MUST keep responses concise and focused`
 
     // 7. Build messages for OpenAI
-    const historyMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = chatHistory.map((msg) => {
-      if (msg.role === 'user') {
-        return {
-          role: 'user' as const,
-          content: msg.content,
-        }
-      } else {
-        return {
-          role: 'assistant' as const,
-          content: msg.content,
+    // Explicitly type the messages to ensure TypeScript knows only "system" | "user" | "assistant" are used
+    const historyMessages: ChatCompletionMessageParam[] = chatHistory.map(
+      (msg): ChatCompletionMessageParam => {
+        if (msg.role === 'user') {
+          return {
+            role: 'user',
+            content: msg.content,
+          }
+        } else {
+          return {
+            role: 'assistant',
+            content: msg.content,
+          }
         }
       }
-    })
+    )
 
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+    const messages: ChatCompletionMessageParam[] = [
       {
         role: 'system',
         content: systemPrompt,
