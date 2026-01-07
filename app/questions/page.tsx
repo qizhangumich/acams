@@ -190,9 +190,9 @@ export default function QuestionPage() {
       // Check if success is false (new user with no progress)
       // or if the API explicitly returns 404 (no questions / no progress)
       if (response.status === 404 || !data.success) {
-        // Try to load the first question (ID = 1) for new users
+        // Try to load the first question from questions.json for new users
         try {
-          const firstQuestionResponse = await fetch('/api/questions/1', {
+          const firstQuestionResponse = await fetch('/api/questions/first', {
             method: 'GET',
             credentials: 'include',
           })
@@ -202,21 +202,19 @@ export default function QuestionPage() {
             return
           }
 
-          if (!firstQuestionResponse.ok) {
-            // No questions in database
-            setError(data.message || 'No questions available. Please ensure the database is seeded.')
-            return
-          }
-
           const firstQuestionData = await firstQuestionResponse.json()
 
-          if (firstQuestionData.success && firstQuestionData.question) {
-            // Successfully loaded first question for new user
-            setQuestion(firstQuestionData.question)
-            setProgress({ status: 'not_started' })
-            setSelectedAnswers([])
+          if (!firstQuestionResponse.ok || !firstQuestionData.success || !firstQuestionData.question) {
+            // No questions in database or failed to load first question
+            setError(firstQuestionData.message || data.message || 'No questions available. Please ensure the database is seeded.')
             return
           }
+
+          // Successfully loaded first question for new user
+          setQuestion(firstQuestionData.question)
+          setProgress({ status: 'not_started' })
+          setSelectedAnswers([])
+          return
         } catch (firstQuestionErr) {
           console.error('Error loading first question:', firstQuestionErr)
           setError(data.message || 'No questions available. Please ensure the database is seeded.')
