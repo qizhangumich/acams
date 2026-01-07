@@ -179,11 +179,6 @@ export default function QuestionPage() {
         return
       }
 
-      if (!response.ok) {
-        // Handle other error statuses
-        throw new Error(`Failed to load question: ${response.status} ${response.statusText}`)
-      }
-
       // Parse response JSON
       let data: ResumeResponse
       try {
@@ -193,7 +188,8 @@ export default function QuestionPage() {
       }
 
       // Check if success is false (new user with no progress)
-      if (!data.success) {
+      // or if the API explicitly returns 404 (no questions / no progress)
+      if (response.status === 404 || !data.success) {
         // Try to load the first question (ID = 1) for new users
         try {
           const firstQuestionResponse = await fetch('/api/questions/1', {
@@ -226,6 +222,11 @@ export default function QuestionPage() {
           setError(data.message || 'No questions available. Please ensure the database is seeded.')
           return
         }
+      }
+
+      // For other non-OK statuses, surface as an error
+      if (!response.ok) {
+        throw new Error(`Failed to load question: ${response.status} ${response.statusText}`)
       }
 
       // Success case: user has progress
