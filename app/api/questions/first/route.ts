@@ -34,9 +34,22 @@ export async function GET() {
 
     const firstQuestion = questions[0]
 
+    // Normalize shape to match Prisma `question` select (question_text, etc.)
+    const normalizedQuestion = {
+      id: firstQuestion.id,
+      domain: firstQuestion.domain,
+      question_text: firstQuestion.question,
+      options: firstQuestion.options,
+      correct_answers: firstQuestion.correct_answers,
+      explanation: firstQuestion.explanation,
+      explanation_ai_en: firstQuestion.explanation_ai_en,
+      explanation_ai_ch: firstQuestion.explanation_ai_ch,
+    }
+
     return NextResponse.json({
       success: true,
-      question: firstQuestion,
+      index: 0,
+      question: normalizedQuestion,
     })
   } catch (error) {
     console.error('[questions/first] Error reading questions.json:', error)

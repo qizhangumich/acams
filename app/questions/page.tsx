@@ -58,10 +58,12 @@ export default function QuestionPage() {
   const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [question, setQuestion] = useState<Question | null>(null)
+  const [currentIndex, setCurrentIndex] = useState<number | null>(null)
   const [progress, setProgress] = useState<Progress | null>(null)
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [completionMessage, setCompletionMessage] = useState<string | null>(null)
   
   // Explanation panel state (UI-only, not persisted)
   const [isExplanationOpen, setIsExplanationOpen] = useState(false)
@@ -212,6 +214,7 @@ export default function QuestionPage() {
 
           // Successfully loaded first question for new user
           setQuestion(firstQuestionData.question)
+          setCurrentIndex(typeof firstQuestionData.index === 'number' ? firstQuestionData.index : 0)
           setProgress({ status: 'not_started' })
           setSelectedAnswers([])
           return
@@ -233,6 +236,7 @@ export default function QuestionPage() {
       }
 
       setQuestion(data.question)
+      setCurrentIndex(null) // Index unknown for resumed questions from DB
       setProgress(data.progress || { status: 'not_started' })
 
       // If progress exists and has selected_answer, restore it
@@ -417,6 +421,49 @@ export default function QuestionPage() {
   const isCorrect = progress?.status === 'correct'
   const isWrong = progress?.status === 'wrong'
 
+  async function handleNextQuestion() {
+    if (currentIndex === null) {
+      // Index is unknown (e.g., resumed from DB); do not attempt next
+      return
+    }
+
+    try {
+      setLoading(true)
+      setError(null)
+      setCompletionMessage(null)
+
+      const response = await fetch(`/api/questions/next?currentIndex=${currentIndex}`, {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (response.status === 401) {
+        router.push('/login')
+        return
+      }
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        if (data.message === 'No more questions') {
+          setCompletionMessage('You have completed all questions.')
+          return
+        }
+        throw new Error(data.message || 'Failed to load next question')
+      }
+
+      setQuestion(data.question)
+      setCurrentIndex(typeof data.index === 'number' ? data.index : currentIndex + 1)
+      setProgress({ status: 'not_started' })
+      setSelectedAnswers([])
+    } catch (err) {
+      console.error('Error loading next question:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load next question')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -533,6 +580,21 @@ export default function QuestionPage() {
 
         {/* Error Message */}
         {error && <div className={styles.error}>{error}</div>}
+
+        {/* Completion Message */}
+        {completionMessage && <div className={styles.completionMessage}>{completionMessage}</div>}
+
+        {/* Next Question Button */}
+        <div className={styles.navigationSection}>
+          <button
+            type="button"
+            className={styles.nextButton || styles.submitButton}
+            onClick={handleNextQuestion}
+            disabled={loading || currentIndex === null}
+          >
+            Next Question
+          </button>
+        </div>
 
         {/* Chat Panel */}
         <div className={styles.chatSection}>
