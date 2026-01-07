@@ -13,6 +13,7 @@
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
+    "db:verify": "tsx scripts/verify-prisma-singleton.ts",
     "test:api": "tsx scripts/test-api-flow.ts"
   },
   "dependencies": {

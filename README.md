@@ -16,11 +16,14 @@ A comprehensive learning system for ACAMS certification exam preparation with AI
 
 ### Technical Stack
 - **Framework**: Next.js 14 (App Router)
-- **Database**: Neon PostgreSQL with Prisma ORM
+- **Database**: PostgreSQL (Neon) - The database server
+- **Database Access**: Prisma ORM - The access layer (replaces direct connections)
 - **Authentication**: JWT-based session with HTTP-only cookies
 - **AI**: OpenAI GPT-4o-mini for explanations and chat
 - **Email**: Resend for magic link delivery
 - **Deployment**: Vercel
+
+> **Architecture Note**: PostgreSQL is the database. Prisma is the access layer (not a database replacement). See [DATABASE_ARCHITECTURE.md](./DATABASE_ARCHITECTURE.md) for details.
 
 ---
 
