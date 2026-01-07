@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromSession } from '@/lib/auth/session'
+import { prisma } from '@/lib/prisma'
 import fs from 'fs/promises'
 import path from 'path'
 
@@ -33,11 +34,18 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { questionId, selectedOptions } = body
+    const { questionId, selectedOptions, currentIndex } = body
 
     if (!questionId || !Array.isArray(selectedOptions) || selectedOptions.length === 0) {
       return NextResponse.json(
         { success: false, message: 'questionId and selectedOptions are required' },
+        { status: 400 }
+      )
+    }
+
+    if (typeof currentIndex !== 'number' || currentIndex < 0) {
+      return NextResponse.json(
+        { success: false, message: 'currentIndex is required and must be a non-negative number' },
         { status: 400 }
       )
     }
@@ -76,7 +84,18 @@ export async function POST(request: NextRequest) {
 
     const status = isCorrect ? 'correct' : 'wrong'
 
-    // Return success response (minimal - always succeeds)
+    // Persist progress: update user's current_index and current_answers
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        current_index: currentIndex,
+        current_answers: selectedOptions,
+        last_active_at: new Date(),
+        last_question_id: questionId,
+      },
+    })
+
+    // Return success response
     return NextResponse.json({
       success: true,
       progress: {

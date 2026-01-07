@@ -121,9 +121,19 @@ export default function QuestionPage() {
   // Load question and progress on page load
   useEffect(() => {
     const questionIdParam = searchParams.get('questionId')
+    const indexParam = searchParams.get('index')
+    
     if (questionIdParam) {
       // Load specific question (from Wrong Book navigation)
       loadSpecificQuestion(parseInt(questionIdParam))
+    } else if (indexParam) {
+      // Load question by index (from dashboard Continue Learning)
+      const index = parseInt(indexParam)
+      if (!isNaN(index) && index >= 0) {
+        loadQuestionByIndex(index)
+      } else {
+        loadQuestion()
+      }
     } else {
       // Use resume logic (normal flow)
       loadQuestion()
@@ -139,6 +149,50 @@ export default function QuestionPage() {
       setChatMessages([])
     }
   }, [question?.id])
+
+  // Load question by index (from dashboard)
+  async function loadQuestionByIndex(index: number) {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const response = await fetch(`/api/questions/next?currentIndex=${index - 1}`, {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (response.status === 401) {
+        router.push('/login')
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error(`Failed to load question: ${response.status} ${response.statusText}`)
+      }
+
+      const data = await response.json()
+
+      if (!data.success || !data.question) {
+        throw new Error('Failed to load question')
+      }
+
+      setQuestion(data.question)
+      setCurrentIndex(data.index)
+      if (typeof data.totalQuestions === 'number') {
+        setTotalQuestions(data.totalQuestions)
+      }
+      setProgress({ status: 'not_started' })
+      setSelectedAnswers([])
+      setHasSubmitted(false)
+    } catch (err) {
+      console.error('Error loading question by index:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load question')
+      // Fallback to normal load
+      loadQuestion()
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Load specific question by ID (from Wrong Book navigation)
   async function loadSpecificQuestion(questionId: number) {
@@ -329,6 +383,7 @@ export default function QuestionPage() {
         body: JSON.stringify({
           questionId: question.id,
           selectedOptions: selectedAnswers,
+          currentIndex: currentIndex !== null ? currentIndex : 0,
         }),
       })
 

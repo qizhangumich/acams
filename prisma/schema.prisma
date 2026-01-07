@@ -19,6 +19,8 @@ model User {
   created_at      DateTime  @default(now())
   last_active_at  DateTime?
   last_question_id Int?
+  current_index   Int?      // Current question index in questions.json array
+  current_answers Json?     // Selected answers for current question
 
   // Relations
   progress        UserProgress[]

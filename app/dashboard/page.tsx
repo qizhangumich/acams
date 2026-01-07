@@ -111,8 +111,30 @@ export default function DashboardPage() {
     loadDashboard()
   }, [router])
 
-  function handleContinueLearning() {
-    router.push('/questions')
+  async function handleContinueLearning() {
+    try {
+      // Check for saved progress
+      const response = await fetch('/api/progress/resume', {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && typeof data.currentIndex === 'number') {
+          // User has progress, navigate with index
+          router.push(`/questions?index=${data.currentIndex}`)
+          return
+        }
+      }
+
+      // No progress, start from beginning
+      router.push('/questions')
+    } catch (err) {
+      console.error('Error checking progress:', err)
+      // On error, just go to questions page
+      router.push('/questions')
+    }
   }
 
   if (loading) {

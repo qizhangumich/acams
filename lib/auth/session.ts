@@ -94,6 +94,8 @@ export async function getUserFromSession(token: string | undefined | null) {
       email: true,
       last_active_at: true,
       last_question_id: true,
+      current_index: true,
+      current_answers: true,
       created_at: true,
     },
   })
