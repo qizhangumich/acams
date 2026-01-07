@@ -13,14 +13,35 @@ import { verifySessionToken } from '@/lib/auth/session'
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // DEBUG: Log all cookies for protected routes
+  const allCookies = request.cookies.getAll()
+  const cookieNames = allCookies.map(c => c.name)
+
   // Only protect /questions and related routes
   // Do NOT run on /login, /api/auth/*, or /auth/verify
   if (pathname.startsWith('/questions')) {
+    // DEBUG: Log cookie check
+    console.log('[MIDDLEWARE] Checking /questions:', {
+      pathname,
+      allCookies: cookieNames,
+      hasSessionToken: cookieNames.includes('session_token'),
+    })
+
     // Get session token from cookie (EXACT name: 'session_token')
     const sessionCookie = request.cookies.get('session_token')
     const sessionToken = sessionCookie?.value
 
+    // DEBUG: Log session token presence
+    console.log('[MIDDLEWARE] Session token check:', {
+      cookieExists: !!sessionCookie,
+      tokenExists: !!sessionToken,
+      tokenLength: sessionToken?.length || 0,
+      tokenPrefix: sessionToken ? sessionToken.substring(0, 20) + '...' : 'NONE',
+    })
+
     if (!sessionToken) {
+      // DEBUG: Log missing token
+      console.log('[MIDDLEWARE] ❌ No session token - redirecting to login')
       // No session cookie - redirect to login
       return NextResponse.redirect(new URL('/login', request.url))
     }
@@ -28,12 +49,24 @@ export function middleware(request: NextRequest) {
     // Verify JWT token
     const payload = verifySessionToken(sessionToken)
 
+    // DEBUG: Log verification result
+    console.log('[MIDDLEWARE] Session verification:', {
+      isValid: !!payload,
+      userId: payload?.userId || 'NONE',
+      email: payload?.email || 'NONE',
+    })
+
     if (!payload) {
+      // DEBUG: Log invalid token
+      console.log('[MIDDLEWARE] ❌ Invalid session token - clearing and redirecting')
       // Invalid token - clear cookie and redirect
       const response = NextResponse.redirect(new URL('/login', request.url))
       response.cookies.delete('session_token')
       return response
     }
+
+    // DEBUG: Log success
+    console.log('[MIDDLEWARE] ✅ Valid session - allowing access to', pathname)
 
     // Valid session - allow access
     return NextResponse.next()

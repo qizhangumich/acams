@@ -60,19 +60,38 @@ export async function GET(request: NextRequest) {
       email: user.email,
     })
 
+    // DEBUG: Log session creation
+    console.log('[VERIFY API] Session created:', {
+      userId: user.id,
+      email: user.email,
+      tokenLength: sessionToken.length,
+      tokenPrefix: sessionToken.substring(0, 20) + '...',
+    })
+
     // CRITICAL: Create redirect response FIRST, then set cookie on it
     // cookies().set() does NOT attach cookies to redirect responses
     // Must use response.cookies.set() on the redirect response object
-    const response = NextResponse.redirect(new URL('/questions', request.url))
+    const redirectUrl = new URL('/questions', request.url)
+    const response = NextResponse.redirect(redirectUrl)
 
     // Set HTTP-only cookie on the redirect response
-    // This ensures cookie is attached to the redirect response
+    // CRITICAL: Cookie must be set with correct attributes for browser to accept it
     response.cookies.set('session_token', sessionToken, {
       httpOnly: true,
       path: '/',
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
       maxAge: 30 * 24 * 60 * 60, // 30 days
+      // Do NOT set domain - let browser use current domain
+      // Do NOT set expires - use maxAge instead
+    })
+
+    // DEBUG: Verify cookie is set on response
+    const setCookieHeader = response.headers.get('Set-Cookie')
+    console.log('[VERIFY API] Cookie set on response:', {
+      hasSetCookie: !!setCookieHeader,
+      cookieHeader: setCookieHeader ? setCookieHeader.substring(0, 50) + '...' : 'MISSING',
+      redirectTo: redirectUrl.toString(),
     })
 
     return response
