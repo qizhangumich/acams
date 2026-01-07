@@ -132,28 +132,41 @@ export async function createMagicLink(email: string): Promise<{ success: boolean
           expires_at: expiresAt,
         },
       })
+      console.log(`[createMagicLink] Token created for ${normalizedEmail.substring(0, 5)}...`)
     } catch (dbError: any) {
-      console.error('[createMagicLink] Database error creating token:', dbError)
+      console.error('[createMagicLink] Database error creating token:', {
+        error: dbError?.message || String(dbError),
+        code: dbError?.code,
+        errorCode: dbError?.errorCode,
+        name: dbError?.name,
+      })
+      
       // Check if it's a connection error (including PrismaClientInitializationError)
-      if (
+      const isConnectionError = 
         dbError.code === 'P1001' || 
         dbError.errorCode === 'P1001' ||
         dbError.name === 'PrismaClientInitializationError' ||
-        dbError.message?.includes('Can\'t reach database server')
-      ) {
+        dbError.message?.includes('Can\'t reach database server') ||
+        dbError.message?.includes('Connection closed') ||
+        dbError.message?.includes('Error in PostgreSQL connection')
+      
+      if (isConnectionError) {
         return {
           success: false,
           message: 'Database connection error. Please check if the database is running and try again later.',
         }
       }
+      
+      // Re-throw other database errors (e.g., constraint violations)
       throw dbError
     }
 
-    // Send email (don't await - fire and forget)
+    // Send email (fire and forget - don't block token creation)
+    // Email sending failures are handled internally with timeout protection
     sendMagicLinkEmail(normalizedEmail, token).catch((error) => {
-      console.error('[createMagicLink] Failed to send magic link email:', error)
-      // Don't throw - token is already created
-      // Email sending failure doesn't prevent token creation
+      // Error is already logged in sendMagicLinkEmail
+      // Token is already created, so user can still use the magic link
+      // This catch is just to prevent unhandled promise rejection
     })
 
     // Always return success (security: don't reveal if email exists)

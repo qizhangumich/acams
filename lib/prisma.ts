@@ -70,6 +70,12 @@ const globalForPrisma = globalThis as unknown as {
  * 
  * In development: Reused across hot reloads (stored in globalThis)
  * In production: Single instance per serverless function lifecycle
+ * 
+ * Connection Configuration:
+ * - Connection timeout: Managed by Neon pooler
+ * - Query timeout: Handled by Neon pooler
+ * - Connection pooling: Managed by Neon pooler endpoint (-pooler)
+ * - Connection string: Read from DATABASE_URL environment variable
  */
 export const prisma =
   globalForPrisma.prisma ??
