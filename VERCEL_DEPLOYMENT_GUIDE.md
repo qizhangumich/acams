@@ -171,7 +171,7 @@ npm run db:seed
 ### 2. 测试功能
 
 1. **访问应用**
-   - 打开 `https://acams.vercel.app`
+   - 打开 `https://acamas.vercel.app`
    - 应该看到登录页面
 
 2. **测试认证**
