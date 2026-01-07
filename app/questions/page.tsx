@@ -168,21 +168,65 @@ export default function QuestionPage() {
 
       const response = await fetch('/api/progress/resume', {
         method: 'GET',
-        credentials: 'include', // Include cookies for session
+        credentials: 'include',
       })
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          // Not authenticated, redirect to login
-          router.push('/login')
-          return
-        }
-        throw new Error('Failed to load question')
+      if (response.status === 401) {
+        // User not authenticated, redirect to login
+        router.push('/login')
+        return
       }
 
-      const data: ResumeResponse = await response.json()
+      // Parse response JSON (handle both success and error responses)
+      let data: ResumeResponse
+      try {
+        data = await response.json()
+      } catch (jsonErr) {
+        // Response is not valid JSON
+        if (!response.ok) {
+          throw new Error(`Failed to load question: ${response.status} ${response.statusText}`)
+        }
+        throw new Error('Invalid response from server')
+      }
 
-      if (!data.success || !data.question) {
+      // Check if success is false (new user with no progress)
+      if (!data.success) {
+        // Try to load the first question (ID = 1) for new users
+        try {
+          const firstQuestionResponse = await fetch('/api/questions/1', {
+            method: 'GET',
+            credentials: 'include',
+          })
+
+          if (firstQuestionResponse.status === 401) {
+            router.push('/login')
+            return
+          }
+
+          if (!firstQuestionResponse.ok) {
+            // No questions in database
+            setError(data.message || 'No questions available. Please ensure the database is seeded.')
+            return
+          }
+
+          const firstQuestionData = await firstQuestionResponse.json()
+
+          if (firstQuestionData.success && firstQuestionData.question) {
+            // Successfully loaded first question for new user
+            setQuestion(firstQuestionData.question)
+            setProgress({ status: 'not_started' })
+            setSelectedAnswers([])
+            return
+          }
+        } catch (firstQuestionErr) {
+          console.error('Error loading first question:', firstQuestionErr)
+          setError(data.message || 'No questions available. Please ensure the database is seeded.')
+          return
+        }
+      }
+
+      // Success case: user has progress
+      if (!data.question) {
         throw new Error('No question found')
       }
 
