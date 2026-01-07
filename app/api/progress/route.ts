@@ -31,14 +31,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // BREAKPOINT B FIX: Extract userId ONLY from session
     const user = await getUserFromSession(sessionToken)
 
-    if (!user) {
+    if (!user || !user.id) {
       return NextResponse.json(
         { success: false, message: 'Invalid session' },
         { status: 401 }
       )
     }
+
+    // BREAKPOINT B FIX: Debug log
+    const userId = user.id
+    console.log('DB WRITE USER:', userId)
 
     const body = await request.json()
     const { question_id, selected_answer } = requestSchema.parse(body)
@@ -71,11 +76,12 @@ export async function POST(request: NextRequest) {
 
     // Use transaction to ensure atomicity
     await prisma.$transaction(async (tx) => {
+      // BREAKPOINT B FIX: Use userId from session (never from request body)
       // Upsert UserProgress
       const existingProgress = await tx.userProgress.findUnique({
         where: {
           user_id_question_id: {
-            user_id: user.id,
+            user_id: userId,
             question_id: question_id,
           },
         },
@@ -85,7 +91,7 @@ export async function POST(request: NextRequest) {
         await tx.userProgress.update({
           where: {
             user_id_question_id: {
-              user_id: user.id,
+              user_id: userId,
               question_id: question_id,
             },
           },
@@ -98,7 +104,7 @@ export async function POST(request: NextRequest) {
       } else {
         await tx.userProgress.create({
           data: {
-            user_id: user.id,
+            user_id: userId,
             question_id: question_id,
             status,
             selected_answer,
@@ -106,12 +112,13 @@ export async function POST(request: NextRequest) {
         })
       }
 
+      // BREAKPOINT B FIX: Use userId from session (never from request body)
       // Update WrongBook if answer is wrong
       if (!isCorrectBackend) {
         const existingWrong = await tx.wrongBook.findUnique({
           where: {
             user_id_question_id: {
-              user_id: user.id,
+              user_id: userId,
               question_id: question_id,
             },
           },
@@ -122,7 +129,7 @@ export async function POST(request: NextRequest) {
           await tx.wrongBook.update({
             where: {
               user_id_question_id: {
-                user_id: user.id,
+                user_id: userId,
                 question_id: question_id,
               },
             },
@@ -135,7 +142,7 @@ export async function POST(request: NextRequest) {
           // Create new wrong book entry
           await tx.wrongBook.create({
             data: {
-              user_id: user.id,
+              user_id: userId,
               question_id: question_id,
               wrong_count: 1,
               last_wrong_at: new Date(),
@@ -144,15 +151,17 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // BREAKPOINT B FIX: Use userId from session (never from request body)
       // Update user's last question ID
-      await updateLastQuestionId(user.id, question_id)
+      await updateLastQuestionId(userId, question_id)
     })
 
+    // BREAKPOINT B FIX: Use userId from session (never from request body)
     // Get updated progress
     const progress = await prisma.userProgress.findUnique({
       where: {
         user_id_question_id: {
-          user_id: user.id,
+          user_id: userId,
           question_id: question_id,
         },
       },
@@ -163,13 +172,14 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // BREAKPOINT B FIX: Use userId from session (never from request body)
     // Get wrong count if wrong
     let wrong_count = null
     if (!isCorrectBackend) {
       const wrongBook = await prisma.wrongBook.findUnique({
         where: {
           user_id_question_id: {
-            user_id: user.id,
+            user_id: userId,
             question_id: question_id,
           },
         },

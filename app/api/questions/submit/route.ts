@@ -22,14 +22,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // BREAKPOINT B FIX: Extract userId ONLY from session
     const user = await getUserFromSession(sessionToken)
 
-    if (!user) {
+    if (!user || !user.id) {
       return NextResponse.json(
         { success: false, message: 'Invalid session' },
         { status: 401 }
       )
     }
+
+    // BREAKPOINT B FIX: Debug log
+    const userId = user.id
+    console.log('DB WRITE USER:', userId)
 
     const body = await request.json()
     const { questionId, selectedOptions, currentIndex } = body
@@ -76,16 +81,108 @@ export async function POST(request: NextRequest) {
 
     const status = isCorrect ? 'correct' : 'wrong'
 
-    // Persist progress: update user's current_index and current_answers
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        current_index: currentIndex,
-        current_answers: selectedOptions,
-        last_active_at: new Date(),
-        last_question_id: questionId,
-      },
+    // BREAKPOINT B FIX: Use userId from session (never from request body)
+    // Persist progress in a transaction
+    await prisma.$transaction(async (tx) => {
+      // Update user's current_index and current_answers
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          current_index: currentIndex,
+          current_answers: selectedOptions,
+          last_active_at: new Date(),
+          last_question_id: questionId,
+        },
+      })
+
+      // Upsert UserProgress (required for progress summary)
+      const existingProgress = await tx.userProgress.findUnique({
+        where: {
+          user_id_question_id: {
+            user_id: userId,
+            question_id: questionId,
+          },
+        },
+      })
+
+      if (existingProgress) {
+        await tx.userProgress.update({
+          where: {
+            user_id_question_id: {
+              user_id: userId,
+              question_id: questionId,
+            },
+          },
+          data: {
+            status,
+            selected_answer: selectedOptions,
+            updated_at: new Date(),
+          },
+        })
+      } else {
+        await tx.userProgress.create({
+          data: {
+            user_id: userId,
+            question_id: questionId,
+            status,
+            selected_answer: selectedOptions,
+          },
+        })
+      }
+
+      // Update WrongBook if answer is wrong
+      if (!isCorrect) {
+        const existingWrong = await tx.wrongBook.findUnique({
+          where: {
+            user_id_question_id: {
+              user_id: userId,
+              question_id: questionId,
+            },
+          },
+        })
+
+        if (existingWrong) {
+          await tx.wrongBook.update({
+            where: {
+              user_id_question_id: {
+                user_id: userId,
+                question_id: questionId,
+              },
+            },
+            data: {
+              wrong_count: existingWrong.wrong_count + 1,
+              last_wrong_at: new Date(),
+            },
+          })
+        } else {
+          await tx.wrongBook.create({
+            data: {
+              user_id: userId,
+              question_id: questionId,
+              wrong_count: 1,
+              last_wrong_at: new Date(),
+            },
+          })
+        }
+      }
     })
+
+    // Get wrong count if wrong
+    let wrong_count = undefined
+    if (!isCorrect) {
+      const wrongBook = await prisma.wrongBook.findUnique({
+        where: {
+          user_id_question_id: {
+            user_id: userId,
+            question_id: questionId,
+          },
+        },
+        select: {
+          wrong_count: true,
+        },
+      })
+      wrong_count = wrongBook?.wrong_count || 1
+    }
 
     // Return success response
     return NextResponse.json({
@@ -93,7 +190,7 @@ export async function POST(request: NextRequest) {
       progress: {
         status,
         selected_answer: selectedOptions,
-        wrong_count: isCorrect ? undefined : 1,
+        wrong_count,
       },
     })
   } catch (error) {

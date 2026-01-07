@@ -85,10 +85,11 @@ export async function POST(
     const body = await request.json()
     const { message } = requestSchema.parse(body)
 
+    // BREAKPOINT B FIX: Use userId from session (never from request body)
     // 5. Load chat history for this user + question (scope enforcement)
     const chatHistory = await prisma.questionChat.findMany({
       where: {
-        user_id: user.id, // Scope: current user
+        user_id: userId, // Scope: current user
         question_id: questionId, // Scope: current question
       },
       orderBy: {
@@ -200,22 +201,23 @@ IMPORTANT RULES:
       )
     }
 
-    // 9. Save both messages in a transaction (append-only)
+    // BREAKPOINT D FIX: Save both messages in a transaction (append-only)
+    // BREAKPOINT B FIX: Use userId from session (never from request body)
     await prisma.$transaction(async (tx) => {
-      // Save user message
+      // BREAKPOINT D FIX: Save user message to QuestionChat
       await tx.questionChat.create({
         data: {
-          user_id: user.id, // Scope: current user
+          user_id: userId, // Scope: current user (from session)
           question_id: questionId, // Scope: current question
           role: 'user',
           content: message,
         },
       })
 
-      // Save assistant message
+      // BREAKPOINT D FIX: Save AI reply to QuestionChat
       await tx.questionChat.create({
         data: {
-          user_id: user.id, // Scope: current user
+          user_id: userId, // Scope: current user (from session)
           question_id: questionId, // Scope: current question
           role: 'assistant',
           content: aiResponse,
@@ -266,14 +268,17 @@ export async function GET(
       )
     }
 
+    // BREAKPOINT B FIX: Extract userId ONLY from session
     const user = await getUserFromSession(sessionToken)
 
-    if (!user) {
+    if (!user || !user.id) {
       return NextResponse.json(
         { success: false, message: 'Invalid session' },
         { status: 401 }
       )
     }
+
+    const userId = user.id
 
     // 2. Parse question ID (scope enforcement)
     const questionId = parseInt(params.questionId)
@@ -285,10 +290,11 @@ export async function GET(
       )
     }
 
+    // BREAKPOINT B FIX: Use userId from session (never from request body)
     // 3. Load chat history (scope: user + question)
     const chatHistory = await prisma.questionChat.findMany({
       where: {
-        user_id: user.id, // Scope: current user
+        user_id: userId, // Scope: current user (from session)
         question_id: questionId, // Scope: current question
       },
       orderBy: {

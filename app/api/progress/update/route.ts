@@ -21,14 +21,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // BREAKPOINT B FIX: Extract userId ONLY from session
     const user = await getUserFromSession(sessionToken)
 
-    if (!user) {
+    if (!user || !user.id) {
       return NextResponse.json(
         { success: false, message: 'Invalid session' },
         { status: 401 }
       )
     }
+
+    // BREAKPOINT B FIX: Debug log
+    const userId = user.id
+    console.log('DB WRITE USER:', userId)
 
     const body = await request.json()
     const { currentIndex } = body
@@ -40,9 +45,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // BREAKPOINT B FIX: Use userId from session (never from request body)
     // Update user's current_index
     await prisma.user.update({
-      where: { id: user.id },
+      where: { id: userId },
       data: {
         current_index: currentIndex,
         last_active_at: new Date(),

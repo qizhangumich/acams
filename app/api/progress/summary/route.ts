@@ -26,35 +26,38 @@ export async function GET(req: NextRequest) {
       )
     }
 
+    // BREAKPOINT C FIX: Extract userId from session
     const user = await getUserFromSession(sessionToken)
 
-    if (!user) {
+    if (!user || !user.id) {
       return NextResponse.json(
         { success: false, message: 'Invalid session' },
         { status: 401 }
       )
     }
 
-    // Get total number of questions
+    const userId = user.id
+
+    // BREAKPOINT C FIX: Get total number of questions (read-only, no filter needed)
     const total = await prisma.question.count()
 
-    // Get user progress counts
+    // BREAKPOINT C FIX: Get user progress counts - MUST filter by userId
     const [done, correct, wrong] = await Promise.all([
-      // Total questions with progress
+      // Total questions with progress for THIS user
       prisma.userProgress.count({
-        where: { user_id: user.id },
+        where: { user_id: userId },
       }),
-      // Questions answered correctly
+      // Questions answered correctly for THIS user
       prisma.userProgress.count({
         where: {
-          user_id: user.id,
+          user_id: userId,
           status: 'correct',
         },
       }),
-      // Questions answered wrong
+      // Questions answered wrong for THIS user
       prisma.userProgress.count({
         where: {
-          user_id: user.id,
+          user_id: userId,
           status: 'wrong',
         },
       }),

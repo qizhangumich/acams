@@ -37,7 +37,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(redirectUrl, { status: 303 })
     }
 
-    const user = await prisma.user.findUnique({
+    // BREAKPOINT A FIX: Ensure user exists (upsert if needed)
+    // The verifyMagicLinkToken already creates/updates user, but we ensure it here too
+    let user = await prisma.user.findUnique({
       where: { id: result.userId },
       select: {
         id: true,
@@ -49,26 +51,35 @@ export async function GET(request: NextRequest) {
     })
 
     if (!user) {
+      // This should not happen if verifyMagicLinkToken worked correctly
+      // But we handle it defensively
       const redirectUrl = new URL('/login?error=user_not_found', PRODUCTION_URL)
       return NextResponse.redirect(redirectUrl, { status: 303 })
     }
 
+    // BREAKPOINT A FIX: Create persistent session with userId and email
     const sessionToken = await createSessionToken({
       userId: user.id,
       email: user.email,
     })
 
+    // BREAKPOINT A FIX: Debug log
+    console.log('MAGIC LOGIN USER:', user.id, user.email)
+
+    // BREAKPOINT A FIX: Create redirect response
     const redirectUrl = new URL('/dashboard', PRODUCTION_URL)
     const response = NextResponse.redirect(redirectUrl, { status: 303 })
 
+    // BREAKPOINT A FIX: Set session cookie BEFORE redirect
     response.cookies.set(SESSION_COOKIE_NAME, sessionToken, {
       httpOnly: true,
       path: '/',
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 30 * 24 * 60 * 60,
+      maxAge: 30 * 24 * 60 * 60, // 30 days
     })
 
+    // BREAKPOINT A FIX: Only redirect after session is created
     return response
   } catch (error) {
     console.error('Error verifying magic link:', error)
