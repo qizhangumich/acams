@@ -21,22 +21,23 @@ export async function GET() {
       message: 'Database connection is healthy',
     })
   } catch (error: any) {
+    let message = 'Database connection failed. Check connection string and database status.'
+    
+    // Check for specific Prisma error codes
+    if (error?.code === 'P1001') {
+      message = 'Cannot reach database server. Check if database is paused or connection string is correct.'
+    } else if (error?.code === 'P1000') {
+      message = 'Authentication failed. Check database credentials.'
+    } else if (error?.code === 'P1017') {
+      message = 'Server closed the connection. Database might be paused.'
+    }
+
     const errorInfo = {
       success: false,
       status: 'disconnected',
       error: error?.message || String(error),
       code: error?.code,
-    }
-
-    // Check for specific Prisma error codes
-    if (error?.code === 'P1001') {
-      errorInfo.message = 'Cannot reach database server. Check if database is paused or connection string is correct.'
-    } else if (error?.code === 'P1000') {
-      errorInfo.message = 'Authentication failed. Check database credentials.'
-    } else if (error?.code === 'P1017') {
-      errorInfo.message = 'Server closed the connection. Database might be paused.'
-    } else {
-      errorInfo.message = 'Database connection failed. Check connection string and database status.'
+      message,
     }
 
     return NextResponse.json(errorInfo, { status: 503 })
