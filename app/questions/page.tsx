@@ -59,6 +59,7 @@ export default function QuestionPage() {
   const [loading, setLoading] = useState(true)
   const [question, setQuestion] = useState<Question | null>(null)
   const [currentIndex, setCurrentIndex] = useState<number | null>(null)
+  const [totalQuestions, setTotalQuestions] = useState<number>(860) // Default to known total
   const [progress, setProgress] = useState<Progress | null>(null)
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
@@ -215,6 +216,9 @@ export default function QuestionPage() {
           // Successfully loaded first question for new user
           setQuestion(firstQuestionData.question)
           setCurrentIndex(typeof firstQuestionData.index === 'number' ? firstQuestionData.index : 0)
+          if (typeof firstQuestionData.totalQuestions === 'number') {
+            setTotalQuestions(firstQuestionData.totalQuestions)
+          }
           setProgress({ status: 'not_started' })
           setSelectedAnswers([])
           return
@@ -278,22 +282,15 @@ export default function QuestionPage() {
       setSubmitting(true)
       setError(null)
 
-      // Calculate correctness locally for UI feedback (but backend will verify)
-      const isCorrect =
-        selectedAnswers.length === question.correct_answers.length &&
-        selectedAnswers.every((answer) => question.correct_answers.includes(answer)) &&
-        question.correct_answers.every((answer) => selectedAnswers.includes(answer))
-
-      const response = await fetch('/api/progress', {
+      const response = await fetch('/api/questions/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
-          question_id: question.id,
-          selected_answer: selectedAnswers,
-          is_correct: isCorrect, // Frontend guess, but backend will verify
+          questionId: question.id,
+          selectedOptions: selectedAnswers,
         }),
       })
 
@@ -305,20 +302,20 @@ export default function QuestionPage() {
         throw new Error('Failed to submit answer')
       }
 
-      const data: ProgressResponse = await response.json()
+      const data = await response.json()
 
       if (!data.success) {
-        throw new Error('Failed to save progress')
+        throw new Error(data.message || 'Failed to submit answer')
       }
 
-      // Update progress with backend response (backend is source of truth)
+      // Update progress with backend response
       setProgress({
         status: data.progress.status,
         selected_answer: data.progress.selected_answer,
         wrong_count: data.progress.wrong_count,
       })
       
-      // Update selectedAnswers to match backend (backend is source of truth)
+      // Update selectedAnswers to match backend
       setSelectedAnswers(data.progress.selected_answer)
     } catch (err) {
       console.error('Error submitting answer:', err)
@@ -454,6 +451,9 @@ export default function QuestionPage() {
 
       setQuestion(data.question)
       setCurrentIndex(typeof data.index === 'number' ? data.index : currentIndex + 1)
+      if (typeof data.totalQuestions === 'number') {
+        setTotalQuestions(data.totalQuestions)
+      }
       setProgress({ status: 'not_started' })
       setSelectedAnswers([])
     } catch (err) {
@@ -494,6 +494,13 @@ export default function QuestionPage() {
   return (
     <div className={styles.container}>
       <div className={styles.questionCard}>
+        {/* Question Number */}
+        {currentIndex !== null && (
+          <div className={styles.questionNumber}>
+            Question {currentIndex + 1} of {totalQuestions}
+          </div>
+        )}
+
         {/* Domain */}
         <div className={styles.domain}>{question.domain}</div>
 

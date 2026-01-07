@@ -49,6 +49,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       index: 0,
+      totalQuestions: questions.length,
       question: normalizedQuestion,
     })
   } catch (error) {
