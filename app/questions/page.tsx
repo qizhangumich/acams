@@ -63,6 +63,7 @@ export default function QuestionPage() {
   const [progress, setProgress] = useState<Progress | null>(null)
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
+  const [hasSubmitted, setHasSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [completionMessage, setCompletionMessage] = useState<string | null>(null)
   
@@ -221,6 +222,7 @@ export default function QuestionPage() {
           }
           setProgress({ status: 'not_started' })
           setSelectedAnswers([])
+          setHasSubmitted(false) // Reset submission state
           return
         } catch (firstQuestionErr) {
           console.error('Error loading first question:', firstQuestionErr)
@@ -317,6 +319,9 @@ export default function QuestionPage() {
       
       // Update selectedAnswers to match backend
       setSelectedAnswers(data.progress.selected_answer)
+      
+      // Mark as submitted to show "Next Question" button
+      setHasSubmitted(true)
     } catch (err) {
       console.error('Error submitting answer:', err)
       setError(err instanceof Error ? err.message : 'Failed to submit answer')
@@ -456,6 +461,7 @@ export default function QuestionPage() {
       }
       setProgress({ status: 'not_started' })
       setSelectedAnswers([])
+      setHasSubmitted(false) // Reset submission state for new question
     } catch (err) {
       console.error('Error loading next question:', err)
       setError(err instanceof Error ? err.message : 'Failed to load next question')
@@ -549,8 +555,8 @@ export default function QuestionPage() {
           })}
         </div>
 
-        {/* Submit Button or Status */}
-        {!isSubmitted ? (
+        {/* Submit Button - Only show when NOT submitted */}
+        {!hasSubmitted && (
           <button
             className={styles.submitButton}
             onClick={handleSubmit}
@@ -558,31 +564,48 @@ export default function QuestionPage() {
           >
             {submitting ? 'Submitting...' : 'Submit Answer'}
           </button>
-        ) : (
-          <div className={styles.statusContainer}>
-            {isCorrect && (
-              <div className={styles.correctStatus}>
-                <span className={styles.statusIcon}>✓</span>
-                <span className={styles.statusText}>Correct!</span>
+        )}
+
+        {/* Status Display - Only show when submitted */}
+        {hasSubmitted && (
+          <>
+            <div className={styles.statusContainer}>
+              {isCorrect && (
+                <div className={styles.correctStatus}>
+                  <span className={styles.statusIcon}>✓</span>
+                  <span className={styles.statusText}>Correct!</span>
+                </div>
+              )}
+              {isWrong && (
+                <div className={styles.wrongStatus}>
+                  <span className={styles.statusIcon}>✗</span>
+                  <span className={styles.statusText}>
+                    Incorrect
+                    {progress.wrong_count && progress.wrong_count > 1 && (
+                      <span className={styles.wrongCount}>
+                        {' '}(Wrong {progress.wrong_count} times)
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
+              <div className={styles.readOnlyNotice}>
+                Answer submitted. This question is now read-only.
               </div>
-            )}
-            {isWrong && (
-              <div className={styles.wrongStatus}>
-                <span className={styles.statusIcon}>✗</span>
-                <span className={styles.statusText}>
-                  Incorrect
-                  {progress.wrong_count && progress.wrong_count > 1 && (
-                    <span className={styles.wrongCount}>
-                      {' '}(Wrong {progress.wrong_count} times)
-                    </span>
-                  )}
-                </span>
-              </div>
-            )}
-            <div className={styles.readOnlyNotice}>
-              Answer submitted. This question is now read-only.
             </div>
-          </div>
+
+            {/* Next Question Button - Only show when submitted */}
+            {currentIndex !== null && (
+              <button
+                type="button"
+                className={styles.nextButton}
+                onClick={handleNextQuestion}
+                disabled={loading}
+              >
+                Next Question
+              </button>
+            )}
+          </>
         )}
 
         {/* Error Message */}
@@ -590,18 +613,6 @@ export default function QuestionPage() {
 
         {/* Completion Message */}
         {completionMessage && <div className={styles.completionMessage}>{completionMessage}</div>}
-
-        {/* Next Question Button */}
-        <div className={styles.navigationSection}>
-          <button
-            type="button"
-            className={styles.nextButton || styles.submitButton}
-            onClick={handleNextQuestion}
-            disabled={loading || currentIndex === null}
-          >
-            Next Question
-          </button>
-        </div>
 
         {/* Chat Panel */}
         <div className={styles.chatSection}>
