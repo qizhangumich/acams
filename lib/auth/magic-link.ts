@@ -33,47 +33,76 @@ export async function createMagicLink(email: string): Promise<{ success: boolean
 
   const normalizedEmail = email.trim().toLowerCase()
 
-  // Rate limiting: Check tokens created in last hour
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
-  const recentTokens = await prisma.magicLinkToken.count({
-    where: {
-      email: normalizedEmail,
-      created_at: {
-        gte: oneHourAgo,
-      },
-    },
-  })
+  try {
+    // Rate limiting: Check tokens created in last hour
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+    let recentTokens = 0
+    
+    try {
+      recentTokens = await prisma.magicLinkToken.count({
+        where: {
+          email: normalizedEmail,
+          created_at: {
+            gte: oneHourAgo,
+          },
+        },
+      })
+    } catch (dbError) {
+      console.error('[createMagicLink] Database error during rate limit check:', dbError)
+      // If database is unavailable, allow the request but log the error
+      // This prevents complete failure when DB is temporarily unavailable
+    }
 
-  if (recentTokens >= MAX_TOKENS_PER_EMAIL_PER_HOUR) {
+    if (recentTokens >= MAX_TOKENS_PER_EMAIL_PER_HOUR) {
+      return {
+        success: false,
+        message: 'Too many magic link requests. Please try again later.',
+      }
+    }
+
+    // Generate token
+    const token = generateMagicLinkToken()
+    const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_MINUTES * 60 * 1000)
+
+    // Store token in database
+    try {
+      await prisma.magicLinkToken.create({
+        data: {
+          email: normalizedEmail,
+          token,
+          expires_at: expiresAt,
+        },
+      })
+    } catch (dbError: any) {
+      console.error('[createMagicLink] Database error creating token:', dbError)
+      // Check if it's a connection error
+      if (dbError.code === 'P1001' || dbError.message?.includes('Can\'t reach database server')) {
+        return {
+          success: false,
+          message: 'Database connection error. Please try again later.',
+        }
+      }
+      throw dbError
+    }
+
+    // Send email (don't await - fire and forget)
+    sendMagicLinkEmail(normalizedEmail, token).catch((error) => {
+      console.error('[createMagicLink] Failed to send magic link email:', error)
+      // Don't throw - token is already created
+      // Email sending failure doesn't prevent token creation
+    })
+
+    // Always return success (security: don't reveal if email exists)
+    return {
+      success: true,
+      message: 'If an account exists, a magic link has been sent to your email.',
+    }
+  } catch (error) {
+    console.error('[createMagicLink] Unexpected error:', error)
     return {
       success: false,
-      message: 'Too many magic link requests. Please try again later.',
+      message: 'Failed to create magic link. Please try again later.',
     }
-  }
-
-  // Generate token
-  const token = generateMagicLinkToken()
-  const expiresAt = new Date(Date.now() + TOKEN_EXPIRY_MINUTES * 60 * 1000)
-
-  // Store token in database
-  await prisma.magicLinkToken.create({
-    data: {
-      email: normalizedEmail,
-      token,
-      expires_at: expiresAt,
-    },
-  })
-
-  // Send email (don't await - fire and forget)
-  sendMagicLinkEmail(normalizedEmail, token).catch((error) => {
-    console.error('Failed to send magic link email:', error)
-    // Don't throw - token is already created
-  })
-
-  // Always return success (security: don't reveal if email exists)
-  return {
-    success: true,
-    message: 'If an account exists, a magic link has been sent to your email.',
   }
 }
 

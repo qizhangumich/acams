@@ -24,6 +24,12 @@ export async function sendMagicLinkEmail(email: string, token: string): Promise<
   // Email parameter is optional for backwards compatibility (token-only verification)
   const magicLink = `${MAGIC_LINK_BASE_URL}/auth/verify?token=${token}&email=${encodeURIComponent(email)}`
 
+  // Check if Resend API key is configured
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[sendMagicLinkEmail] RESEND_API_KEY not configured, skipping email send')
+    return
+  }
+
   try {
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL || 'noreply@acams-learning.com',
@@ -57,9 +63,16 @@ export async function sendMagicLinkEmail(email: string, token: string): Promise<
       `,
       text: `Sign in to ACAMS Learning System\n\nClick this link to sign in:\n${magicLink}\n\nThis link will expire in 15 minutes.`,
     })
-  } catch (error) {
-    console.error('Failed to send magic link email:', error)
-    throw error
+  } catch (error: any) {
+    // Log detailed error information
+    console.error('[sendMagicLinkEmail] Failed to send email:', {
+      error: error?.message || String(error),
+      code: error?.code,
+      cause: error?.cause,
+      email: email.substring(0, 5) + '...', // Log partial email for debugging
+    })
+    // Don't throw - allow token creation to succeed even if email fails
+    // The error is already logged for monitoring
   }
 }
 
