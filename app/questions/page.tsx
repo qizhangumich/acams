@@ -365,6 +365,7 @@ export default function QuestionPage() {
   }
 
   // Submit answer to backend
+  // HARD, UNAVOIDABLE answer submission
   async function handleSubmit() {
     if (!question || selectedAnswers.length === 0) {
       return
@@ -374,7 +375,8 @@ export default function QuestionPage() {
       setSubmitting(true)
       setError(null)
 
-      const response = await fetch('/api/questions/submit', {
+      // Call POST /api/answer (MANDATORY)
+      const response = await fetch('/api/answer', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -382,8 +384,7 @@ export default function QuestionPage() {
         credentials: 'include',
         body: JSON.stringify({
           questionId: question.id,
-          selectedOptions: selectedAnswers,
-          currentIndex: currentIndex !== null ? currentIndex : 0,
+          selectedAnswers: selectedAnswers,
         }),
       })
 
@@ -403,19 +404,16 @@ export default function QuestionPage() {
 
       // Update progress with backend response
       setProgress({
-        status: data.progress.status,
-        selected_answer: data.progress.selected_answer,
-        wrong_count: data.progress.wrong_count,
+        status: data.status,
+        selected_answer: data.selectedAnswers,
       })
-      
-      // Update selectedAnswers to match backend
-      setSelectedAnswers(data.progress.selected_answer)
       
       // Mark as submitted to show "Next Question" button
       setHasSubmitted(true)
     } catch (err) {
       console.error('Error submitting answer:', err)
       setError(err instanceof Error ? err.message : 'Failed to submit answer')
+      // DO NOT mark as submitted if API call fails
     } finally {
       setSubmitting(false)
     }
@@ -514,12 +512,67 @@ export default function QuestionPage() {
   const isCorrect = progress?.status === 'correct'
   const isWrong = progress?.status === 'wrong'
 
+  // HARD, UNAVOIDABLE: Next button MUST call /api/answer before navigation
   async function handleNextQuestion() {
     if (currentIndex === null) {
       // Index is unknown (e.g., resumed from DB); do not attempt next
       return
     }
 
+    // ENFORCEMENT: If answer not submitted, submit it first
+    if (!hasSubmitted && question && selectedAnswers.length > 0) {
+      try {
+        setSubmitting(true)
+        setError(null)
+
+        // 1. Call POST /api/answer (MANDATORY)
+        const answerResponse = await fetch('/api/answer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            questionId: question.id,
+            selectedAnswers: selectedAnswers,
+          }),
+        })
+
+        if (!answerResponse.ok) {
+          if (answerResponse.status === 401) {
+            router.push('/login')
+            return
+          }
+          throw new Error('Failed to submit answer')
+        }
+
+        const answerData = await answerResponse.json()
+
+        if (!answerData.success) {
+          throw new Error(answerData.message || 'Failed to submit answer')
+        }
+
+        // 2. Wait for success
+        // Answer is now saved to database
+
+        // 3. THEN navigate to next question
+        setHasSubmitted(true)
+        setProgress({
+          status: answerData.status,
+          selected_answer: answerData.selectedAnswers,
+        })
+      } catch (err) {
+        console.error('Error submitting answer before navigation:', err)
+        setError(err instanceof Error ? err.message : 'Failed to submit answer')
+        setSubmitting(false)
+        // STOP navigation if API call fails
+        return
+      } finally {
+        setSubmitting(false)
+      }
+    }
+
+    // If already submitted or no answer selected, proceed to next question
     try {
       setLoading(true)
       setError(null)
