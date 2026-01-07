@@ -156,7 +156,7 @@ export default function QuestionPage() {
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/questions/next?currentIndex=${index - 1}`, {
+      const response = await fetch(`/api/questions/by-index?index=${index}`, {
         method: 'GET',
         credentials: 'include',
       })
@@ -546,13 +546,31 @@ export default function QuestionPage() {
       }
 
       setQuestion(data.question)
-      setCurrentIndex(typeof data.index === 'number' ? data.index : currentIndex + 1)
+      const newIndex = typeof data.index === 'number' ? data.index : currentIndex + 1
+      setCurrentIndex(newIndex)
       if (typeof data.totalQuestions === 'number') {
         setTotalQuestions(data.totalQuestions)
       }
       setProgress({ status: 'not_started' })
       setSelectedAnswers([])
       setHasSubmitted(false) // Reset submission state for new question
+
+      // Update progress: save the new index so user can resume from here
+      try {
+        await fetch('/api/progress/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            currentIndex: newIndex,
+          }),
+        })
+      } catch (updateErr) {
+        // Non-critical: progress update failed, but question loaded successfully
+        console.error('Failed to update progress index:', updateErr)
+      }
     } catch (err) {
       console.error('Error loading next question:', err)
       setError(err instanceof Error ? err.message : 'Failed to load next question')

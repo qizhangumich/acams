@@ -14,18 +14,18 @@ datasource db {
 // User Model
 // ============================================
 model User {
-  id              String    @id @default(uuid())
-  email           String    @unique
-  created_at      DateTime  @default(now())
-  last_active_at  DateTime?
+  id               String    @id @default(uuid())
+  email            String    @unique
+  created_at       DateTime  @default(now())
+  last_active_at   DateTime?
   last_question_id Int?
-  current_index   Int?      // Current question index in questions.json array
-  current_answers Json?     // Selected answers for current question
+  current_index    Int? // Current question index in questions.json array
+  current_answers  Json? // Selected answers for current question
 
   // Relations
-  progress        UserProgress[]
-  chats           QuestionChat[]
-  wrong_book      WrongBook[]
+  progress   UserProgress[]
+  chats      QuestionChat[]
+  wrong_book WrongBook[]
 
   @@index([email])
   @@index([last_active_at])
@@ -39,7 +39,7 @@ model Question {
   id                  Int      @id
   domain              String
   question_text       String   @db.Text
-  options             Json     // { "A": "...", "B": "..." }
+  options             Json // { "A": "...", "B": "..." }
   correct_answers     String[] // ["A", "B"]
   explanation         String   @db.Text
   explanation_ai_en   String?  @db.Text
@@ -48,9 +48,9 @@ model Question {
   normalized_question String?  @db.Text
 
   // Relations
-  progress            UserProgress[]
-  chats               QuestionChat[]
-  wrong_book          WrongBook[]
+  progress   UserProgress[]
+  chats      QuestionChat[]
+  wrong_book WrongBook[]
 
   @@index([domain])
   @@index([is_complete])
@@ -60,17 +60,17 @@ model Question {
 // User Progress Model
 // ============================================
 model UserProgress {
-  id              String    @id @default(uuid())
+  id              String         @id @default(uuid())
   user_id         String
   question_id     Int
   status          ProgressStatus @default(not_started)
   selected_answer String[]
-  updated_at      DateTime  @default(now()) @updatedAt
-  created_at      DateTime  @default(now())
+  updated_at      DateTime       @default(now()) @updatedAt
+  created_at      DateTime       @default(now())
 
   // Relations
-  user            User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  question        Question  @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, question_id])
   @@index([user_id, status])
@@ -96,8 +96,8 @@ model QuestionChat {
   created_at  DateTime @default(now())
 
   // Relations
-  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  question    Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
 
   @@index([user_id, question_id, created_at])
   @@index([question_id])
@@ -120,8 +120,8 @@ model WrongBook {
   created_at    DateTime @default(now())
 
   // Relations
-  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  question      Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, question_id])
   @@index([user_id, wrong_count(sort: Desc), last_wrong_at(sort: Desc)])
@@ -148,4 +148,3 @@ model MagicLinkToken {
   @@index([used])
   @@index([email, used])
 }
-
