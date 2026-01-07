@@ -1,8 +1,11 @@
 .container {
-  max-width: 1200px;
+  max-width: 600px;
   margin: 0 auto;
   padding: 2rem;
   min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .loading {
@@ -21,10 +24,81 @@
   border: 1px solid #fcc;
 }
 
-.retryButton {
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 3rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.userSection {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.userLabel {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.userEmail {
+  font-size: 1.125rem;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.progressSection {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.progressText {
+  font-size: 1rem;
+  color: #1e40af;
+  font-weight: 500;
+}
+
+.continueButton {
+  width: 100%;
+  padding: 1rem 2rem;
   background-color: #2563eb;
   color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.continueButton:hover {
+  background-color: #1d4ed8;
+}
+
+.button {
+  width: 100%;
   padding: 0.75rem 1.5rem;
+  background-color: #2563eb;
+  color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -32,179 +106,6 @@
   margin-top: 1rem;
 }
 
-.retryButton:hover {
+.button:hover {
   background-color: #1d4ed8;
 }
-
-.header {
-  margin-bottom: 2rem;
-}
-
-.title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 0.5rem;
-}
-
-.subtitle {
-  font-size: 1.125rem;
-  color: #6b7280;
-}
-
-.statsSection {
-  margin-bottom: 3rem;
-}
-
-.sectionTitle {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 1.5rem;
-}
-
-.statsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-.statCard {
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1.5rem;
-  text-align: center;
-  transition: all 0.2s;
-}
-
-.statCard:hover {
-  border-color: #2563eb;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.statCardCorrect {
-  border-color: #10b981;
-  background-color: #f0fdf4;
-}
-
-.statCardWrong {
-  border-color: #ef4444;
-  background-color: #fef2f2;
-}
-
-.statValue {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #1f2937;
-  margin-bottom: 0.5rem;
-}
-
-.statCardCorrect .statValue {
-  color: #10b981;
-}
-
-.statCardWrong .statValue {
-  color: #ef4444;
-}
-
-.statLabel {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #6b7280;
-  margin-bottom: 0.25rem;
-}
-
-.statSubtext {
-  font-size: 0.875rem;
-  color: #9ca3af;
-  margin-top: 0.5rem;
-}
-
-.domainSection {
-  margin-bottom: 3rem;
-}
-
-.domainTable {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.domainTableHeader {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  gap: 1rem;
-  padding: 1rem 1.5rem;
-  background-color: #f9fafb;
-  border-bottom: 2px solid #e5e7eb;
-  font-weight: 600;
-  color: #374151;
-}
-
-.domainTableRow {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-  gap: 1rem;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  transition: background-color 0.2s;
-}
-
-.domainTableRow:hover {
-  background-color: #f9fafb;
-}
-
-.domainTableRow:last-child {
-  border-bottom: none;
-}
-
-.domainTableCell {
-  display: flex;
-  align-items: center;
-  color: #1f2937;
-}
-
-.domainTableCellCorrect {
-  color: #10b981;
-  font-weight: 600;
-}
-
-.domainTableCellWrong {
-  color: #ef4444;
-  font-weight: 600;
-}
-
-.ctaSection {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-top: 3rem;
-}
-
-.ctaButton {
-  display: inline-block;
-  padding: 1rem 2rem;
-  background-color: #2563eb;
-  color: white;
-  text-decoration: none;
-  border-radius: 8px;
-  font-size: 1.125rem;
-  font-weight: 600;
-  text-align: center;
-  transition: background-color 0.2s;
-}
-
-.ctaButton:hover {
-  background-color: #1d4ed8;
-}
-
-.ctaButtonSecondary {
-  background-color: #ef4444;
-}
-
-.ctaButtonSecondary:hover {
-  background-color: #dc2626;
-}
-

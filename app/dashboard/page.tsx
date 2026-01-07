@@ -1,84 +1,118 @@
 /**
  * Dashboard Page
  * 
- * Phase 3D: READ-ONLY decision layer
- * 
- * Features:
- * - Overall stats (total / completed / correct / wrong / not_started)
- * - Domain-level aggregation
- * - CTA buttons (Resume / Wrong Book)
+ * User account entry point showing identity and progress summary
  */
 
 'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import styles from './page.module.css'
 
-interface DashboardStats {
-  total_questions: number
-  completed: number
-  correct: number
-  wrong: number
-  not_started: number
+interface User {
+  id: string
+  email: string
 }
 
-interface DomainStat {
-  domain: string
-  correct: number
-  wrong: number
-  total: number
-}
-
-interface DashboardData {
-  success: boolean
-  stats: DashboardStats
-  domain_stats: DomainStat[]
-  last_question_id: number | null
+interface ProgressSummary {
+  currentQuestion: number | null
+  totalQuestions: number
+  hasProgress: boolean
 }
 
 export default function DashboardPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<DashboardData | null>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [progress, setProgress] = useState<ProgressSummary | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    loadDashboard()
-  }, [])
+    async function loadDashboard() {
+      try {
+        setLoading(true)
+        setError(null)
 
-  async function loadDashboard() {
-    try {
-      setLoading(true)
-      setError(null)
+        // Load user
+        const userResponse = await fetch('/api/auth/me', {
+          method: 'GET',
+          credentials: 'include',
+        })
 
-      const response = await fetch('/api/dashboard', {
-        method: 'GET',
-        credentials: 'include',
-      })
-
-      if (!response.ok) {
-        if (response.status === 401) {
+        if (userResponse.status === 401) {
+          // Not authenticated, redirect to login
           router.push('/login')
           return
         }
-        throw new Error('Failed to load dashboard')
+
+        if (!userResponse.ok) {
+          throw new Error('Failed to load user')
+        }
+
+        const userData = await userResponse.json()
+        if (!userData.success || !userData.user) {
+          throw new Error('Invalid user data')
+        }
+
+        setUser({
+          id: userData.user.id,
+          email: userData.user.email,
+        })
+
+        // Try to load progress summary
+        try {
+          const progressResponse = await fetch('/api/progress/resume', {
+            method: 'GET',
+            credentials: 'include',
+          })
+
+          if (progressResponse.ok) {
+            const progressData = await progressResponse.json()
+            if (progressData.success && progressData.question) {
+              // User has progress
+              setProgress({
+                currentQuestion: progressData.question_id || null,
+                totalQuestions: 860, // Default, could be fetched from API
+                hasProgress: true,
+              })
+            } else {
+              // New user, no progress yet
+              setProgress({
+                currentQuestion: null,
+                totalQuestions: 860,
+                hasProgress: false,
+              })
+            }
+          } else {
+            // No progress yet
+            setProgress({
+              currentQuestion: null,
+              totalQuestions: 860,
+              hasProgress: false,
+            })
+          }
+        } catch (progressErr) {
+          // Progress loading failed, but not critical
+          setProgress({
+            currentQuestion: null,
+            totalQuestions: 860,
+            hasProgress: false,
+          })
+        }
+      } catch (err) {
+        console.error('Error loading dashboard:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load dashboard')
+      } finally {
+        setLoading(false)
       }
-
-      const dashboardData: DashboardData = await response.json()
-
-      if (!dashboardData.success) {
-        throw new Error('Failed to load dashboard data')
-      }
-
-      setData(dashboardData)
-    } catch (err) {
-      console.error('Error loading dashboard:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard')
-    } finally {
-      setLoading(false)
     }
+
+    loadDashboard()
+  }, [router])
+
+  function handleContinueLearning() {
+    router.push('/questions')
   }
 
   if (loading) {
@@ -89,111 +123,52 @@ export default function DashboardPage() {
     )
   }
 
-  if (error || !data) {
+  if (error && !user) {
     return (
       <div className={styles.container}>
-        <div className={styles.error}>{error || 'Failed to load dashboard'}</div>
-        <button onClick={loadDashboard} className={styles.retryButton}>
-          Retry
+        <div className={styles.error}>{error}</div>
+        <button onClick={() => router.push('/login')} className={styles.button}>
+          Go to Login
         </button>
       </div>
     )
   }
 
-  const { stats, domain_stats, last_question_id } = data
-
-  // Calculate percentages
-  const completionRate = stats.total_questions > 0 
-    ? Math.round((stats.completed / stats.total_questions) * 100) 
-    : 0
-  const accuracyRate = stats.completed > 0
-    ? Math.round((stats.correct / stats.completed) * 100)
-    : 0
+  if (!user) {
+    return null // Will redirect
+  }
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Dashboard</h1>
-        <p className={styles.subtitle}>Your learning progress overview</p>
-      </div>
-
-      {/* Overall Stats */}
-      <div className={styles.statsSection}>
-        <h2 className={styles.sectionTitle}>Overall Progress</h2>
-        <div className={styles.statsGrid}>
-          <div className={styles.statCard}>
-            <div className={styles.statValue}>{stats.total_questions}</div>
-            <div className={styles.statLabel}>Total Questions</div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statValue}>{stats.completed}</div>
-            <div className={styles.statLabel}>Completed</div>
-            <div className={styles.statSubtext}>{completionRate}%</div>
-          </div>
-          <div className={`${styles.statCard} ${styles.statCardCorrect}`}>
-            <div className={styles.statValue}>{stats.correct}</div>
-            <div className={styles.statLabel}>Correct</div>
-            <div className={styles.statSubtext}>
-              {stats.completed > 0 ? `${accuracyRate}% accuracy` : '—'}
-            </div>
-          </div>
-          <div className={`${styles.statCard} ${styles.statCardWrong}`}>
-            <div className={styles.statValue}>{stats.wrong}</div>
-            <div className={styles.statLabel}>Wrong</div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statValue}>{stats.not_started}</div>
-            <div className={styles.statLabel}>Not Started</div>
-          </div>
+      <div className={styles.card}>
+        <h1 className={styles.title}>Welcome to ACAMS Learning</h1>
+        
+        <div className={styles.userSection}>
+          <div className={styles.userLabel}>Logged in as:</div>
+          <div className={styles.userEmail}>{user.email}</div>
         </div>
-      </div>
 
-      {/* Domain Stats */}
-      {domain_stats.length > 0 && (
-        <div className={styles.domainSection}>
-          <h2 className={styles.sectionTitle}>Progress by Domain</h2>
-          <div className={styles.domainTable}>
-            <div className={styles.domainTableHeader}>
-              <div className={styles.domainTableCell}>Domain</div>
-              <div className={styles.domainTableCell}>Total</div>
-              <div className={styles.domainTableCell}>Correct</div>
-              <div className={styles.domainTableCell}>Wrong</div>
-              <div className={styles.domainTableCell}>Accuracy</div>
-            </div>
-            {domain_stats.map((domain) => {
-              const domainAccuracy = domain.total > 0
-                ? Math.round((domain.correct / domain.total) * 100)
-                : 0
-              return (
-                <div key={domain.domain} className={styles.domainTableRow}>
-                  <div className={styles.domainTableCell}>{domain.domain}</div>
-                  <div className={styles.domainTableCell}>{domain.total}</div>
-                  <div className={`${styles.domainTableCell} ${styles.domainTableCellCorrect}`}>
-                    {domain.correct}
-                  </div>
-                  <div className={`${styles.domainTableCell} ${styles.domainTableCellWrong}`}>
-                    {domain.wrong}
-                  </div>
-                  <div className={styles.domainTableCell}>
-                    {domain.total > 0 ? `${domainAccuracy}%` : '—'}
-                  </div>
-                </div>
-              )
-            })}
+        {progress && (
+          <div className={styles.progressSection}>
+            {progress.hasProgress && progress.currentQuestion ? (
+              <div className={styles.progressText}>
+                Your progress: Question {progress.currentQuestion} of {progress.totalQuestions}
+              </div>
+            ) : (
+              <div className={styles.progressText}>
+                Ready to start learning! {progress.totalQuestions} questions available.
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* CTA Buttons */}
-      <div className={styles.ctaSection}>
-        <Link href="/questions" className={styles.ctaButton}>
-          {last_question_id ? 'Resume Learning' : 'Start Learning'}
-        </Link>
-        <Link href="/wrong-book" className={`${styles.ctaButton} ${styles.ctaButtonSecondary}`}>
-          Wrong Book ({stats.wrong})
-        </Link>
+        <button
+          className={styles.continueButton}
+          onClick={handleContinueLearning}
+        >
+          Continue Learning
+        </button>
       </div>
     </div>
   )
 }
-

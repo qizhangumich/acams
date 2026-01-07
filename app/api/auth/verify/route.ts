@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
       email: user.email,
     })
 
-    const redirectUrl = new URL('/questions', PRODUCTION_URL)
+    const redirectUrl = new URL('/dashboard', PRODUCTION_URL)
     const response = NextResponse.redirect(redirectUrl, { status: 303 })
 
     response.cookies.set(SESSION_COOKIE_NAME, sessionToken, {

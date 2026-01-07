@@ -30,7 +30,7 @@ export default async function VerifyPage({
 
   // Build API URL with token
   // Browser will directly hit this API endpoint
-  // API will set cookie and redirect to /questions
+  // API will set cookie and redirect to /dashboard
   const apiUrl = `/api/auth/verify?token=${encodeURIComponent(normalizedToken)}${email ? `&email=${encodeURIComponent(email)}` : ''}`
 
   // Redirect browser to API endpoint
