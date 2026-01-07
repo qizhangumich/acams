@@ -43,14 +43,19 @@ export async function POST(
       )
     }
 
+    // BREAKPOINT B FIX: Extract userId ONLY from session
     const user = await getUserFromSession(sessionToken)
 
-    if (!user) {
+    if (!user || !user.id) {
       return NextResponse.json(
         { success: false, message: 'Invalid session' },
         { status: 401 }
       )
     }
+
+    // BREAKPOINT B FIX: Debug log
+    const userId = user.id
+    console.log('DB WRITE USER:', userId)
 
     // 2. Parse question ID (scope enforcement)
     const questionId = parseInt(params.questionId)
@@ -89,7 +94,7 @@ export async function POST(
     // 5. Load chat history for this user + question (scope enforcement)
     const chatHistory = await prisma.questionChat.findMany({
       where: {
-        user_id: userId, // Scope: current user
+        user_id: userId, // Scope: current user (from session)
         question_id: questionId, // Scope: current question
       },
       orderBy: {
