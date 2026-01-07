@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyMagicLinkToken } from '@/lib/auth/magic-link'
-import { generateSessionToken, SESSION_COOKIE_NAME } from '@/lib/auth/session'
+import { createSessionToken, SESSION_COOKIE_NAME } from '@/lib/auth/session'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(redirectUrl, { status: 303 })
     }
 
-    const sessionToken = generateSessionToken({
+    const sessionToken = await createSessionToken({
       userId: user.id,
       email: user.email,
     })

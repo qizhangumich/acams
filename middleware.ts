@@ -13,7 +13,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifySessionToken, SESSION_COOKIE_NAME } from '@/lib/auth/session'
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Protect page routes
@@ -29,7 +29,7 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    const payload = verifySessionToken(sessionToken)
+    const payload = await verifySessionToken(sessionToken)
 
     if (!payload) {
       return NextResponse.redirect(new URL('/login', request.url))
@@ -57,7 +57,7 @@ export function middleware(request: NextRequest) {
       )
     }
 
-    const payload = verifySessionToken(sessionToken)
+    const payload = await verifySessionToken(sessionToken)
 
     if (!payload) {
       return NextResponse.json(
