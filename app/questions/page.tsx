@@ -40,6 +40,8 @@ interface ResumeResponse {
   question_id: number
   question: Question
   progress?: Progress
+  // Optional error/message field returned when success is false
+  message?: string
 }
 
 interface ProgressResponse {
