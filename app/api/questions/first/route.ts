@@ -1,59 +1,50 @@
 /**
  * GET /api/questions/first
  *
- * Returns the first question from questions.json in the project root.
+ * Returns the first question from the database (index = 0).
  */
 
 import { NextResponse } from 'next/server'
-import fs from 'fs/promises'
-import path from 'path'
+import { prisma } from '@/lib/prisma'
 
-// This route reads from the filesystem at request time
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const filePath = path.join(process.cwd(), 'questions.json')
+    // Get first question (index = 0)
+    const firstQuestion = await prisma.question.findUnique({
+      where: { index: 0 },
+      select: {
+        id: true,
+        index: true,
+        domain: true,
+        question_text: true,
+        options: true,
+        correct_answers: true,
+        explanation: true,
+        explanation_ai_en: true,
+        explanation_ai_ch: true,
+      },
+    })
 
-    const fileContents = await fs.readFile(filePath, 'utf-8')
-    if (!fileContents.trim()) {
+    if (!firstQuestion) {
       return NextResponse.json(
         { success: false, message: 'No questions found' },
         { status: 200 }
       )
     }
 
-    const questions = JSON.parse(fileContents)
-
-    if (!Array.isArray(questions) || questions.length === 0) {
-      return NextResponse.json(
-        { success: false, message: 'No questions found' },
-        { status: 200 }
-      )
-    }
-
-    const firstQuestion = questions[0]
-
-    // Normalize shape to match Prisma `question` select (question_text, etc.)
-    const normalizedQuestion = {
-      id: firstQuestion.id,
-      domain: firstQuestion.domain,
-      question_text: firstQuestion.question,
-      options: firstQuestion.options,
-      correct_answers: firstQuestion.correct_answers,
-      explanation: firstQuestion.explanation,
-      explanation_ai_en: firstQuestion.explanation_ai_en,
-      explanation_ai_ch: firstQuestion.explanation_ai_ch,
-    }
+    // Get total count
+    const totalQuestions = await prisma.question.count()
 
     return NextResponse.json({
       success: true,
-      index: 0,
-      totalQuestions: questions.length,
-      question: normalizedQuestion,
+      index: firstQuestion.index,
+      totalQuestions,
+      question: firstQuestion,
     })
   } catch (error) {
-    console.error('[questions/first] Error reading questions.json:', error)
+    console.error('[questions/first] Error:', error)
     return NextResponse.json(
       { success: false, message: 'Failed to load questions' },
       { status: 500 }

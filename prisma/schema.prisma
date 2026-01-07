@@ -33,10 +33,11 @@ model User {
 }
 
 // ============================================
-// Question Model (Read-only, loaded from JSON)
+// Question Model
 // ============================================
 model Question {
   id                  Int      @id
+  index               Int      @unique // Array position in questions.json (0-based)
   domain              String
   question_text       String   @db.Text
   options             Json // { "A": "...", "B": "..." }
@@ -54,6 +55,7 @@ model Question {
 
   @@index([domain])
   @@index([is_complete])
+  @@index([index])
 }
 
 // ============================================

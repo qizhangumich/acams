@@ -1,15 +1,13 @@
 /**
  * POST /api/questions/submit
  *
- * Submit answer for a question from questions.json
- * Minimal implementation that validates locally and always succeeds
+ * Submit answer for a question from the database
+ * Validates answer and persists user progress
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromSession } from '@/lib/auth/session'
 import { prisma } from '@/lib/prisma'
-import fs from 'fs/promises'
-import path from 'path'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,20 +48,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Read questions.json
-    const filePath = path.join(process.cwd(), 'questions.json')
-    const fileContents = await fs.readFile(filePath, 'utf-8')
-    const questions = JSON.parse(fileContents)
-
-    if (!Array.isArray(questions)) {
-      return NextResponse.json(
-        { success: false, message: 'Invalid questions data' },
-        { status: 500 }
-      )
-    }
-
-    // Find the question by ID
-    const question = questions.find((q: any) => q.id === questionId)
+    // Get question from database
+    const question = await prisma.question.findUnique({
+      where: { id: questionId },
+      select: {
+        id: true,
+        correct_answers: true,
+      },
+    })
 
     if (!question) {
       return NextResponse.json(

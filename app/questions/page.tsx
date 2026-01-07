@@ -284,7 +284,7 @@ export default function QuestionPage() {
       // Check if success is false (new user with no progress)
       // or if the API explicitly returns 404 (no questions / no progress)
       if (response.status === 404 || !data.success) {
-        // Try to load the first question from questions.json for new users
+        // Try to load the first question from database for new users
         try {
           const firstQuestionResponse = await fetch('/api/questions/first', {
             method: 'GET',

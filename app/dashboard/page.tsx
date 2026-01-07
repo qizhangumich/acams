@@ -1,7 +1,7 @@
 /**
  * Dashboard Page
  * 
- * User account entry point showing identity and progress summary
+ * User account entry point showing progress summary, filters, and question list
  */
 
 'use client'
@@ -16,18 +16,34 @@ interface User {
 }
 
 interface ProgressSummary {
-  currentQuestion: number | null
-  totalQuestions: number
-  hasProgress: boolean
+  total: number
+  done: number
+  correct: number
+  wrong: number
+  percent: number
 }
+
+interface Question {
+  id: number
+  index: number
+  domain: string
+  question_text: string
+  status: 'correct' | 'wrong' | 'not_started'
+}
+
+type Filter = 'all' | 'done' | 'undone' | 'wrong'
 
 export default function DashboardPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<User | null>(null)
-  const [progress, setProgress] = useState<ProgressSummary | null>(null)
+  const [summary, setSummary] = useState<ProgressSummary | null>(null)
+  const [filter, setFilter] = useState<Filter>('all')
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [loadingQuestions, setLoadingQuestions] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Load user and progress summary
   useEffect(() => {
     async function loadDashboard() {
       try {
@@ -41,7 +57,6 @@ export default function DashboardPage() {
         })
 
         if (userResponse.status === 401) {
-          // Not authenticated, redirect to login
           router.push('/login')
           return
         }
@@ -60,45 +75,23 @@ export default function DashboardPage() {
           email: userData.user.email,
         })
 
-        // Try to load progress summary
-        try {
-          const progressResponse = await fetch('/api/progress/resume', {
-            method: 'GET',
-            credentials: 'include',
-          })
+        // Load progress summary
+        const summaryResponse = await fetch('/api/progress/summary', {
+          method: 'GET',
+          credentials: 'include',
+        })
 
-          if (progressResponse.ok) {
-            const progressData = await progressResponse.json()
-            if (progressData.success && progressData.question) {
-              // User has progress
-              setProgress({
-                currentQuestion: progressData.question_id || null,
-                totalQuestions: 860, // Default, could be fetched from API
-                hasProgress: true,
-              })
-            } else {
-              // New user, no progress yet
-              setProgress({
-                currentQuestion: null,
-                totalQuestions: 860,
-                hasProgress: false,
-              })
-            }
-          } else {
-            // No progress yet
-            setProgress({
-              currentQuestion: null,
-              totalQuestions: 860,
-              hasProgress: false,
+        if (summaryResponse.ok) {
+          const summaryData = await summaryResponse.json()
+          if (summaryData.success) {
+            setSummary({
+              total: summaryData.total,
+              done: summaryData.done,
+              correct: summaryData.correct,
+              wrong: summaryData.wrong,
+              percent: summaryData.percent,
             })
           }
-        } catch (progressErr) {
-          // Progress loading failed, but not critical
-          setProgress({
-            currentQuestion: null,
-            totalQuestions: 860,
-            hasProgress: false,
-          })
         }
       } catch (err) {
         console.error('Error loading dashboard:', err)
@@ -111,9 +104,47 @@ export default function DashboardPage() {
     loadDashboard()
   }, [router])
 
+  // Load questions when filter changes
+  useEffect(() => {
+    async function loadQuestions() {
+      if (!user) return
+
+      try {
+        setLoadingQuestions(true)
+        const response = await fetch(`/api/questions?filter=${filter}`, {
+          method: 'GET',
+          credentials: 'include',
+        })
+
+        if (response.status === 401) {
+          router.push('/login')
+          return
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to load questions')
+        }
+
+        const data = await response.json()
+        if (data.success && Array.isArray(data.questions)) {
+          setQuestions(data.questions)
+        }
+      } catch (err) {
+        console.error('Error loading questions:', err)
+      } finally {
+        setLoadingQuestions(false)
+      }
+    }
+
+    loadQuestions()
+  }, [filter, user, router])
+
+  function handleQuestionClick(questionId: number) {
+    router.push(`/questions?questionId=${questionId}`)
+  }
+
   async function handleContinueLearning() {
     try {
-      // Check for saved progress
       const response = await fetch('/api/progress/resume', {
         method: 'GET',
         credentials: 'include',
@@ -122,17 +153,14 @@ export default function DashboardPage() {
       if (response.ok) {
         const data = await response.json()
         if (data.success && typeof data.currentIndex === 'number') {
-          // User has progress, navigate with index
           router.push(`/questions?index=${data.currentIndex}`)
           return
         }
       }
 
-      // No progress, start from beginning
       router.push('/questions')
     } catch (err) {
       console.error('Error checking progress:', err)
-      // On error, just go to questions page
       router.push('/questions')
     }
   }
@@ -157,32 +185,101 @@ export default function DashboardPage() {
   }
 
   if (!user) {
-    return null // Will redirect
+    return null
   }
 
   return (
     <div className={styles.container}>
       <div className={styles.card}>
-        <h1 className={styles.title}>Welcome to ACAMS Learning</h1>
+        <h1 className={styles.title}>ACAMS Learning Dashboard</h1>
         
         <div className={styles.userSection}>
           <div className={styles.userLabel}>Logged in as:</div>
           <div className={styles.userEmail}>{user.email}</div>
         </div>
 
-        {progress && (
+        {summary && (
           <div className={styles.progressSection}>
-            {progress.hasProgress && progress.currentQuestion ? (
-              <div className={styles.progressText}>
-                Your progress: Question {progress.currentQuestion} of {progress.totalQuestions}
+            <div className={styles.progressHeader}>
+              <div className={styles.progressStats}>
+                <span className={styles.statLabel}>Done:</span>
+                <span className={styles.statValue}>{summary.done} / {summary.total}</span>
               </div>
-            ) : (
-              <div className={styles.progressText}>
-                Ready to start learning! {progress.totalQuestions} questions available.
+              <div className={styles.progressStats}>
+                <span className={styles.statLabel}>Correct:</span>
+                <span className={styles.statValueCorrect}>{summary.correct}</span>
               </div>
-            )}
+              <div className={styles.progressStats}>
+                <span className={styles.statLabel}>Wrong:</span>
+                <span className={styles.statValueWrong}>{summary.wrong}</span>
+              </div>
+              <div className={styles.progressStats}>
+                <span className={styles.statLabel}>Progress:</span>
+                <span className={styles.statValue}>{summary.percent}%</span>
+              </div>
+            </div>
+            <div className={styles.progressBarContainer}>
+              <div 
+                className={styles.progressBar}
+                style={{ width: `${summary.percent}%` }}
+              />
+            </div>
           </div>
         )}
+
+        <div className={styles.filterSection}>
+          <button
+            className={`${styles.filterButton} ${filter === 'all' ? styles.filterButtonActive : ''}`}
+            onClick={() => setFilter('all')}
+          >
+            All
+          </button>
+          <button
+            className={`${styles.filterButton} ${filter === 'done' ? styles.filterButtonActive : ''}`}
+            onClick={() => setFilter('done')}
+          >
+            Done
+          </button>
+          <button
+            className={`${styles.filterButton} ${filter === 'undone' ? styles.filterButtonActive : ''}`}
+            onClick={() => setFilter('undone')}
+          >
+            Undone
+          </button>
+          <button
+            className={`${styles.filterButton} ${filter === 'wrong' ? styles.filterButtonActive : ''}`}
+            onClick={() => setFilter('wrong')}
+          >
+            Wrong
+          </button>
+        </div>
+
+        <div className={styles.questionsSection}>
+          {loadingQuestions ? (
+            <div className={styles.loadingQuestions}>Loading questions...</div>
+          ) : questions.length === 0 ? (
+            <div className={styles.noQuestions}>No questions found</div>
+          ) : (
+            <div className={styles.questionsList}>
+              {questions.map((q) => (
+                <div
+                  key={q.id}
+                  className={styles.questionItem}
+                  onClick={() => handleQuestionClick(q.id)}
+                >
+                  <div className={styles.questionHeader}>
+                    <span className={styles.questionNumber}>Q{q.index + 1}</span>
+                    <span className={`${styles.statusBadge} ${styles[`statusBadge${q.status.charAt(0).toUpperCase() + q.status.slice(1).replace('_', '')}`]}`}>
+                      {q.status === 'not_started' ? 'Not Started' : q.status === 'correct' ? 'Correct' : 'Wrong'}
+                    </span>
+                  </div>
+                  <div className={styles.questionDomain}>{q.domain}</div>
+                  <div className={styles.questionText}>{q.question_text}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <button
           className={styles.continueButton}
