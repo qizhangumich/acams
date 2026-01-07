@@ -39,7 +39,10 @@ async function main() {
   let created = 0
   let updated = 0
 
-  for (const questionData of questionsData) {
+  for (let i = 0; i < questionsData.length; i++) {
+    const questionData = questionsData[i]
+    const questionIndex = i // 0-based index
+
     // Check if question already exists to determine if it's a create or update
     const existing = await prisma.question.findUnique({
       where: { id: questionData.id },
@@ -51,6 +54,7 @@ async function main() {
       await prisma.question.update({
         where: { id: questionData.id },
         data: {
+          index: questionIndex,
           domain: questionData.domain,
           question_text: questionData.question,
           options: questionData.options,
@@ -68,6 +72,7 @@ async function main() {
       await prisma.question.create({
         data: {
           id: questionData.id,
+          index: questionIndex,
           domain: questionData.domain,
           question_text: questionData.question,
           options: questionData.options,
