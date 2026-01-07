@@ -12,6 +12,41 @@ const TOKEN_EXPIRY_MINUTES = 15
 const MAX_TOKENS_PER_EMAIL_PER_HOUR = 5
 
 /**
+ * Test accounts that bypass rate limits
+ * 
+ * These emails can request unlimited magic links without rate limiting.
+ * Useful for development and testing.
+ * 
+ * Can be configured via environment variable MAGIC_LINK_BYPASS_EMAILS
+ * (comma-separated list) or hardcoded list below.
+ */
+function getBypassEmails(): string[] {
+  // Check environment variable first
+  const envBypass = process.env.MAGIC_LINK_BYPASS_EMAILS
+  if (envBypass) {
+    return envBypass
+      .split(',')
+      .map(email => email.trim().toLowerCase())
+      .filter(email => email.length > 0)
+  }
+  
+  // Fallback to hardcoded test accounts
+  return [
+    'jeremy4crypto@gmail.com',
+    'zhangqi362@gmail.com',
+  ]
+}
+
+/**
+ * Check if email is a test account that bypasses rate limits
+ */
+function isTestAccount(email: string): boolean {
+  const normalizedEmail = email.trim().toLowerCase()
+  const bypassEmails = getBypassEmails()
+  return bypassEmails.includes(normalizedEmail)
+}
+
+/**
  * Generate a secure random token for magic link
  */
 export function generateMagicLinkToken(): string {
@@ -35,44 +70,53 @@ export async function createMagicLink(email: string): Promise<{ success: boolean
 
   try {
     // Rate limiting: Check tokens created in last hour
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
-    let recentTokens = 0
+    // SKIP rate limiting for test accounts
+    const isTest = isTestAccount(normalizedEmail)
     
-    try {
-      recentTokens = await prisma.magicLinkToken.count({
-        where: {
-          email: normalizedEmail,
-          created_at: {
-            gte: oneHourAgo,
-          },
-        },
-      })
-    } catch (dbError: any) {
-      console.error('[createMagicLink] Database error during rate limit check:', dbError)
-      // Check if it's a connection error - if so, fail early
-      const isConnectionError = 
-        dbError.code === 'P1001' || 
-        dbError.errorCode === 'P1001' ||
-        dbError.name === 'PrismaClientInitializationError' ||
-        dbError.message?.includes('Can\'t reach database server') ||
-        dbError.message?.includes('database server is running') ||
-        dbError.message?.includes('Invalid `prisma.')
+    if (!isTest) {
+      // Only check rate limits for non-test accounts
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+      let recentTokens = 0
       
-      if (isConnectionError) {
+      try {
+        recentTokens = await prisma.magicLinkToken.count({
+          where: {
+            email: normalizedEmail,
+            created_at: {
+              gte: oneHourAgo,
+            },
+          },
+        })
+      } catch (dbError: any) {
+        console.error('[createMagicLink] Database error during rate limit check:', dbError)
+        // Check if it's a connection error - if so, fail early
+        const isConnectionError = 
+          dbError.code === 'P1001' || 
+          dbError.errorCode === 'P1001' ||
+          dbError.name === 'PrismaClientInitializationError' ||
+          dbError.message?.includes('Can\'t reach database server') ||
+          dbError.message?.includes('database server is running') ||
+          dbError.message?.includes('Invalid `prisma.')
+        
+        if (isConnectionError) {
+          return {
+            success: false,
+            message: 'Database connection error. Please check if the database is running and try again later.',
+          }
+        }
+        // If database is unavailable for other reasons, allow the request but log the error
+        // This prevents complete failure when DB is temporarily unavailable
+      }
+
+      if (recentTokens >= MAX_TOKENS_PER_EMAIL_PER_HOUR) {
         return {
           success: false,
-          message: 'Database connection error. Please check if the database is running and try again later.',
+          message: 'Too many magic link requests. Please try again later.',
         }
       }
-      // If database is unavailable for other reasons, allow the request but log the error
-      // This prevents complete failure when DB is temporarily unavailable
-    }
-
-    if (recentTokens >= MAX_TOKENS_PER_EMAIL_PER_HOUR) {
-      return {
-        success: false,
-        message: 'Too many magic link requests. Please try again later.',
-      }
+    } else {
+      // Test account: Skip rate limiting
+      console.log(`[createMagicLink] Test account detected (${normalizedEmail}), bypassing rate limits`)
     }
 
     // Generate token
