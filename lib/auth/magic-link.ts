@@ -47,9 +47,21 @@ export async function createMagicLink(email: string): Promise<{ success: boolean
           },
         },
       })
-    } catch (dbError) {
+    } catch (dbError: any) {
       console.error('[createMagicLink] Database error during rate limit check:', dbError)
-      // If database is unavailable, allow the request but log the error
+      // Check if it's a connection error - if so, fail early
+      if (
+        dbError.code === 'P1001' || 
+        dbError.errorCode === 'P1001' ||
+        dbError.message?.includes('Can\'t reach database server') ||
+        dbError.name === 'PrismaClientInitializationError'
+      ) {
+        return {
+          success: false,
+          message: 'Database connection error. Please check if the database is running and try again later.',
+        }
+      }
+      // If database is unavailable for other reasons, allow the request but log the error
       // This prevents complete failure when DB is temporarily unavailable
     }
 
@@ -75,11 +87,16 @@ export async function createMagicLink(email: string): Promise<{ success: boolean
       })
     } catch (dbError: any) {
       console.error('[createMagicLink] Database error creating token:', dbError)
-      // Check if it's a connection error
-      if (dbError.code === 'P1001' || dbError.message?.includes('Can\'t reach database server')) {
+      // Check if it's a connection error (including PrismaClientInitializationError)
+      if (
+        dbError.code === 'P1001' || 
+        dbError.errorCode === 'P1001' ||
+        dbError.name === 'PrismaClientInitializationError' ||
+        dbError.message?.includes('Can\'t reach database server')
+      ) {
         return {
           success: false,
-          message: 'Database connection error. Please try again later.',
+          message: 'Database connection error. Please check if the database is running and try again later.',
         }
       }
       throw dbError
