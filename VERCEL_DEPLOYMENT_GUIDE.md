@@ -23,7 +23,7 @@ RESEND_FROM_EMAIL=noreply@yourdomain.com
 OPENAI_API_KEY=sk-xxxxxxxxxxxxx
 
 # 应用 URL
-NEXT_PUBLIC_APP_URL=https://acams.vercel.app
+NEXT_PUBLIC_APP_URL=https://acamas.vercel.app
 ```
 
 #### 环境变量说明
@@ -49,7 +49,7 @@ NEXT_PUBLIC_APP_URL=https://acams.vercel.app
   - 用于 AI 解释和聊天功能
 
 - **NEXT_PUBLIC_APP_URL**: 应用部署 URL
-  - 格式：`https://acams.vercel.app`
+  - 格式：`https://acamas.vercel.app`
   - 用于生成魔法链接
 
 ---
