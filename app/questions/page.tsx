@@ -66,6 +66,7 @@ export default function QuestionPage() {
   const [hasSubmitted, setHasSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [completionMessage, setCompletionMessage] = useState<string | null>(null)
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null)
   
   // Explanation panel state (UI-only, not persisted)
   const [isExplanationOpen, setIsExplanationOpen] = useState(false)
@@ -81,6 +82,41 @@ export default function QuestionPage() {
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
+
+  // Load user context on page load
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const response = await fetch('/api/auth/me', {
+          method: 'GET',
+          credentials: 'include',
+        })
+
+        if (response.status === 401) {
+          // Not authenticated, redirect to login
+          router.push('/login')
+          return
+        }
+
+        if (!response.ok) {
+          console.error('Failed to load user')
+          return
+        }
+
+        const data = await response.json()
+        if (data.success && data.user) {
+          setUser({
+            id: data.user.id,
+            email: data.user.email,
+          })
+        }
+      } catch (err) {
+        console.error('Error loading user:', err)
+      }
+    }
+
+    loadUser()
+  }, [router])
 
   // Load question and progress on page load
   useEffect(() => {
@@ -500,6 +536,14 @@ export default function QuestionPage() {
   return (
     <div className={styles.container}>
       <div className={styles.questionCard}>
+        {/* User Identity Header */}
+        {user && (
+          <div className={styles.userHeader}>
+            <span className={styles.userLabel}>Logged in as:</span>
+            <span className={styles.userEmail}>{user.email}</span>
+          </div>
+        )}
+
         {/* Question Number */}
         {currentIndex !== null && (
           <div className={styles.questionNumber}>

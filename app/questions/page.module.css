@@ -43,6 +43,29 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.userHeader {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+}
+
+.userLabel {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.userEmail {
+  color: #1f2937;
+  font-weight: 600;
+}
+
 .questionNumber {
   font-size: 0.875rem;
   color: #6b7280;
