@@ -54,8 +54,12 @@ export async function GET(req: NextRequest) {
         }
 
         // Determine progress status from saved answers
-        const savedAnswers = Array.isArray(user.current_answers) ? user.current_answers : []
-        const correctAnswers = Array.isArray(question.correct_answers) ? question.correct_answers : [question.correct_answers]
+        const savedAnswers = Array.isArray(user.current_answers) 
+          ? (user.current_answers as string[])
+          : []
+        const correctAnswers = Array.isArray(question.correct_answers) 
+          ? question.correct_answers 
+          : [question.correct_answers]
         const isCorrect = savedAnswers.length === correctAnswers.length &&
           savedAnswers.every((a: string) => correctAnswers.includes(a)) &&
           correctAnswers.every((a: string) => savedAnswers.includes(a))
