@@ -50,12 +50,15 @@ export async function createMagicLink(email: string): Promise<{ success: boolean
     } catch (dbError: any) {
       console.error('[createMagicLink] Database error during rate limit check:', dbError)
       // Check if it's a connection error - if so, fail early
-      if (
+      const isConnectionError = 
         dbError.code === 'P1001' || 
         dbError.errorCode === 'P1001' ||
+        dbError.name === 'PrismaClientInitializationError' ||
         dbError.message?.includes('Can\'t reach database server') ||
-        dbError.name === 'PrismaClientInitializationError'
-      ) {
+        dbError.message?.includes('database server is running') ||
+        dbError.message?.includes('Invalid `prisma.')
+      
+      if (isConnectionError) {
         return {
           success: false,
           message: 'Database connection error. Please check if the database is running and try again later.',
