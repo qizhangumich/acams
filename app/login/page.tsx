@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
+  const [errorCode, setErrorCode] = useState<string | null>(null)
 
   // Read error from URL parameters
   useEffect(() => {
@@ -26,14 +27,51 @@ export default function LoginPage() {
         missing_token: 'Missing token. Please request a new magic link.',
         missing_parameters: 'Missing token or email. Please request a new magic link.',
         verification_failed: 'Verification failed. The link may be invalid or expired.',
-        invalid_magic_link: 'Invalid magic link. Please request a new one.',
-        'Magic link expired': 'Magic link expired. Please request a new one.',
-        'Magic link already used': 'This magic link has already been used. Please request a new one.',
+        invalid_magic_link: 'This login link is invalid or has expired. Please request a new one.',
+        'Invalid magic link': 'This login link is invalid or has expired. Please request a new one.',
+        'Magic link expired': 'This login link has expired. Please request a new one.',
+        'Magic link already used': 'This login link has already been used. Please request a new one.',
         user_not_found: 'User not found. Please try again.',
       }
       setMessage(errorMessages[error] || `Error: ${decodeURIComponent(error)}`)
+      setErrorCode(error)
     }
   }, [searchParams])
+
+  // Development-only convenience:
+  // If already authenticated and we hit /login?error=Invalid magic link,
+  // automatically redirect to /questions to avoid blocking local testing.
+  useEffect(() => {
+    // Only in development, and only for this specific error string
+    if (process.env.NODE_ENV !== 'development') return
+    if (errorCode !== 'Invalid magic link') return
+
+    let cancelled = false
+
+    async function checkSessionAndRedirect() {
+      try {
+        const res = await fetch('/api/auth/me', {
+          method: 'GET',
+          credentials: 'include',
+        })
+
+        if (!res.ok) return
+
+        const data = await res.json()
+        if (!cancelled && data?.success) {
+          router.replace('/questions')
+        }
+      } catch {
+        // Silently ignore in development; user can still see the message and request a new link
+      }
+    }
+
+    checkSessionAndRedirect()
+
+    return () => {
+      cancelled = true
+    }
+  }, [errorCode, router])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
