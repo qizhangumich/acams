@@ -177,15 +177,16 @@ export default function QuestionPage() {
         return
       }
 
-      // Parse response JSON (handle both success and error responses)
+      if (!response.ok) {
+        // Handle other error statuses
+        throw new Error(`Failed to load question: ${response.status} ${response.statusText}`)
+      }
+
+      // Parse response JSON
       let data: ResumeResponse
       try {
         data = await response.json()
       } catch (jsonErr) {
-        // Response is not valid JSON
-        if (!response.ok) {
-          throw new Error(`Failed to load question: ${response.status} ${response.statusText}`)
-        }
         throw new Error('Invalid response from server')
       }
 
