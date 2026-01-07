@@ -76,23 +76,7 @@ export default function DashboardPage() {
         })
 
         // Load progress summary
-        const summaryResponse = await fetch('/api/progress/summary', {
-          method: 'GET',
-          credentials: 'include',
-        })
-
-        if (summaryResponse.ok) {
-          const summaryData = await summaryResponse.json()
-          if (summaryData.success) {
-            setSummary({
-              total: summaryData.total,
-              done: summaryData.done,
-              correct: summaryData.correct,
-              wrong: summaryData.wrong,
-              percent: summaryData.percent,
-            })
-          }
-        }
+        await loadProgressSummary()
       } catch (err) {
         console.error('Error loading dashboard:', err)
         setError(err instanceof Error ? err.message : 'Failed to load dashboard')
@@ -103,6 +87,31 @@ export default function DashboardPage() {
 
     loadDashboard()
   }, [router])
+
+  // Load progress summary (reusable function)
+  async function loadProgressSummary() {
+    try {
+      const summaryResponse = await fetch('/api/progress/summary', {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (summaryResponse.ok) {
+        const summaryData = await summaryResponse.json()
+        if (summaryData.success) {
+          setSummary({
+            total: summaryData.total,
+            done: summaryData.done,
+            correct: summaryData.correct,
+            wrong: summaryData.wrong,
+            percent: summaryData.percent,
+          })
+        }
+      }
+    } catch (err) {
+      console.error('Error loading progress summary:', err)
+    }
+  }
 
   // Load questions when filter changes
   useEffect(() => {
@@ -162,6 +171,51 @@ export default function DashboardPage() {
     } catch (err) {
       console.error('Error checking progress:', err)
       router.push('/questions')
+    }
+  }
+
+  // Reset learning progress
+  async function handleReset() {
+    // Show confirmation dialog
+    const ok = confirm('This will permanently reset your learning progress. Continue?')
+    if (!ok) return
+
+    try {
+      const res = await fetch('/api/progress/reset', {
+        method: 'POST',
+        credentials: 'include',
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        alert(data.message || 'Reset failed')
+        return
+      }
+
+      const data = await res.json()
+      if (!data.success) {
+        alert('Reset failed')
+        return
+      }
+
+      // Re-fetch summary to update UI
+      await loadProgressSummary()
+
+      // Also reload questions list to reflect reset
+      const questionsResponse = await fetch(`/api/questions?filter=${filter}`, {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (questionsResponse.ok) {
+        const questionsData = await questionsResponse.json()
+        if (questionsData.success && Array.isArray(questionsData.questions)) {
+          setQuestions(questionsData.questions)
+        }
+      }
+    } catch (err) {
+      console.error('Error resetting progress:', err)
+      alert('Reset failed. Please try again.')
     }
   }
 
@@ -281,12 +335,22 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <button
-          className={styles.continueButton}
-          onClick={handleContinueLearning}
-        >
-          Continue Learning
-        </button>
+        <div className={styles.actionButtons}>
+          <button
+            className={styles.continueButton}
+            onClick={handleContinueLearning}
+          >
+            Continue Learning
+          </button>
+          
+          <button
+            className={styles.resetButton}
+            onClick={handleReset}
+            type="button"
+          >
+            Reset Learning Progress
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -251,6 +251,12 @@
   overflow: hidden;
 }
 
+.actionButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .continueButton {
   width: 100%;
   padding: 1rem 2rem;
@@ -266,6 +272,23 @@
 
 .continueButton:hover {
   background-color: #1d4ed8;
+}
+
+.resetButton {
+  width: 100%;
+  padding: 0.875rem 2rem;
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.resetButton:hover {
+  background-color: #b91c1c;
 }
 
 .button {
