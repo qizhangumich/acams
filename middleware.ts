@@ -2,6 +2,11 @@
  * Next.js Middleware
  * 
  * Handles authentication for protected routes
+ * 
+ * CRITICAL: Middleware is READ-ONLY for auth
+ * - NEVER clears cookies
+ * - NEVER mutates auth state
+ * - ONLY decides: allow or redirect
  */
 
 import { NextResponse } from 'next/server'
@@ -11,7 +16,12 @@ import { verifySessionToken, SESSION_COOKIE_NAME } from '@/lib/auth/session'
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (pathname.startsWith('/questions')) {
+  // Protect page routes
+  if (
+    pathname.startsWith('/questions') ||
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/wrong-book')
+  ) {
     const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)
     const sessionToken = sessionCookie?.value
 
@@ -22,14 +32,13 @@ export function middleware(request: NextRequest) {
     const payload = verifySessionToken(sessionToken)
 
     if (!payload) {
-      const response = NextResponse.redirect(new URL('/login', request.url))
-      response.cookies.delete(SESSION_COOKIE_NAME)
-      return response
+      return NextResponse.redirect(new URL('/login', request.url))
     }
 
     return NextResponse.next()
   }
 
+  // Protect API routes
   if (
     pathname.startsWith('/api/progress') ||
     pathname.startsWith('/api/chat') ||
@@ -51,12 +60,10 @@ export function middleware(request: NextRequest) {
     const payload = verifySessionToken(sessionToken)
 
     if (!payload) {
-      const response = NextResponse.json(
+      return NextResponse.json(
         { success: false, message: 'Invalid session' },
         { status: 401 }
       )
-      response.cookies.delete(SESSION_COOKIE_NAME)
-      return response
     }
 
     const requestHeaders = new Headers(request.headers)
