@@ -12,6 +12,10 @@ import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
+// CRITICAL: Always use production domain for redirects
+// NEVER use request.url or request.headers.host (could be preview domain)
+const PRODUCTION_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
@@ -19,7 +23,7 @@ export async function GET(request: NextRequest) {
     const email = searchParams.get('email')
 
     if (!token) {
-      const redirectUrl = new URL('/login?error=missing_token', request.url)
+      const redirectUrl = new URL('/login?error=missing_token', PRODUCTION_URL)
       return NextResponse.redirect(redirectUrl, { status: 303 })
     }
 
@@ -29,7 +33,7 @@ export async function GET(request: NextRequest) {
 
     if (!result.success || !result.userId) {
       const error = result.error || 'verification_failed'
-      const redirectUrl = new URL(`/login?error=${encodeURIComponent(error)}`, request.url)
+      const redirectUrl = new URL(`/login?error=${encodeURIComponent(error)}`, PRODUCTION_URL)
       return NextResponse.redirect(redirectUrl, { status: 303 })
     }
 
@@ -45,7 +49,7 @@ export async function GET(request: NextRequest) {
     })
 
     if (!user) {
-      const redirectUrl = new URL('/login?error=user_not_found', request.url)
+      const redirectUrl = new URL('/login?error=user_not_found', PRODUCTION_URL)
       return NextResponse.redirect(redirectUrl, { status: 303 })
     }
 
@@ -54,7 +58,7 @@ export async function GET(request: NextRequest) {
       email: user.email,
     })
 
-    const redirectUrl = new URL('/questions', request.url)
+    const redirectUrl = new URL('/questions', PRODUCTION_URL)
     const response = NextResponse.redirect(redirectUrl, { status: 303 })
 
     response.cookies.set(SESSION_COOKIE_NAME, sessionToken, {
@@ -68,7 +72,7 @@ export async function GET(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Error verifying magic link:', error)
-    const redirectUrl = new URL('/login?error=verification_failed', request.url)
+    const redirectUrl = new URL('/login?error=verification_failed', PRODUCTION_URL)
     return NextResponse.redirect(redirectUrl, { status: 303 })
   }
 }

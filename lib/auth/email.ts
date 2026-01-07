@@ -8,6 +8,9 @@ import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+// CRITICAL: Always use production domain for magic links
+// NEVER derive from request headers (could be preview/edge domain)
+// This ensures cookie is set on the same domain that receives subsequent requests
 const MAGIC_LINK_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 /**
