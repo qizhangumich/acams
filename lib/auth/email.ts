@@ -16,18 +16,40 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 // Email sending timeout (10 seconds)
 const EMAIL_SEND_TIMEOUT_MS = 10000
 
+// Retry configuration for transient network errors
+const MAX_RETRIES = 2
+const RETRY_DELAY_MS = 1000 // 1 second between retries
+
 // CRITICAL: Always use production domain for magic links
 // NEVER derive from request headers (could be preview/edge domain)
 // This ensures cookie is set on the same domain that receives subsequent requests
 const MAGIC_LINK_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 /**
- * Send magic link email
+ * Check if an error is a transient network error that should be retried
+ */
+function isTransientNetworkError(error: any): boolean {
+  const transientCodes = ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNREFUSED', 'EAI_AGAIN']
+  return transientCodes.includes(error?.code) || 
+         error?.message?.includes('network socket disconnected') ||
+         error?.message?.includes('TLS connection')
+}
+
+/**
+ * Sleep utility for retry delays
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+/**
+ * Send magic link email with retry logic for transient network errors
  * 
  * @param email Recipient email
  * @param token Magic link token
+ * @param retryCount Current retry attempt (internal use)
  */
-export async function sendMagicLinkEmail(email: string, token: string): Promise<void> {
+export async function sendMagicLinkEmail(email: string, token: string, retryCount: number = 0): Promise<void> {
   // Magic link URL: /auth/verify (NOT /verify)
   // Email parameter is optional for backwards compatibility (token-only verification)
   const magicLink = `${MAGIC_LINK_BASE_URL}/auth/verify?token=${token}&email=${encodeURIComponent(email)}`
@@ -83,19 +105,42 @@ export async function sendMagicLinkEmail(email: string, token: string): Promise<
       timeoutPromise,
     ])
     
-    console.log(`[sendMagicLinkEmail] Email sent successfully to ${email.substring(0, 5)}...`)
+    if (retryCount > 0) {
+      console.log(`[sendMagicLinkEmail] Email sent successfully to ${email.substring(0, 5)}... (after ${retryCount} retry${retryCount > 1 ? 's' : ''})`)
+    } else {
+      console.log(`[sendMagicLinkEmail] Email sent successfully to ${email.substring(0, 5)}...`)
+    }
   } catch (error: any) {
     // Determine error type for better logging
     const isTimeout = error?.message?.includes('timeout') || error?.code === 'ETIMEDOUT'
     const isNetworkError = error?.code === 'ETIMEDOUT' || error?.code === 'ECONNRESET' || error?.code === 'ENOTFOUND'
+    const isTransient = isTransientNetworkError(error)
     
-    // Log detailed error information
+    // Retry logic for transient network errors
+    if (isTransient && retryCount < MAX_RETRIES) {
+      const nextRetry = retryCount + 1
+      console.warn(`[sendMagicLinkEmail] Transient network error (attempt ${retryCount + 1}/${MAX_RETRIES + 1}), retrying in ${RETRY_DELAY_MS}ms:`, {
+        error: error?.message || String(error),
+        code: error?.code,
+        email: email.substring(0, 5) + '...',
+      })
+      
+      // Wait before retrying
+      await sleep(RETRY_DELAY_MS)
+      
+      // Retry the email send
+      return sendMagicLinkEmail(email, token, nextRetry)
+    }
+    
+    // Log detailed error information (only on final failure)
     console.error('[sendMagicLinkEmail] Failed to send email:', {
       error: error?.message || String(error),
       code: error?.code,
       errno: error?.errno,
       syscall: error?.syscall,
       errorType: isTimeout ? 'TIMEOUT' : isNetworkError ? 'NETWORK' : 'UNKNOWN',
+      isTransient,
+      attempts: retryCount + 1,
       email: email.substring(0, 5) + '...',
       // Only log cause if it's not too verbose
       cause: error?.cause?.message || error?.cause?.code || undefined,

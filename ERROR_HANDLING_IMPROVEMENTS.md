@@ -95,10 +95,57 @@ All errors are logged with:
 4. **User-friendly messages**: Don't expose technical details to users
 5. **Structured logging**: Makes debugging easier
 
+## Retry Logic Implementation
+
+### Transient Network Errors
+
+Added automatic retry logic for transient network errors:
+
+**Retry Configuration**:
+- Maximum retries: 2 attempts (3 total attempts)
+- Retry delay: 1 second between attempts
+- Only retries on transient errors: `ECONNRESET`, `ETIMEDOUT`, `ENOTFOUND`, `ECONNREFUSED`, `EAI_AGAIN`
+- Also retries on TLS connection errors (e.g., "network socket disconnected before secure TLS connection")
+
+**How It Works**:
+1. First attempt fails with transient error (e.g., `ECONNRESET`)
+2. Wait 1 second
+3. Retry (attempt 2)
+4. If still fails, wait 1 second
+5. Retry (attempt 3)
+6. If all attempts fail, log error and continue (token still created)
+
+**Error Detection**:
+```typescript
+function isTransientNetworkError(error: any): boolean {
+  const transientCodes = ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNREFUSED', 'EAI_AGAIN']
+  return transientCodes.includes(error?.code) || 
+         error?.message?.includes('network socket disconnected') ||
+         error?.message?.includes('TLS connection')
+}
+```
+
+**Benefits**:
+- Automatically recovers from temporary network issues
+- Reduces false failures due to transient TLS/connection errors
+- Improves email delivery success rate
+- Still logs final failures for monitoring
+- Logs retry attempts for debugging
+
+**Example Log Output**:
+```
+[sendMagicLinkEmail] Transient network error (attempt 1/3), retrying in 1000ms: {
+  error: 'Client network socket disconnected before secure TLS connection was established',
+  code: 'ECONNRESET',
+  email: 'yupei...'
+}
+[sendMagicLinkEmail] Email sent successfully to yupei... (after 1 retry)
+```
+
 ## Future Improvements
 
-- Add retry logic for transient network errors
-- Implement exponential backoff for email sending
-- Add metrics/monitoring for error rates
-- Consider using a queue system for email sending (e.g., BullMQ)
+- Implement exponential backoff for email sending (currently fixed 1s delay)
+- Add metrics/monitoring for error rates and retry success rates
+- Consider using a queue system for email sending (e.g., BullMQ) for better reliability
+- Add circuit breaker pattern for repeated failures
 
