@@ -7,6 +7,11 @@
  * - Timeout protection (10 seconds)
  * - Graceful error handling (doesn't block token creation)
  * - Retry logic for transient failures
+ * - Completely non-blocking (fire-and-forget)
+ * 
+ * IMPORTANT: This function is called asynchronously and never awaited.
+ * All errors are handled internally and logged. Email failures never
+ * affect the API response or token creation.
  */
 
 import { Resend } from 'resend'
@@ -45,9 +50,14 @@ function sleep(ms: number): Promise<void> {
 /**
  * Send magic link email with retry logic for transient network errors
  * 
+ * This function is called asynchronously (fire-and-forget) and never awaited.
+ * All errors are handled internally and logged. Email failures never affect
+ * the API response or token creation.
+ * 
  * @param email Recipient email
  * @param token Magic link token
  * @param retryCount Current retry attempt (internal use)
+ * @returns Promise that resolves when email is sent (or fails after retries)
  */
 export async function sendMagicLinkEmail(email: string, token: string, retryCount: number = 0): Promise<void> {
   // Magic link URL: /auth/verify (NOT /verify)
@@ -133,7 +143,9 @@ export async function sendMagicLinkEmail(email: string, token: string, retryCoun
     }
     
     // Log detailed error information (only on final failure)
-    console.error('[sendMagicLinkEmail] Failed to send email:', {
+    // Structured logging for monitoring and debugging
+    const errorLog = {
+      timestamp: new Date().toISOString(),
       error: error?.message || String(error),
       code: error?.code,
       errno: error?.errno,
@@ -144,11 +156,14 @@ export async function sendMagicLinkEmail(email: string, token: string, retryCoun
       email: email.substring(0, 5) + '...',
       // Only log cause if it's not too verbose
       cause: error?.cause?.message || error?.cause?.code || undefined,
-    })
+    }
     
-    // Don't throw - allow token creation to succeed even if email fails
+    console.error('[sendMagicLinkEmail] Failed to send email (non-blocking):', errorLog)
+    
+    // Don't throw - this function is called asynchronously and never awaited
     // The error is already logged for monitoring
-    // Token is still created, so user can manually use the link if needed
+    // Token is already created, so user can manually use the link if needed
+    // This ensures email failures never affect the API response
   }
 }
 

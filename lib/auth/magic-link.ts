@@ -161,12 +161,20 @@ export async function createMagicLink(email: string): Promise<{ success: boolean
       throw dbError
     }
 
-    // Send email (fire and forget - don't block token creation)
-    // Email sending failures are handled internally with timeout protection
-    sendMagicLinkEmail(normalizedEmail, token).catch((error) => {
-      // Error is already logged in sendMagicLinkEmail
-      // Token is already created, so user can still use the magic link
-      // This catch is just to prevent unhandled promise rejection
+    // Send email asynchronously (completely detached from request lifecycle)
+    // Use queueMicrotask to ensure email sending happens after response is sent
+    // This prevents any email delays from affecting API response time
+    queueMicrotask(() => {
+      sendMagicLinkEmail(normalizedEmail, token).catch((error) => {
+        // Error is already logged in sendMagicLinkEmail
+        // Token is already created, so user can still use the magic link
+        // This catch prevents unhandled promise rejection
+        // Email failures are logged but never affect the API response
+        console.error('[createMagicLink] Unhandled email error (non-blocking):', {
+          email: normalizedEmail.substring(0, 5) + '...',
+          error: error?.message || String(error),
+        })
+      })
     })
 
     // Always return success (security: don't reveal if email exists)
