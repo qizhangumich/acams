@@ -37,9 +37,11 @@ interface Progress {
 
 interface ResumeResponse {
   success: boolean
-  question_id: number
+  question_id?: number
+  currentIndex?: number
   question: Question
   progress?: Progress
+  totalQuestions?: number
   // Optional error/message field returned when success is false
   message?: string
 }
@@ -332,14 +334,29 @@ export default function QuestionPage() {
       }
 
       setQuestion(data.question)
-      setCurrentIndex(null) // Index unknown for resumed questions from DB
+      // Use index from API response if available, otherwise try to get from question object
+      const questionIndex = typeof (data as any).currentIndex === 'number' 
+        ? (data as any).currentIndex 
+        : (data.question.index !== undefined ? data.question.index : null)
+      setCurrentIndex(questionIndex)
+      
+      // Use totalQuestions from API response if available
+      if (typeof (data as any).totalQuestions === 'number') {
+        setTotalQuestions((data as any).totalQuestions)
+      }
+      
       setProgress(data.progress || { status: 'not_started' })
 
       // If progress exists and has selected_answer, restore it
       if (data.progress?.selected_answer) {
         setSelectedAnswers(data.progress.selected_answer)
+        // If progress exists, mark as submitted
+        if (data.progress.status === 'correct' || data.progress.status === 'wrong') {
+          setHasSubmitted(true)
+        }
       } else {
         setSelectedAnswers([])
+        setHasSubmitted(false)
       }
     } catch (err) {
       console.error('Error loading question:', err)
@@ -511,6 +528,10 @@ export default function QuestionPage() {
   const isSubmitted = progress?.status === 'correct' || progress?.status === 'wrong'
   const isCorrect = progress?.status === 'correct'
   const isWrong = progress?.status === 'wrong'
+  
+  // Determine if there's a next question available
+  // Only show Next button if we have an index and there are more questions
+  const hasNextQuestion = currentIndex !== null && currentIndex + 1 < totalQuestions
 
   // HARD, UNAVOIDABLE: Next button MUST call /api/answer before navigation
   async function handleNextQuestion() {
@@ -764,16 +785,23 @@ export default function QuestionPage() {
               </div>
             </div>
 
-            {/* Next Question Button - Only show when submitted */}
-            {currentIndex !== null && (
+            {/* Next Question Button - Only show when submitted and there's a next question */}
+            {hasSubmitted && hasNextQuestion && (
               <button
                 type="button"
                 className={styles.nextButton}
                 onClick={handleNextQuestion}
-                disabled={loading}
+                disabled={loading || submitting}
               >
-                Next Question
+                {loading ? 'Loading...' : 'Next Question'}
               </button>
+            )}
+            
+            {/* Completion Message - Show when submitted but no next question */}
+            {hasSubmitted && !hasNextQuestion && currentIndex !== null && (
+              <div className={styles.completionMessage}>
+                🎉 You've completed all questions! Great work!
+              </div>
             )}
           </>
         )}

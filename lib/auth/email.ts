@@ -32,12 +32,26 @@ const MAGIC_LINK_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost
 
 /**
  * Check if an error is a transient network error that should be retried
+ * 
+ * Transient errors are temporary issues that may resolve on retry:
+ * - Network timeouts (our timeout or system ETIMEDOUT)
+ * - Connection resets (ECONNRESET)
+ * - DNS failures (ENOTFOUND, EAI_AGAIN)
+ * - Connection refused (ECONNREFUSED)
+ * - TLS handshake failures
  */
 function isTransientNetworkError(error: any): boolean {
   const transientCodes = ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNREFUSED', 'EAI_AGAIN']
-  return transientCodes.includes(error?.code) || 
-         error?.message?.includes('network socket disconnected') ||
-         error?.message?.includes('TLS connection')
+  const errorMessage = error?.message?.toLowerCase() || ''
+  
+  return (
+    transientCodes.includes(error?.code) || 
+    errorMessage.includes('timeout') ||  // Our timeout or system timeout
+    errorMessage.includes('network socket disconnected') ||
+    errorMessage.includes('tls connection') ||
+    errorMessage.includes('connection reset') ||
+    errorMessage.includes('connection refused')
+  )
 }
 
 /**
