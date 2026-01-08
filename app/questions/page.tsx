@@ -20,6 +20,7 @@ import styles from './page.module.css'
 
 interface Question {
   id: number
+  index?: number // Array position in questions.json (0-based), optional for backwards compatibility
   domain: string
   question_text: string
   options: Record<string, string>
@@ -335,14 +336,14 @@ export default function QuestionPage() {
 
       setQuestion(data.question)
       // Use index from API response if available, otherwise try to get from question object
-      const questionIndex = typeof (data as any).currentIndex === 'number' 
-        ? (data as any).currentIndex 
+      const questionIndex = typeof data.currentIndex === 'number' 
+        ? data.currentIndex 
         : (data.question.index !== undefined ? data.question.index : null)
       setCurrentIndex(questionIndex)
       
       // Use totalQuestions from API response if available
-      if (typeof (data as any).totalQuestions === 'number') {
-        setTotalQuestions((data as any).totalQuestions)
+      if (typeof data.totalQuestions === 'number') {
+        setTotalQuestions(data.totalQuestions)
       }
       
       setProgress(data.progress || { status: 'not_started' })
