@@ -117,6 +117,10 @@ def fix_word_boundaries(text: str) -> str:
     # Fix specific word concatenations (case-sensitive, word boundaries)
     # Only fix actual concatenations, not parts of larger words
     replacements = [
+        # Function words (the/a/an) + common nouns (lowercase-lowercase)
+        # Only add space after the function word when followed by common words
+        (r'\b(the|a|an)(manager|director|officer|customer|bank|institution|company|firm|entity|person|individual|group|team|department|division|unit|section|branch|office|agency|organization|authority|body|council|board|committee|commission|panel|high|risk|low|medium|large|small|big|little|short|long|tall|wide|narrow|deep|shallow|thick|thin|heavy|light|strong|weak|hard|soft|hot|cold|warm|cool|dry|wet|full|empty|new|old|young|rich|poor|good|bad|right|wrong|true|false|real|fake|sure|certain|clear|unclear|open|closed|free|busy|safe|dangerous|important|significant|major|minor|main|key|primary|secondary|final|initial|first|last|next|previous|early|late|recent|current|past|future|present|absent|available|possible|impossible|likely|unlikely|necessary|essential|basic|simple|complex|easy|difficult|quick|slow|fast|steady|stable|variable|constant|regular|irregular|normal|abnormal|natural|artificial|public|private|general|specific|particular|special|common|typical|standard|average|ordinary|usual|unusual|rare|unique|different|similar|same|equal|equal|total|complete|whole|entire|full|partial|individual|personal|social|political|economic|financial|commercial|legal|official|formal|informal|direct|indirect|active|passive|positive|negative|successful|unsuccessful|effective|ineffective|efficient|inefficient|productive|unproductive|constructive|destructive|creative|original|traditional|conventional|modern|ancient|recent|current|present|future|past|historical|technical|practical|theoretical|academic|scientific|medical|clinical|professional|industrial|agricultural|environmental|global|international|national|regional|local|urban|rural|suburban|metropolitan|central|federal|state|local|military|civil|criminal|civil|judicial|legislative|executive|administrative|managerial|supervisory|operative|operative|operative)\b', r'\1 \2'),
+
         # adopt + when/where/etc
         (r'\b(adopt)(when|where|what|which|how)\b', r'\1 \2'),
         (r'\b(adopt)(the|a|an)\b', r'\1 \2'),
@@ -162,6 +166,15 @@ def fix_word_boundaries(text: str) -> str:
 
         # a + purpose/nature/etc
         (r'\b(a)(purpose|nature|risk|use|basis)\b', r'\1 \2'),
+
+        # team + discovers/reports/etc
+        (r'\b(team)(discovers|reports|finds|identifies|detects|observes|notices|recognizes|sees|views|regards|considers|thinks|believes|assumes|expects|anticipates|predicts|forecasts|projects|estimates|calculates|computes|determines|decides|chooses|selects|picks|prefers|likes|loves|hates|dislikes|wants|needs|requires|demands|requests|asks|seeks|searches|looks|hopes|wishes|desires|intends|plans|prepares|organizes|arranges|manages|controls|directs|leads|guides|teaches|trains|educates|instructs|coaches|mentors|advises|consults|assists|helps|supports|serves|works|operates|functions|acts|behaves|performs|executes|implements|conducts|carries|does|makes|creates|produces|builds|constructs|develops|designs|plans|organizes|manages|administers|supervises|oversees|monitors|checks|tests|examines|inspects|investigates|analyzes|studies|researches|explores|discovers|finds|identifies|detects|observes|notices|recognizes|sees|views|regards|considers|thinks|believes|assumes|expects|anticipates|predicts|forecasts|projects|estimates|calculates|computes|determines|decides|chooses|selects|picks|prefers|likes|loves|hates|dislikes|wants|needs|requires|demands|requests|asks|seeks|searches|looks|hopes|wishes|desires|intends|plans|prepares)\b', r'\1 \2'),
+
+        # quarter + as/when/etc
+        (r'\b(quarter)(as|when|where|while|after|before|during|since|until|till)\b', r'\1 \2'),
+
+        # Common noun + verb patterns (lowercase-lowercase)
+        (r'\b(customer|client|user|member|employee|staff|worker|manager|director|officer|official|representative|agent|advisor|consultant|expert|specialist|analyst|researcher)(discovers|reports|finds|identifies|detects|observes|notices|recognizes|sees|views|regards|considers|thinks|believes|assumes|expects|anticipates|predicts|forecasts|projects|estimates|calculates|computes|determines|decides|chooses|selects|picks|prefers|likes|loves|hates|dislikes|wants|needs|requires|demands|requests|asks|seeks|searches|looks|hopes|wishes|desires|intends|plans|prepares|organizes|arranges|manages|controls|directs|leads|guides|teaches|trains|educates|instructs|coaches|mentors|advises|consults|assists|helps|supports|serves|works|operates|functions|acts|behaves|performs|executes|implements|conducts|carries|does|makes|creates|produces|builds|constructs|develops|designs)\b', r'\1 \2'),
     ]
 
     for pattern, replacement in replacements:
