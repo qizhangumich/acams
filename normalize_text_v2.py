@@ -25,6 +25,128 @@ def fix_word_boundaries(text: str) -> str:
 
     result = text
 
+    # Fix reverse concatenations (spaces added inside legitimate words)
+    # These are cases where OCR added a space in the middle of a word
+    # Apply these FIRST before any other patterns
+    reverse_fixes = [
+        (r'\binform ation', 'information'),
+        (r'\bform ation', 'formation'),
+        (r'\bsec urity', 'security'),
+        (r'\bcompli ance', 'compliance'),
+        (r'\bopera tions', 'operations'),
+        (r'\bfin ance', 'finance'),
+        (r'\bmar keting', 'marketing'),
+        (r'\bsales\b', 'sales'),  # keep sales as is
+        (r'\btech nology', 'technology'),
+        (r'\bprod uct', 'product'),
+        (r'\bengi neering', 'engineering'),
+        (r'\bresearch\b', 'research'),  # keep research as is
+        (r'\bdevel opment', 'development'),
+        (r'\bau dit', 'audit'),
+        (r'\bacc ounting', 'accounting'),
+        (r'\bhu man', 'human'),
+        (r'\bresour ces', 'resources'),
+        (r'\bchallen ge', 'challenge'),
+        (r'\bconcer ned', 'concerned'),
+        (r'\binter est', 'interest'),
+        (r'\bimpor tance', 'importance'),
+        (r'\bessen tial', 'essential'),
+        (r'\bnece ssary', 'necessary'),
+        (r'\bimpor tant', 'important'),
+        (r'\bsig nificant', 'significant'),
+        (r'\bacci dentally', 'accidentally'),
+        (r'\baccou nting', 'accounting'),
+        (r'\baddi tional', 'additional'),
+        (r'\badmini stration', 'administration'),
+        (r'\badvisory', 'advisory'),
+        (r'\bappro ach', 'approach'),
+        (r'\bappro priate', 'appropriate'),
+        (r'\bassoc iation', 'association'),
+        (r'\bautho rity', 'authority'),
+        (r'\bavail able', 'available'),
+        (r'\bcharac teristic', 'characteristic'),
+        (r'\bcompen sation', 'compensation'),
+        (r'\bcompli ance', 'compliance'),
+        (r'\bconse quence', 'consequence'),
+        (r'\bconsi der', 'consider'),
+        (r'\bconti nue', 'continue'),
+        (r'\bconve nience', 'convenience'),
+        (r'\bcorpo rate', 'corporate'),
+        (r'\bcurr ency', 'currency'),
+        (r'\bdecla ration', 'declaration'),
+        (r'\bdefi nition', 'definition'),
+        (r'\bdepart ment', 'department'),
+        (r'\bdesc ription', 'description'),
+        (r'\bdevia tion', 'deviation'),
+        (r'\bdiscri mination', 'discrimination'),
+        (r'\bdocu mentation', 'documentation'),
+        (r'\benforcement', 'enforcement'),
+        (r'\benviron ment', 'environment'),
+        (r'\bequ ipment', 'equipment'),
+        (r'\bestab lishment', 'establishment'),
+        (r'\bevalua tion', 'evaluation'),
+        (r'\bexami nation', 'examination'),
+        (r'\bexpe rience', 'experience'),
+        (r'\bexpla nation', 'explanation'),
+        (r'\bidenti fication', 'identification'),
+        (r'\bimpor tation', 'importation'),
+        (r'\bimpro vement', 'improvement'),
+        (r'\bindi vidual', 'individual'),
+        (r'\binfo rmation', 'information'),
+        (r'\binsti tution', 'institution'),
+        (r'\binte grity', 'integrity'),
+        (r'\bintera ction', 'interaction'),
+        (r'\binvest ment', 'investment'),
+        (r'\binvo lvement', 'involvement'),
+        (r'\bknow ledge', 'knowledge'),
+        (r'\bmain tenance', 'maintenance'),
+        (r'\bmanage ment', 'management'),
+        (r'\bmecha nism', 'mechanism'),
+        (r'\bmoni toring', 'monitoring'),
+        (r'\bneces sary', 'necessary'),
+        (r'\bnotifi cation', 'notification'),
+        (r'\bopera tion', 'operation'),
+        (r'\bpartici pation', 'participation'),
+        (r'\bperfor mance', 'performance'),
+        (r'\bpermit ting', 'permitting'),
+        (r'\bposi tion', 'position'),
+        (r'\bpossi bility', 'possibility'),
+        (r'\bproce dure', 'procedure'),
+        (r'\bprovi sion', 'provision'),
+        (r'\breco gnition', 'recognition'),
+        (r'\bregi stration', 'registration'),
+        (r'\bregu latory', 'regulatory'),
+        (r'\brela tionship', 'relationship'),
+        (r'\brequi rement', 'requirement'),
+        (r'\bres ponse', 'response'),
+        (r'\bres ponsible', 'responsible'),
+        (r'\bsecur ity', 'security'),
+        (r'\bsimi lar', 'similar'),
+        (r'\bsitu ation', 'situation'),
+        (r'\bspecia lized', 'specialized'),
+        (r'\bstruc ture', 'structure'),
+        (r'\bsugge stion', 'suggestion'),
+        (r'\bsuper vision', 'supervision'),
+        (r'\btransa ction', 'transaction'),
+        (r'\btransfe rring', 'transferring'),
+        (r'\btransfor mation', 'transformation'),
+        (r'\btrans mission', 'transmission'),
+        (r'\btranspa rency', 'transparency'),
+        (r'\bunder stand', 'understand'),
+        (r'\bunder standing', 'understanding'),
+        (r'\busually', 'usually'),
+        (r'\bvaria tion', 'variation'),
+        (r'\bwithdra wal', 'withdrawal'),
+        (r'\bwithdra wing', 'withdrawing'),
+    ]
+
+    for pattern, replacement in reverse_fixes:
+        old_result = result
+        result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
+        # Debug: print if something changed
+        if old_result != result and 'inform' in old_result.lower():
+            print(f"DEBUG: Applied pattern '{pattern}' - changed text")
+
     # 1. Fix lowercase letter followed by uppercase letter (most common OCR error)
     result = re.sub(r'([a-z])([A-Z][a-z])', r'\1 \2', result)
 
@@ -90,8 +212,8 @@ def fix_word_boundaries(text: str) -> str:
         # Head + of + information
         (r"\b(head)('s)?(of)(information|security|compliance|operations)\b", r'\1\2 \3 \4', re.IGNORECASE),
 
-        # Fix "ofinformation" -> "of information"
-        (r"(of)(information|security|compliance|operations|risk|finance|legal|marketing|sales|technology|product|engineering|research|development|audit|accounting|human|resources|course|charge|concern|interest|importance|value|use|fact|matter|issue|question|problem|nature|purpose|scope|extent|basis|case|instance|example|sample|type|kind|sort|form|shape|size|piece|part|portion|segment|section|chapter|paragraph|sentence|phrase|word|letter|character|symbol|sign|mark|token|emblem|badge|crest|seal|stamp|brand|label|tag|ticket|card|pass|permit|license|certificate|diploma|degree|qualification|credential|document|paper|file|record|report|account|story|tale|narrative|history|chronicle|annal|archive|library|collection|repository|store|cache|stock|pile|heap|stack|bundle|package|parcel|pack|packet|box|case|container|vessel|receptacle|any|all|each|every|some|many|few|no|none|certain|specific|particular|various|different|multiple|several|numerous|countless|many|much|little|less|more|most|least)", r'\1 \2', re.IGNORECASE),
+        # Fix "ofinformation" -> "of information" (use word boundary to avoid splitting "information")
+        (r"\b(of)(information|security|compliance|operations|risk|finance|legal|marketing|sales|technology|product|engineering|research|development|audit|accounting|human|resources|course|charge|concern|interest|importance|value|use|fact|matter|issue|question|problem|nature|purpose|scope|extent|basis|case|instance|example|sample|type|kind|sort|form|shape|size|piece|part|portion|segment|section|chapter|paragraph|sentence|phrase|word|letter|character|symbol|sign|mark|token|emblem|badge|crest|seal|stamp|brand|label|tag|ticket|card|pass|permit|license|certificate|diploma|degree|qualification|credential|document|paper|file|record|report|account|story|tale|narrative|history|chronicle|annal|archive|library|collection|repository|store|cache|stock|pile|heap|stack|bundle|package|parcel|pack|packet|box|case|container|vessel|receptacle|any|all|each|every|some|many|few|no|none|certain|specific|particular|various|different|multiple|several|numerous|countless|much|little|less|more|most|least)\b", r'\1 \2', re.IGNORECASE),
 
         # Fix "is/accountable/ultimately/etc + word"
         (r"(is|are|was|were|be|been|being|have|has|had|do|does|did|will|would|could|should|may|might|must|can|not)(ultimately|actually|really|truly|certainly|definitely|probably|possibly|perhaps|maybe|surely|clearly|obviously|evidently|naturally|of|course|indeed|in|fact|no|doubt|without|doubt|beyond|doubt|out|of|question|for|sure|certain|sure|positive|confident|convinced|satisfied|content|happy|pleased|delighted|thrilled|excited|enthusiastic|eager|keen|anxious|worried|concerned|troubled|disturbed|upset|angry|mad|furious|irate|outraged|offended|hurt|wounded|injured|damaged|harmed|impaired|disabled|handicapped|disadvantaged|deprived|needy|poor|impoverished|destitute|penniless|broke|bankrupt|insolvent)", r'\1 \2', re.IGNORECASE),
