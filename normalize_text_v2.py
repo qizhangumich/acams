@@ -18,6 +18,19 @@ def save_json(data: dict, file_path: str) -> None:
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
+    # Debug: verify what was saved
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+        if 'inform ation' in content[:5000]:  # Check first part of file
+            print(f"DEBUG: Saved file still contains 'inform ation' in first 5000 chars")
+            # Find a specific instance
+            idx = content.find('inform ation')
+            print(f"  Context: {content[max(0, idx-50):idx+100]}...")
+        elif 'information' in content[:5000]:
+            print(f"DEBUG: Saved file contains 'information' in first 5000 chars")
+        else:
+            print(f"DEBUG: Neither 'inform ation' nor 'information' in first 5000 chars")
+
 def fix_word_boundaries(text: str) -> str:
     """Fix common word boundary issues"""
     if not text:
@@ -144,8 +157,14 @@ def fix_word_boundaries(text: str) -> str:
         old_result = result
         result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
         # Debug: print if something changed
-        if old_result != result and 'inform' in old_result.lower():
-            print(f"DEBUG: Applied pattern '{pattern}' - changed text")
+        if old_result != result:
+            if 'inform' in old_result.lower() or 'inform' in result.lower():
+                print(f"DEBUG: Applied pattern '{pattern}'")
+                print(f"  Before (snippet): {old_result[old_result.lower().find('inform'):old_result.lower().find('inform')+20]}...")
+                print(f"  After (snippet): {result[result.lower().find('inform'):result.lower().find('inform')+20]}...")
+                print(f"  Changed: {old_result != result}")
+                print(f"  'information' in result: {'information' in result}")
+                print(f"  'inform ation' in result: {'inform ation' in result}")
 
     # 1. Fix lowercase letter followed by uppercase letter (most common OCR error)
     result = re.sub(r'([a-z])([A-Z][a-z])', r'\1 \2', result)
@@ -266,12 +285,24 @@ def normalize_question(question: dict) -> dict:
     if 'options' in result:
         normalized_options = {}
         for key, value in result['options'].items():
-            normalized_options[key] = fix_word_boundaries(value)
+            normalized_value = fix_word_boundaries(value)
+            # Debug: check if option F was fixed
+            if key == 'F' and 'inform ation' in value and 'information' in normalized_value:
+                print(f"DEBUG: Fixed option F - 'inform ation' -> 'information'")
+            elif key == 'F' and 'inform ation' in value:
+                print(f"DEBUG: Option F still has 'inform ation': {normalized_value[:80]}")
+            normalized_options[key] = normalized_value
         result['options'] = normalized_options
 
     # Normalize explanation
     if 'explanation' in result:
-        result['explanation'] = fix_word_boundaries(result['explanation'])
+        normalized_explanation = fix_word_boundaries(result['explanation'])
+        # Debug: check if explanation was fixed
+        if 'inform ation' in result['explanation'] and 'information' in normalized_explanation:
+            print(f"DEBUG: Fixed explanation - 'inform ation' -> 'information'")
+        elif 'inform ation' in result['explanation']:
+            print(f"DEBUG: Explanation still has 'inform ation'")
+        result['explanation'] = normalized_explanation
 
     return result
 
