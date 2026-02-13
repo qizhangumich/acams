@@ -2872,10 +2872,10 @@
     "question": "How does the Egmont Group assist financial intelligence unit members to accomplish their goals? (Select Three.)",
     "options": {
       "A": "Provides support to expand and systematize cooperation related to the reciprocal exchange of information",
-      "C": "Develops official lists of suspected terrorists on a globally coordinated basis by relevant authorities",
-      "D": "Encourages operational autonomy of financial intelligence units",
-      "E": "Maintains uniform global form ats for funds transfers that assist in the detection of money laundering",
-      "F": "Supplies information on the common money laundering tactics used by terrorists and financial supporters of terrorism"
+      "B": "Develops official lists of suspected terrorists on a globally coordinated basis by relevant authorities",
+      "C": "Encourages operational autonomy of financial intelligence units",
+      "D": "Maintains uniform global form ats for funds transfers that assist in the detection of money laundering",
+      "E": "Supplies information on the common money laundering tactics used by terrorists and financial supporters of terrorism"
     },
     "correct_answers": [
       "A",
