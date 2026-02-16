@@ -109,6 +109,7 @@ export async function POST(
     // 6. Build system prompt (fixed and restrictive)
     const optionsText = question.options && typeof question.options === 'object' && !Array.isArray(question.options)
       ? Object.entries(question.options as Record<string, string>)
+          .sort(([a], [b]) => a.localeCompare(b))
           .map(([key, value]) => `${key}: ${value}`)
           .join('\n')
       : 'No options available'

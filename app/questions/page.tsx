@@ -707,7 +707,9 @@ export default function QuestionPage() {
 
         {/* Options */}
         <div className={styles.optionsContainer}>
-          {question.options && Object.entries(question.options).map(([key, value]) => {
+          {question.options && Object.entries(question.options)
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([key, value]) => {
             const isSelected = selectedAnswers.includes(key)
             const isCorrectAnswer = question.correct_answers.includes(key)
             const showCorrectness = isSubmitted
