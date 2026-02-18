@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+GIT#!/usr/bin/env python3
 import json
 import re
 import sys
