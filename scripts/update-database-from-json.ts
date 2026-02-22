@@ -67,6 +67,7 @@ async function updateDatabaseFromJSON() {
         await prisma.question.create({
           data: {
             id: questionData.id,
+            index: questionData.id - 1, // 0-based index
             domain: questionData.domain,
             question_text: questionData.question,
             options: questionData.options,
