@@ -7,7 +7,7 @@
 
 import { readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import { createOpenAI } from '@openai/openai'
+import OpenAI from 'openai'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
