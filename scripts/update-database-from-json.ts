@@ -53,7 +53,13 @@ async function updateDatabaseFromJSON() {
       // Check if question exists in database
       const existing = await prisma.question.findUnique({
         where: { id: questionData.id },
-        select: { id: true, question_text: true, options: true },
+        select: {
+          id: true,
+          question_text: true,
+          options: true,
+          explanation_ai_en: true,
+          explanation_ai_ch: true,
+        },
       })
 
       if (!existing) {
@@ -75,7 +81,9 @@ async function updateDatabaseFromJSON() {
         // Compare with existing data to see if update is needed
         const needsUpdate =
           JSON.stringify(existing.options) !==
-          JSON.stringify(questionData.options)
+          JSON.stringify(questionData.options) ||
+          existing.explanation_ai_en !== (questionData.explanation_ai_en || null) ||
+          existing.explanation_ai_ch !== (questionData.explanation_ai_ch || null)
 
         if (needsUpdate) {
           console.log(`  Question ${questionData.id}: Updating...`)
