@@ -70,19 +70,7 @@ ${optionsText}
 
 Correct Answer(s): ${correctAnswers.join(', ')}
 
-Please provide a Chinese explanation following the format above.`
-
-The user wants to learn and understand the material, so be thorough and educational. Make sure your explanation is in Chinese only, no English.`
-
-Remember: Return ONLY the Chinese explanation, no English at all. No markdown formatting, just plain Chinese text.`
-
-### 正确答案
-
-### 错误选项
-
-### 总结`
-
-Explain the correct answers clearly and why the incorrect answers are wrong. Focus on practical application in AML/CFT compliance.`;
+Please provide a Chinese explanation following the format above.`;
 
   try {
     const response = await openai.chat.completions.create({
