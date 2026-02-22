@@ -43,8 +43,9 @@ async function fixQuestion162() {
   }
 
   // Check if options need fixing
-  const needsFix = Object.keys(fixedOptions).some(key => !(key in existing.options)) ||
-                    JSON.stringify(existing.options) !== JSON.stringify(fixedOptions)
+  const needsFix = typeof existing.options === 'object' && existing.options !== null &&
+                    (Object.keys(fixedOptions).some(key => !(key in existing.options)) ||
+                     JSON.stringify(existing.options) !== JSON.stringify(fixedOptions))
 
   if (!needsFix) {
     console.log('✅ Question 162 is already correct!')
