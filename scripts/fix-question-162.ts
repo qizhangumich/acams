@@ -43,8 +43,9 @@ async function fixQuestion162() {
   }
 
   // Check if options need fixing
+  const optionsAsRecord = existing.options as Record<string, unknown>
   const needsFix = typeof existing.options === 'object' && existing.options !== null &&
-                    (Object.keys(fixedOptions).some(key => !(key in existing.options as Record<string, unknown>)) ||
+                    (Object.keys(fixedOptions).some(key => !(key in optionsAsRecord)) ||
                      JSON.stringify(existing.options) !== JSON.stringify(fixedOptions))
 
   if (!needsFix) {
