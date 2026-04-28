@@ -239,7 +239,7 @@
 .explanationText {
   line-height: 1.7;
   color: #1f2937;
-  white-space: pre-wrap;
+  white-space: normal;
   word-wrap: break-word;
 }
 
