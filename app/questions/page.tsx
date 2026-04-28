@@ -26,7 +26,6 @@ interface Question {
   options: Record<string, string>
   correct_answers: string[]
   explanation: string
-  explanation_ai_en?: string | null
   explanation_ai_ch?: string | null
 }
 
@@ -73,7 +72,7 @@ export default function QuestionPage() {
   
   // Explanation panel state (UI-only, not persisted)
   const [isExplanationOpen, setIsExplanationOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<'official' | 'ai_en' | 'ai_ch'>('official')
+  const [activeTab, setActiveTab] = useState<'official' | 'ai_ch'>('official')
   
   // Chat state
   const [chatMessages, setChatMessages] = useState<Array<{
@@ -901,13 +900,6 @@ export default function QuestionPage() {
                   Official
                 </button>
                 <button
-                  className={`${styles.tab} ${activeTab === 'ai_en' ? styles.tabActive : ''}`}
-                  onClick={() => setActiveTab('ai_en')}
-                  type="button"
-                >
-                  AI (EN)
-                </button>
-                <button
                   className={`${styles.tab} ${activeTab === 'ai_ch' ? styles.tabActive : ''}`}
                   onClick={() => setActiveTab('ai_ch')}
                   type="button"
@@ -921,11 +913,6 @@ export default function QuestionPage() {
                 {activeTab === 'official' && (
                   <div className={styles.explanationText}>
                     {question.explanation || 'No official explanation available.'}
-                  </div>
-                )}
-                {activeTab === 'ai_en' && (
-                  <div className={styles.explanationText}>
-                    {question.explanation_ai_en || 'AI explanation in English is not available.'}
                   </div>
                 )}
                 {activeTab === 'ai_ch' && (

@@ -24,7 +24,6 @@ interface Question {
   options: Record<string, string>
   correct_answers: string[]
   explanation: string
-  explanation_ai_en?: string | null
   explanation_ai_ch?: string | null
 }
 
@@ -52,7 +51,7 @@ export default function ReviewModePage() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState<'official' | 'ai_en' | 'ai_ch'>('official')
+  const [activeTab, setActiveTab] = useState<'official' | 'ai_ch'>('official')
 
   useEffect(() => {
     if (questionId) {
@@ -264,13 +263,6 @@ export default function ReviewModePage() {
                 Official
               </button>
               <button
-                className={`${styles.tab} ${activeTab === 'ai_en' ? styles.tabActive : ''}`}
-                onClick={() => setActiveTab('ai_en')}
-                type="button"
-              >
-                AI (EN)
-              </button>
-              <button
                 className={`${styles.tab} ${activeTab === 'ai_ch' ? styles.tabActive : ''}`}
                 onClick={() => setActiveTab('ai_ch')}
                 type="button"
@@ -284,11 +276,6 @@ export default function ReviewModePage() {
               {activeTab === 'official' && (
                 <div className={styles.explanationText}>
                   {question.explanation || 'No official explanation available.'}
-                </div>
-              )}
-              {activeTab === 'ai_en' && (
-                <div className={styles.explanationText}>
-                  {question.explanation_ai_en || 'AI explanation in English is not available.'}
                 </div>
               )}
               {activeTab === 'ai_ch' && (
