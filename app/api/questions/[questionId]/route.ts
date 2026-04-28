@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromSession } from '@/lib/auth/session'
-import { prisma } from '@/lib/prisma'
+import { getQuestionById } from '@/lib/progress/service'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,20 +44,7 @@ export async function GET(
       )
     }
 
-    // Get question (READ-ONLY)
-    const question = await prisma.question.findUnique({
-      where: { id: questionId },
-      select: {
-        id: true,
-        domain: true,
-        question_text: true,
-        options: true,
-        correct_answers: true,
-        explanation: true,
-        explanation_ai_en: true,
-        explanation_ai_ch: true,
-      },
-    })
+    const question = await getQuestionById(questionId)
 
     if (!question) {
       return NextResponse.json(

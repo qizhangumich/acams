@@ -8,6 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { getQuestionByIndex } from '@/lib/progress/service'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -44,21 +45,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get next question by index
-    const nextQuestion = await prisma.question.findUnique({
-      where: { index: nextIndex },
-      select: {
-        id: true,
-        index: true,
-        domain: true,
-        question_text: true,
-        options: true,
-        correct_answers: true,
-        explanation: true,
-        explanation_ai_en: true,
-        explanation_ai_ch: true,
-      },
-    })
+    const nextQuestion = await getQuestionByIndex(nextIndex)
 
     if (!nextQuestion) {
       return NextResponse.json(

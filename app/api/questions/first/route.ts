@@ -4,28 +4,34 @@
  * Returns the first question from the database (index = 0).
  */
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { getUserFromSession } from '@/lib/auth/session'
+import { getQuestionStateByIndex } from '@/lib/progress/service'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    // Get first question (index = 0)
-    const firstQuestion = await prisma.question.findUnique({
-      where: { index: 0 },
-      select: {
-        id: true,
-        index: true,
-        domain: true,
-        question_text: true,
-        options: true,
-        correct_answers: true,
-        explanation: true,
-        explanation_ai_en: true,
-        explanation_ai_ch: true,
-      },
-    })
+    const sessionToken = request.cookies.get('session_token')?.value
+
+    if (!sessionToken) {
+      return NextResponse.json(
+        { success: false, message: 'Not authenticated' },
+        { status: 401 }
+      )
+    }
+
+    const user = await getUserFromSession(sessionToken)
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: 'Invalid session' },
+        { status: 401 }
+      )
+    }
+
+    const firstQuestion = await getQuestionStateByIndex(user.id, 0)
 
     if (!firstQuestion) {
       return NextResponse.json(
@@ -39,9 +45,10 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      index: firstQuestion.index,
+      index: firstQuestion.currentIndex,
       totalQuestions,
-      question: firstQuestion,
+      question: firstQuestion.question,
+      progress: firstQuestion.progress,
     })
   } catch (error) {
     console.error('[questions/first] Error:', error)

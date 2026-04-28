@@ -184,9 +184,10 @@ export default function QuestionPage() {
       if (typeof data.totalQuestions === 'number') {
         setTotalQuestions(data.totalQuestions)
       }
-      setProgress({ status: 'not_started' })
-      setSelectedAnswers([])
-      setHasSubmitted(false)
+      const restoredProgress = data.progress || { status: 'not_started' }
+      setProgress(restoredProgress)
+      setSelectedAnswers(restoredProgress.selected_answer || [])
+      setHasSubmitted(restoredProgress.status === 'correct' || restoredProgress.status === 'wrong')
     } catch (err) {
       console.error('Error loading question by index:', err)
       setError(err instanceof Error ? err.message : 'Failed to load question')
@@ -313,9 +314,12 @@ export default function QuestionPage() {
           if (typeof firstQuestionData.totalQuestions === 'number') {
             setTotalQuestions(firstQuestionData.totalQuestions)
           }
-          setProgress({ status: 'not_started' })
-          setSelectedAnswers([])
-          setHasSubmitted(false) // Reset submission state
+          const restoredProgress = firstQuestionData.progress || { status: 'not_started' }
+          setProgress(restoredProgress)
+          setSelectedAnswers(restoredProgress.selected_answer || [])
+          setHasSubmitted(
+            restoredProgress.status === 'correct' || restoredProgress.status === 'wrong'
+          )
           return
         } catch (firstQuestionErr) {
           console.error('Error loading first question:', firstQuestionErr)
@@ -382,8 +386,52 @@ export default function QuestionPage() {
     }
   }
 
+  async function submitCurrentAnswer() {
+    if (!question || selectedAnswers.length === 0) {
+      return false
+    }
+
+    const response = await fetch('/api/questions/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        questionId: question.id,
+        selectedOptions: selectedAnswers,
+        currentIndex: currentIndex ?? undefined,
+      }),
+    })
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        router.push('/login')
+        return false
+      }
+
+      const errorData = await response.json().catch(() => null)
+      throw new Error(errorData?.message || 'Failed to submit answer')
+    }
+
+    const data = await response.json()
+
+    if (!data.success) {
+      throw new Error(data.message || 'Failed to submit answer')
+    }
+
+    if (typeof data.currentIndex === 'number') {
+      setCurrentIndex(data.currentIndex)
+    }
+
+    setProgress(data.progress)
+    setSelectedAnswers(data.progress?.selected_answer || [])
+    setHasSubmitted(true)
+
+    return true
+  }
+
   // Submit answer to backend
-  // HARD, UNAVOIDABLE answer submission
   async function handleSubmit() {
     if (!question || selectedAnswers.length === 0) {
       return
@@ -392,42 +440,7 @@ export default function QuestionPage() {
     try {
       setSubmitting(true)
       setError(null)
-
-      // Call POST /api/answer (MANDATORY)
-      const response = await fetch('/api/answer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          questionId: question.id,
-          selectedAnswers: selectedAnswers,
-        }),
-      })
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          router.push('/login')
-          return
-        }
-        throw new Error('Failed to submit answer')
-      }
-
-      const data = await response.json()
-
-      if (!data.success) {
-        throw new Error(data.message || 'Failed to submit answer')
-      }
-
-      // Update progress with backend response
-      setProgress({
-        status: data.status,
-        selected_answer: data.selectedAnswers,
-      })
-      
-      // Mark as submitted to show "Next Question" button
-      setHasSubmitted(true)
+      await submitCurrentAnswer()
     } catch (err) {
       console.error('Error submitting answer:', err)
       setError(err instanceof Error ? err.message : 'Failed to submit answer')
@@ -534,7 +547,6 @@ export default function QuestionPage() {
   // Only show Next button if we have an index and there are more questions
   const hasNextQuestion = currentIndex !== null && currentIndex + 1 < totalQuestions
 
-  // HARD, UNAVOIDABLE: Next button MUST call /api/answer before navigation
   async function handleNextQuestion() {
     if (currentIndex === null) {
       // Index is unknown (e.g., resumed from DB); do not attempt next
@@ -546,43 +558,10 @@ export default function QuestionPage() {
       try {
         setSubmitting(true)
         setError(null)
-
-        // 1. Call POST /api/answer (MANDATORY)
-        const answerResponse = await fetch('/api/answer', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            questionId: question.id,
-            selectedAnswers: selectedAnswers,
-          }),
-        })
-
-        if (!answerResponse.ok) {
-          if (answerResponse.status === 401) {
-            router.push('/login')
-            return
-          }
-          throw new Error('Failed to submit answer')
+        const submitted = await submitCurrentAnswer()
+        if (!submitted) {
+          return
         }
-
-        const answerData = await answerResponse.json()
-
-        if (!answerData.success) {
-          throw new Error(answerData.message || 'Failed to submit answer')
-        }
-
-        // 2. Wait for success
-        // Answer is now saved to database
-
-        // 3. THEN navigate to next question
-        setHasSubmitted(true)
-        setProgress({
-          status: answerData.status,
-          selected_answer: answerData.selectedAnswers,
-        })
       } catch (err) {
         console.error('Error submitting answer before navigation:', err)
         setError(err instanceof Error ? err.message : 'Failed to submit answer')

@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
       prisma.user.update({
         where: { id: userId },
         data: {
+          last_question_id: null,
           current_index: null,
           current_answers: Prisma.JsonNull,
         },

@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromSession } from '@/lib/auth/session'
 import { prisma } from '@/lib/prisma'
-import { updateLastQuestionId } from '@/lib/progress/restore'
+import { getQuestionStateById, submitQuestionAnswer } from '@/lib/progress/service'
 import { z } from 'zod'
 
 const requestSchema = z.object({
@@ -47,161 +47,35 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { question_id, selected_answer } = requestSchema.parse(body)
-    // Note: is_correct is ignored - backend verifies independently
-
-    // Verify question exists
-    const question = await prisma.question.findUnique({
-      where: { id: question_id },
+    const result = await submitQuestionAnswer({
+      userId,
+      questionId: question_id,
+      selectedAnswers: selected_answer,
     })
 
-    if (!question) {
+    if (!result) {
       return NextResponse.json(
         { success: false, message: 'Question not found' },
         { status: 404 }
       )
     }
 
-    // Backend verifies correctness (don't trust frontend)
-    const correctAnswers = Array.isArray(question.correct_answers)
-      ? question.correct_answers
-      : [question.correct_answers]
-    
-    const isCorrectBackend =
-      selected_answer.length === correctAnswers.length &&
-      selected_answer.every((answer) => correctAnswers.includes(answer)) &&
-      correctAnswers.every((answer) => selected_answer.includes(answer))
-
-    // Determine status (backend is source of truth)
-    const status = isCorrectBackend ? 'correct' : 'wrong'
-
-    // Use transaction to ensure atomicity
-    await prisma.$transaction(async (tx) => {
-      // BREAKPOINT B FIX: Use userId from session (never from request body)
-      // Upsert UserProgress
-      const existingProgress = await tx.userProgress.findUnique({
-        where: {
-          user_id_question_id: {
-            user_id: userId,
-            question_id: question_id,
-          },
-        },
-      })
-
-      if (existingProgress) {
-        await tx.userProgress.update({
-          where: {
-            user_id_question_id: {
-              user_id: userId,
-              question_id: question_id,
-            },
-          },
-          data: {
-            status,
-            selected_answer,
-            updated_at: new Date(),
-          },
-        })
-      } else {
-        await tx.userProgress.create({
-          data: {
-            user_id: userId,
-            question_id: question_id,
-            status,
-            selected_answer,
-          },
-        })
-      }
-
-      // BREAKPOINT B FIX: Use userId from session (never from request body)
-      // Update WrongBook if answer is wrong
-      if (!isCorrectBackend) {
-        const existingWrong = await tx.wrongBook.findUnique({
-          where: {
-            user_id_question_id: {
-              user_id: userId,
-              question_id: question_id,
-            },
-          },
-        })
-
-        if (existingWrong) {
-          // Increment wrong_count (never decrease)
-          await tx.wrongBook.update({
-            where: {
-              user_id_question_id: {
-                user_id: userId,
-                question_id: question_id,
-              },
-            },
-            data: {
-              wrong_count: existingWrong.wrong_count + 1, // Always increment, never reset
-              last_wrong_at: new Date(),
-            },
-          })
-        } else {
-          // Create new wrong book entry
-          await tx.wrongBook.create({
-            data: {
-              user_id: userId,
-              question_id: question_id,
-              wrong_count: 1,
-              last_wrong_at: new Date(),
-            },
-          })
-        }
-      }
-
-      // BREAKPOINT B FIX: Use userId from session (never from request body)
-      // Update user's last question ID
-      await updateLastQuestionId(userId, question_id)
-    })
-
-    // BREAKPOINT B FIX: Use userId from session (never from request body)
-    // Get updated progress
-    const progress = await prisma.userProgress.findUnique({
-      where: {
-        user_id_question_id: {
-          user_id: userId,
-          question_id: question_id,
-        },
-      },
-      select: {
-        status: true,
-        selected_answer: true,
-        updated_at: true,
-      },
-    })
-
-    // BREAKPOINT B FIX: Use userId from session (never from request body)
-    // Get wrong count if wrong
-    let wrong_count = null
-    if (!isCorrectBackend) {
-      const wrongBook = await prisma.wrongBook.findUnique({
-        where: {
-          user_id_question_id: {
-            user_id: userId,
-            question_id: question_id,
-          },
-        },
-        select: {
-          wrong_count: true,
-        },
-      })
-      wrong_count = wrongBook?.wrong_count || null
-    }
-
     return NextResponse.json({
       success: true,
-      progress: {
-        status: progress?.status,
-        selected_answer: progress?.selected_answer,
-        wrong_count,
-      },
+      progress: result.progress,
+      currentIndex: result.currentIndex,
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, message: error.errors[0].message },
+        { status: 400 }
+      )
+    }
+
+    if (error instanceof Error && error.message === 'Question index does not match question ID') {
+      return NextResponse.json(
+        { success: false, message: error.message },
         { status: 400 }
       )
     }
@@ -257,46 +131,11 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      const progress = await prisma.userProgress.findUnique({
-        where: {
-          user_id_question_id: {
-            user_id: user.id,
-            question_id: questionId,
-          },
-        },
-        select: {
-          status: true,
-          selected_answer: true,
-          updated_at: true,
-        },
-      })
-
-      // Get wrong count if wrong
-      let wrong_count = null
-      if (progress?.status === 'wrong') {
-        const wrongBook = await prisma.wrongBook.findUnique({
-          where: {
-            user_id_question_id: {
-              user_id: user.id,
-              question_id: questionId,
-            },
-          },
-          select: {
-            wrong_count: true,
-          },
-        })
-        wrong_count = wrongBook?.wrong_count || null
-      }
+      const questionState = await getQuestionStateById(user.id, questionId)
 
       return NextResponse.json({
         success: true,
-        progress: progress
-          ? {
-              status: progress.status,
-              selected_answer: progress.selected_answer,
-              wrong_count,
-            }
-          : null,
+        progress: questionState?.progress ?? null,
       })
     }
 

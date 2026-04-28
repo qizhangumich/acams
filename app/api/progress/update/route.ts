@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromSession } from '@/lib/auth/session'
-import { prisma } from '@/lib/prisma'
+import { updateCurrentQuestionIndex } from '@/lib/progress/service'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,15 +45,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // BREAKPOINT B FIX: Use userId from session (never from request body)
-    // Update user's current_index
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        current_index: currentIndex,
-        last_active_at: new Date(),
-      },
-    })
+    await updateCurrentQuestionIndex(userId, currentIndex)
 
     return NextResponse.json({
       success: true,

@@ -8,6 +8,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { getUserFromSession } from '@/lib/auth/session'
+import { getQuestionStateByIndex } from '@/lib/progress/service'
 import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
@@ -42,23 +44,27 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get question by index
-    const question = await prisma.question.findUnique({
-      where: { index },
-      select: {
-        id: true,
-        index: true,
-        domain: true,
-        question_text: true,
-        options: true,
-        correct_answers: true,
-        explanation: true,
-        explanation_ai_en: true,
-        explanation_ai_ch: true,
-      },
-    })
+    const sessionToken = request.cookies.get('session_token')?.value
 
-    if (!question) {
+    if (!sessionToken) {
+      return NextResponse.json(
+        { success: false, message: 'Not authenticated' },
+        { status: 401 }
+      )
+    }
+
+    const user = await getUserFromSession(sessionToken)
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: 'Invalid session' },
+        { status: 401 }
+      )
+    }
+
+    const state = await getQuestionStateByIndex(user.id, index)
+
+    if (!state) {
       return NextResponse.json(
         { success: false, message: 'Question not found' },
         { status: 404 }
@@ -67,9 +73,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      index: question.index,
+      index: state.currentIndex,
       totalQuestions,
-      question,
+      question: state.question,
+      progress: state.progress,
     })
   } catch (error) {
     console.error('[questions/by-index] Error:', error)

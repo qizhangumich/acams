@@ -18,7 +18,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromSession } from '@/lib/auth/session'
-import { prisma } from '@/lib/prisma'
+import { submitQuestionAnswer } from '@/lib/progress/service'
 
 export const dynamic = 'force-dynamic'
 
@@ -64,103 +64,39 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 4. Validate question exists (questionId MUST match Question.id)
-    const question = await prisma.question.findUnique({
-      where: { id: questionId },
-      select: {
-        id: true,
-        correct_answers: true,
-      },
+    const result = await submitQuestionAnswer({
+      userId,
+      questionId,
+      selectedAnswers,
     })
 
-    if (!question) {
+    if (!result) {
       return NextResponse.json(
         { success: false, message: 'Question not found' },
         { status: 404 }
       )
     }
 
-    // 5. Compare selectedAnswers with question.correct_answers
-    const correctAnswers = Array.isArray(question.correct_answers)
-      ? question.correct_answers
-      : [question.correct_answers]
-
-    const isCorrect =
-      selectedAnswers.length === correctAnswers.length &&
-      selectedAnswers.every((answer: string) => correctAnswers.includes(answer)) &&
-      correctAnswers.every((answer: string) => selectedAnswers.includes(answer))
-
-    const status = isCorrect ? 'correct' : 'wrong'
-
-    // 6. Upsert UserProgress (MANDATORY - using prisma.userProgress.upsert)
-    // Prisma compound unique constraint: @@unique([user_id, question_id])
-    await prisma.userProgress.upsert({
-      where: {
-        user_id_question_id: {
-          user_id: userId,
-          question_id: questionId,
-        },
-      },
-      update: {
-        status,
-        selected_answer: selectedAnswers,
-        updated_at: new Date(),
-      },
-      create: {
-        user_id: userId,
-        question_id: questionId,
-        status,
-        selected_answer: selectedAnswers,
-      },
-    })
-
-    // 7. If wrong: Upsert WrongBook (increment wrong_count)
-    if (!isCorrect) {
-      const existingWrong = await prisma.wrongBook.findUnique({
-        where: {
-          user_id_question_id: {
-            user_id: userId,
-            question_id: questionId,
-          },
-        },
-      })
-
-      if (existingWrong) {
-        await prisma.wrongBook.update({
-          where: {
-            user_id_question_id: {
-              user_id: userId,
-              question_id: questionId,
-            },
-          },
-          data: {
-            wrong_count: existingWrong.wrong_count + 1,
-            last_wrong_at: new Date(),
-          },
-        })
-      } else {
-        await prisma.wrongBook.create({
-          data: {
-            user_id: userId,
-            question_id: questionId,
-            wrong_count: 1,
-            last_wrong_at: new Date(),
-          },
-        })
-      }
-    }
-
     // 8. Log the write
-    console.log('ANSWER SAVED', userId, questionId, status)
+    console.log('ANSWER SAVED', userId, questionId, result.progress.status)
 
     // Return success response
     return NextResponse.json({
       success: true,
-      status,
-      selectedAnswers,
+      status: result.progress.status,
+      selectedAnswers: result.progress.selected_answer,
+      currentIndex: result.currentIndex,
+      progress: result.progress,
     })
   } catch (error) {
     console.error('[answer] Error:', error)
+    if (error instanceof Error && error.message === 'Question index does not match question ID') {
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 400 }
+      )
+    }
+
     return NextResponse.json(
       { success: false, message: 'Failed to save answer' },
       { status: 500 }
