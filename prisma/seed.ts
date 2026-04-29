@@ -1,8 +1,8 @@
 /**
- * Database Seed Script
- * 
- * Loads questions from questions.json into database
- * Idempotent: Can be run multiple times safely
+ * Database seed script.
+ *
+ * Loads questions from questions.json into the database.
+ * Idempotent: can be run multiple times safely.
  */
 
 import { PrismaClient } from '@prisma/client'
@@ -31,35 +31,30 @@ interface QuestionData {
 }
 
 async function main() {
-  console.log('🌱 Starting database seed...')
+  console.log('Starting database seed...')
 
-  // Load questions from JSON
   const questionsPath = join(process.cwd(), 'questions.json')
-  console.log(`📖 Loading questions from: ${questionsPath}`)
+  console.log(`Loading questions from: ${questionsPath}`)
 
   const questionsData: QuestionData[] = JSON.parse(readFileSync(questionsPath, 'utf-8'))
+  console.log(`Found ${questionsData.length} questions`)
 
-  console.log(`📊 Found ${questionsData.length} questions`)
+  const existingQuestions = await prisma.question.findMany({
+    where: { id: { in: questionsData.map((question) => question.id) } },
+    select: { id: true },
+  })
+  const existingQuestionIds = new Set(existingQuestions.map((question) => question.id))
+  const created = questionsData.filter((question) => !existingQuestionIds.has(question.id)).length
+  const updated = questionsData.length - created
 
-  // Upsert questions
-  let created = 0
-  let updated = 0
+  const chunkSize = 50
+  for (let start = 0; start < questionsData.length; start += chunkSize) {
+    const chunk = questionsData.slice(start, start + chunkSize)
 
-  for (let i = 0; i < questionsData.length; i++) {
-    const questionData = questionsData[i]
-    const questionIndex = i // 0-based index
-
-    // Check if question already exists to determine if it's a create or update
-    const existing = await prisma.question.findUnique({
-      where: { id: questionData.id },
-      select: { id: true },
-    })
-
-    if (existing) {
-      // Update existing question
-      await prisma.question.update({
-        where: { id: questionData.id },
-        data: {
+    await prisma.$transaction(
+      chunk.map((questionData, offset) => {
+        const questionIndex = start + offset
+        const data = {
           index: questionIndex,
           domain: questionData.domain,
           question_text: questionData.question,
@@ -70,41 +65,32 @@ async function main() {
           explanation_ai_ch: questionData.explanation_ai_ch || null,
           is_complete: questionData.is_complete ?? false,
           normalized_question: questionData.normalized_question || null,
-        },
+        }
+
+        return prisma.question.upsert({
+          where: { id: questionData.id },
+          create: {
+            id: questionData.id,
+            ...data,
+          },
+          update: data,
+        })
       })
-      updated++
-    } else {
-      // Create new question
-      await prisma.question.create({
-        data: {
-          id: questionData.id,
-          index: questionIndex,
-          domain: questionData.domain,
-          question_text: questionData.question,
-          options: questionData.options,
-          correct_answers: questionData.correct_answers,
-          explanation: questionData.explanation,
-          explanation_ai_en: questionData.explanation_ai_en || null,
-          explanation_ai_ch: questionData.explanation_ai_ch || null,
-          is_complete: questionData.is_complete ?? false,
-          normalized_question: questionData.normalized_question || null,
-        },
-      })
-      created++
-    }
+    )
+
+    console.log(`Seeded ${Math.min(start + chunk.length, questionsData.length)} / ${questionsData.length}`)
   }
 
-  console.log(`✅ Seed completed!`)
+  console.log('Seed completed!')
   console.log(`   Created: ${created} questions`)
   console.log(`   Updated: ${updated} questions`)
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Seed failed:', e)
+    console.error('Seed failed:', e)
     process.exit(1)
   })
   .finally(async () => {
     await prisma.$disconnect()
   })
-
