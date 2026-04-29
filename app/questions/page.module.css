@@ -77,6 +77,111 @@
   text-align: right;
 }
 
+.navigationBar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.previousButton,
+.nextTopButton {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.previousButton {
+  background-color: white;
+  color: #374151;
+  border: 2px solid #d1d5db;
+}
+
+.previousButton:hover:not(:disabled) {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.nextTopButton {
+  background-color: #2563eb;
+  color: white;
+  border: 2px solid #2563eb;
+}
+
+.nextTopButton:hover:not(:disabled) {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.previousButton:disabled,
+.nextTopButton:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+}
+
+.doneNavigator {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #f9fafb;
+}
+
+.doneNavigatorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  color: #4b5563;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.doneQuestionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.5rem, 1fr));
+  gap: 0.5rem;
+  max-height: 10.5rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.doneQuestionButton {
+  min-width: 0;
+  height: 2.25rem;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.doneQuestionButton:hover {
+  transform: translateY(-1px);
+}
+
+.doneQuestionCorrect {
+  background-color: #10b981;
+}
+
+.doneQuestionWrong {
+  background-color: #ef4444;
+}
+
+.doneQuestionCurrent {
+  outline: 3px solid #2563eb;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 1px white;
+}
+
 .domain {
   font-size: 0.875rem;
   color: #666;

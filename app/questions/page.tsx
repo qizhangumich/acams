@@ -55,6 +55,12 @@ interface ProgressResponse {
   }
 }
 
+interface DoneQuestion {
+  id: number
+  index: number
+  status: 'correct' | 'wrong'
+}
+
 export default function QuestionPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -69,6 +75,7 @@ export default function QuestionPage() {
   const [error, setError] = useState<string | null>(null)
   const [completionMessage, setCompletionMessage] = useState<string | null>(null)
   const [user, setUser] = useState<{ id: string; email: string } | null>(null)
+  const [doneQuestions, setDoneQuestions] = useState<DoneQuestion[]>([])
   
   // Explanation panel state (UI-only, not persisted)
   const [isExplanationOpen, setIsExplanationOpen] = useState(false)
@@ -119,6 +126,34 @@ export default function QuestionPage() {
 
     loadUser()
   }, [router])
+
+  async function loadDoneQuestions() {
+    try {
+      const response = await fetch('/api/questions?filter=done', {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        return
+      }
+
+      const data = await response.json()
+      if (data.success && Array.isArray(data.questions)) {
+        setDoneQuestions(
+          data.questions
+            .filter((item: DoneQuestion) => item.status === 'correct' || item.status === 'wrong')
+            .map((item: DoneQuestion) => ({
+              id: item.id,
+              index: item.index,
+              status: item.status,
+            }))
+        )
+      }
+    } catch (err) {
+      console.error('Error loading done questions:', err)
+    }
+  }
 
   // Load question and progress on page load
   useEffect(() => {
@@ -187,6 +222,7 @@ export default function QuestionPage() {
       setProgress(restoredProgress)
       setSelectedAnswers(restoredProgress.selected_answer || [])
       setHasSubmitted(restoredProgress.status === 'correct' || restoredProgress.status === 'wrong')
+      await loadDoneQuestions()
     } catch (err) {
       console.error('Error loading question by index:', err)
       setError(err instanceof Error ? err.message : 'Failed to load question')
@@ -254,6 +290,7 @@ export default function QuestionPage() {
       if (questionData.question.id) {
         loadChatHistory(questionData.question.id)
       }
+      await loadDoneQuestions()
     } catch (err) {
       console.error('Error loading specific question:', err)
       setError(err instanceof Error ? err.message : 'Failed to load question')
@@ -322,6 +359,7 @@ export default function QuestionPage() {
           setHasSubmitted(
             restoredProgress.status === 'correct' || restoredProgress.status === 'wrong'
           )
+          await loadDoneQuestions()
           return
         } catch (firstQuestionErr) {
           console.error('Error loading first question:', firstQuestionErr)
@@ -365,6 +403,7 @@ export default function QuestionPage() {
         setSelectedAnswers([])
         setHasSubmitted(false)
       }
+      await loadDoneQuestions()
     } catch (err) {
       console.error('Error loading question:', err)
       setError(err instanceof Error ? err.message : 'Failed to load question')
@@ -429,6 +468,7 @@ export default function QuestionPage() {
     setProgress(data.progress)
     setSelectedAnswers(data.progress?.selected_answer || [])
     setHasSubmitted(true)
+    await loadDoneQuestions()
 
     return true
   }
@@ -548,6 +588,47 @@ export default function QuestionPage() {
   // Determine if there's a next question available
   // Only show Next button if we have an index and there are more questions
   const hasNextQuestion = currentIndex !== null && currentIndex + 1 < totalQuestions
+  const hasPreviousQuestion = currentIndex !== null && currentIndex > 0
+
+  async function submitBeforeNavigation() {
+    if (!hasSubmitted && question && selectedAnswers.length > 0) {
+      setSubmitting(true)
+      setError(null)
+      try {
+        return await submitCurrentAnswer()
+      } catch (err) {
+        console.error('Error submitting answer before navigation:', err)
+        setError(err instanceof Error ? err.message : 'Failed to submit answer')
+        return false
+      } finally {
+        setSubmitting(false)
+      }
+    }
+
+    return true
+  }
+
+  async function handlePreviousQuestion() {
+    if (!hasPreviousQuestion || currentIndex === null) {
+      return
+    }
+
+    const canNavigate = await submitBeforeNavigation()
+    if (!canNavigate) {
+      return
+    }
+
+    await loadQuestionByIndex(currentIndex - 1)
+  }
+
+  async function handleQuestionJump(index: number) {
+    const canNavigate = await submitBeforeNavigation()
+    if (!canNavigate) {
+      return
+    }
+
+    await loadQuestionByIndex(index)
+  }
 
   async function handleNextQuestion() {
     if (currentIndex === null) {
@@ -555,24 +636,9 @@ export default function QuestionPage() {
       return
     }
 
-    // ENFORCEMENT: If answer not submitted, submit it first
-    if (!hasSubmitted && question && selectedAnswers.length > 0) {
-      try {
-        setSubmitting(true)
-        setError(null)
-        const submitted = await submitCurrentAnswer()
-        if (!submitted) {
-          return
-        }
-      } catch (err) {
-        console.error('Error submitting answer before navigation:', err)
-        setError(err instanceof Error ? err.message : 'Failed to submit answer')
-        setSubmitting(false)
-        // STOP navigation if API call fails
-        return
-      } finally {
-        setSubmitting(false)
-      }
+    const canNavigate = await submitBeforeNavigation()
+    if (!canNavigate) {
+      return
     }
 
     // If already submitted or no answer selected, proceed to next question
@@ -610,6 +676,7 @@ export default function QuestionPage() {
       setProgress({ status: 'not_started' })
       setSelectedAnswers([])
       setHasSubmitted(false) // Reset submission state for new question
+      await loadDoneQuestions()
 
       // Update progress: save the new index so user can resume from here
       try {
@@ -677,6 +744,56 @@ export default function QuestionPage() {
         {currentIndex !== null && (
           <div className={styles.questionNumber}>
             Question {currentIndex + 1} of {totalQuestions}
+          </div>
+        )}
+
+        <div className={styles.navigationBar}>
+          <button
+            type="button"
+            className={styles.previousButton}
+            onClick={handlePreviousQuestion}
+            disabled={!hasPreviousQuestion || loading || submitting}
+          >
+            Previous Question
+          </button>
+          <button
+            type="button"
+            className={styles.nextTopButton}
+            onClick={handleNextQuestion}
+            disabled={!hasNextQuestion || loading || submitting}
+          >
+            Next Question
+          </button>
+        </div>
+
+        {doneQuestions.length > 0 && (
+          <div className={styles.doneNavigator} aria-label="Answered question navigation">
+            <div className={styles.doneNavigatorHeader}>
+              <span>Answered Questions</span>
+              <span>{doneQuestions.length} done</span>
+            </div>
+            <div className={styles.doneQuestionGrid}>
+              {doneQuestions.map((item) => {
+                const isCurrent = currentIndex === item.index
+                const buttonClass = [
+                  styles.doneQuestionButton,
+                  item.status === 'correct' ? styles.doneQuestionCorrect : styles.doneQuestionWrong,
+                  isCurrent ? styles.doneQuestionCurrent : '',
+                ].filter(Boolean).join(' ')
+
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={buttonClass}
+                    onClick={() => handleQuestionJump(item.index)}
+                    aria-label={`Go to question ${item.index + 1}, ${item.status}`}
+                  >
+                    {item.index + 1}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         )}
 
