@@ -238,6 +238,9 @@ export default function QuestionPage() {
       }
 
       setQuestion(questionData.question)
+      if (typeof questionData.question.index === 'number') {
+        setCurrentIndex(questionData.question.index)
+      }
       setProgress(progress || { status: 'not_started' })
 
       // If progress exists and has selected_answer, restore it

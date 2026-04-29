@@ -46,9 +46,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (typeof currentIndex !== 'number' || currentIndex < 0) {
+    if (
+      currentIndex !== undefined &&
+      (typeof currentIndex !== 'number' || currentIndex < 0)
+    ) {
       return NextResponse.json(
-        { success: false, message: 'currentIndex is required and must be a non-negative number' },
+        { success: false, message: 'currentIndex must be a non-negative number when provided' },
         { status: 400 }
       )
     }

@@ -19,6 +19,9 @@
   border-radius: 6px;
   margin-bottom: 1rem;
   border: 1px solid #fcc;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 .backButton {
@@ -92,6 +95,8 @@
   color: #1f2937;
   margin-bottom: 2rem;
   font-weight: 500;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 .optionsContainer {
@@ -103,7 +108,8 @@
 
 .option {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  gap: 1rem;
   padding: 1rem 1.25rem;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
@@ -133,7 +139,6 @@
   background-color: #f3f4f6;
   color: #374151;
   font-weight: 600;
-  margin-right: 1rem;
   flex-shrink: 0;
 }
 
@@ -151,12 +156,13 @@
   flex: 1;
   min-width: 0;
   color: #1f2937;
+  line-height: 1.55;
   white-space: normal;
   overflow-wrap: break-word;
 }
 
 .correctBadge {
-  margin-left: auto;
+  flex-shrink: 0;
   padding: 0.25rem 0.75rem;
   background-color: #10b981;
   color: white;
@@ -166,7 +172,7 @@
 }
 
 .incorrectBadge {
-  margin-left: auto;
+  flex-shrink: 0;
   padding: 0.25rem 0.75rem;
   background-color: #ef4444;
   color: white;
@@ -243,7 +249,7 @@
   line-height: 1.7;
   color: #1f2937;
   white-space: normal;
-  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Chat Section */
