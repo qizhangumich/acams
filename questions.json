@@ -24,8 +24,8 @@
     "domain": "Compliance Standards for Anti-Money Laundering (AML) and Combating the Financing of\nTerrorism (CFT)",
     "question": "Which are key objectives of the Egmont Group? (Select Two.)",
     "options": {
-      "A": "Setting international standards that aim to prevent",
-      "B": "AML Providing a platform for the secure exchange of financial intelligence",
+      "A": "Setting international standards that aim to prevent AML",
+      "B": "Providing a platform for the secure exchange of financial intelligence",
       "C": "Serving as a prudential regulator for global financial institutions",
       "D": "Serving as an authoritative body in the field of anti-corruption",
       "E": "Serving as a united body of financial intelligence units across the world"
