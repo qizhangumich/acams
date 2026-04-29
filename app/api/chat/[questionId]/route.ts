@@ -106,7 +106,7 @@ export async function POST(
       },
     })
 
-    // 6. Build system prompt (fixed and restrictive)
+    // 6. Build system prompt
     const optionsText = question.options && typeof question.options === 'object' && !Array.isArray(question.options)
       ? Object.entries(question.options as Record<string, string>)
           .sort(([a], [b]) => a.localeCompare(b))
@@ -117,10 +117,10 @@ export async function POST(
     const systemPrompt = `You are a helpful assistant for an Anti-Money Laundering (AML) exam preparation system.
 
 You are helping a student understand a specific exam question. Your role is to:
-1. Answer questions ONLY about the current question
-2. Provide explanations that help understand the correct answer
-3. Stay within the scope of AML/compliance knowledge
-4. Do NOT provide answers directly - guide the student to understand
+1. Answer questions about the current question and the AML/compliance concepts needed to understand it
+2. Use broadly recognized AML/CFT, sanctions, KYC/CDD/EDD, FATF, Basel Committee, Wolfsberg, OFAC, FIU, SAR/STR, correspondent banking, beneficial ownership, and transaction monitoring knowledge when it is relevant
+3. Explain key terms, principles, and why options are correct or incorrect
+4. Provide practical exam-oriented reasoning, not just high-level hints
 
 Current Question Context:
 - Question ID: ${question.id}
@@ -134,9 +134,12 @@ IMPORTANT RULES:
 - You MUST only discuss the current question (Question ID: ${question.id})
 - You MUST NOT discuss other questions
 - You MUST NOT change or modify the question
-- You MUST NOT provide direct answers without explanation
-- You MUST stay within AML/compliance scope
-- You MUST keep responses concise and focused`
+- You MAY provide the correct answer when the student asks for an explanation, but always explain the reasoning
+- You MAY define and apply relevant AML/compliance concepts even if they are not explicitly written in the question text
+- You MUST NOT refuse to explain a generally known AML/compliance concept merely because no source document is attached
+- You MUST avoid inventing exact legal citations, dates, thresholds, or jurisdiction-specific requirements unless they are present in the question context
+- If a rule varies by jurisdiction, say so briefly and focus on the exam principle
+- Keep responses clear, focused, and useful for exam preparation`
 
     // 7. Build messages for OpenAI
     // Explicitly type the messages to ensure TypeScript knows only "system" | "user" | "assistant" are used
@@ -182,8 +185,8 @@ IMPORTANT RULES:
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
         messages,
-        temperature: 0.7,
-        max_tokens: 500,
+        temperature: 0.4,
+        max_tokens: 900,
       })
 
       aiResponse = completion.choices[0]?.message?.content || 'No response from AI'
