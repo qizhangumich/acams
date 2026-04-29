@@ -201,6 +201,133 @@
   overflow-wrap: break-word;
 }
 
+.tagsPanel {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #f9fafb;
+}
+
+.tagsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.tagsSaving {
+  color: #6b7280;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.tagList,
+.suggestedTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tagList {
+  margin-bottom: 0.75rem;
+}
+
+.tagChip,
+.suggestedTagButton {
+  min-height: 2rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tagChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid #bfdbfe;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.tagChip:hover {
+  border-color: #93c5fd;
+  background-color: #dbeafe;
+}
+
+.suggestedTags {
+  margin-bottom: 0.75rem;
+}
+
+.suggestedTagButton {
+  border: 1px solid #d1d5db;
+  background-color: white;
+  color: #374151;
+}
+
+.suggestedTagButton:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.noTags {
+  margin-bottom: 0.75rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.tagForm {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+}
+
+.tagInput {
+  min-width: 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  color: #1f2937;
+  font-size: 0.95rem;
+}
+
+.tagInput:focus {
+  outline: 2px solid #bfdbfe;
+  border-color: #2563eb;
+}
+
+.addTagButton {
+  padding: 0.65rem 1rem;
+  border: 1px solid #2563eb;
+  border-radius: 6px;
+  background-color: #2563eb;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.addTagButton:disabled {
+  border-color: #d1d5db;
+  background-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.tagsError {
+  margin-top: 0.75rem;
+  color: #dc2626;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
 .optionsContainer {
   display: flex;
   flex-direction: column;

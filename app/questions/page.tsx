@@ -61,6 +61,40 @@ interface DoneQuestion {
   status: 'correct' | 'wrong'
 }
 
+const DEFAULT_TAG_ALIASES: Record<string, string> = {
+  FIS: 'FI',
+}
+
+function normalizeTag(tag: string) {
+  return tag.trim().replace(/\s+/g, ' ').toUpperCase()
+}
+
+function getSuggestedTags(question: Question | null) {
+  if (!question) {
+    return []
+  }
+
+  const text = [
+    question.domain,
+    question.question_text,
+    question.explanation,
+    ...Object.values(question.options || {}),
+  ].join(' ')
+
+  const tagSet = new Set<string>()
+  const acronymMatches = text.match(/\b[A-Z]{2,6}s?\b/g) || []
+  const parentheticalMatches = text.match(/\(([A-Z]{2,6}s?)\)/g) || []
+
+  for (const rawTag of [...acronymMatches, ...parentheticalMatches.map((tag) => tag.slice(1, -1))]) {
+    const normalized = normalizeTag(DEFAULT_TAG_ALIASES[rawTag] || rawTag)
+    if (normalized.length >= 2 && normalized.length <= 8) {
+      tagSet.add(normalized)
+    }
+  }
+
+  return Array.from(tagSet).sort()
+}
+
 export default function QuestionPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -76,6 +110,10 @@ export default function QuestionPage() {
   const [completionMessage, setCompletionMessage] = useState<string | null>(null)
   const [user, setUser] = useState<{ id: string; email: string } | null>(null)
   const [doneQuestions, setDoneQuestions] = useState<DoneQuestion[]>([])
+  const [customTags, setCustomTags] = useState<string[]>([])
+  const [tagInput, setTagInput] = useState('')
+  const [tagsSaving, setTagsSaving] = useState(false)
+  const [tagsError, setTagsError] = useState<string | null>(null)
   
   // Explanation panel state (UI-only, not persisted)
   const [isExplanationOpen, setIsExplanationOpen] = useState(false)
@@ -181,11 +219,90 @@ export default function QuestionPage() {
   useEffect(() => {
     if (question?.id) {
       loadChatHistory(question.id)
+      loadQuestionTags(question.id)
     } else {
       // Reset chat when question is cleared
       setChatMessages([])
+      setCustomTags([])
     }
   }, [question?.id])
+
+  async function loadQuestionTags(questionId: number) {
+    try {
+      setTagsError(null)
+      const response = await fetch(`/api/questions/${questionId}/tags`, {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (response.status === 401) {
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to load tags')
+      }
+
+      const data = await response.json()
+      if (data.success && Array.isArray(data.tags)) {
+        setCustomTags(data.tags)
+      }
+    } catch (err) {
+      console.error('Error loading tags:', err)
+      setTagsError(err instanceof Error ? err.message : 'Failed to load tags')
+    }
+  }
+
+  async function saveQuestionTags(nextTags: string[]) {
+    if (!question) {
+      return
+    }
+
+    const normalizedTags = Array.from(new Set(nextTags.map(normalizeTag).filter(Boolean))).slice(0, 20)
+    setCustomTags(normalizedTags)
+    setTagsSaving(true)
+    setTagsError(null)
+
+    try {
+      const response = await fetch(`/api/questions/${question.id}/tags`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ tags: normalizedTags }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save tags')
+      }
+
+      const data = await response.json()
+      if (data.success && Array.isArray(data.tags)) {
+        setCustomTags(data.tags)
+      }
+    } catch (err) {
+      console.error('Error saving tags:', err)
+      setTagsError(err instanceof Error ? err.message : 'Failed to save tags')
+    } finally {
+      setTagsSaving(false)
+    }
+  }
+
+  function handleAddTag(tag: string) {
+    const normalizedTag = normalizeTag(tag)
+    if (!normalizedTag || customTags.includes(normalizedTag)) {
+      setTagInput('')
+      return
+    }
+
+    saveQuestionTags([...customTags, normalizedTag])
+    setTagInput('')
+  }
+
+  function handleRemoveTag(tag: string) {
+    saveQuestionTags(customTags.filter((item) => item !== tag))
+  }
 
   // Load question by index (from dashboard)
   async function loadQuestionByIndex(index: number) {
@@ -589,6 +706,7 @@ export default function QuestionPage() {
   // Only show Next button if we have an index and there are more questions
   const hasNextQuestion = currentIndex !== null && currentIndex + 1 < totalQuestions
   const hasPreviousQuestion = currentIndex !== null && currentIndex > 0
+  const suggestedTags = getSuggestedTags(question).filter((tag) => !customTags.includes(tag))
 
   async function submitBeforeNavigation() {
     if (!hasSubmitted && question && selectedAnswers.length > 0) {
@@ -802,6 +920,72 @@ export default function QuestionPage() {
 
         {/* Question Text */}
         <h1 className={styles.questionText}>{question.question_text}</h1>
+
+        <section className={styles.tagsPanel} aria-label="Question tags">
+          <div className={styles.tagsHeader}>
+            <span>Tags</span>
+            {tagsSaving && <span className={styles.tagsSaving}>Saving...</span>}
+          </div>
+
+          {customTags.length > 0 ? (
+            <div className={styles.tagList}>
+              {customTags.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className={styles.tagChip}
+                  onClick={() => handleRemoveTag(tag)}
+                  title={`Remove ${tag}`}
+                >
+                  {tag}
+                  <span aria-hidden="true">x</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.noTags}>No custom tags yet.</div>
+          )}
+
+          {suggestedTags.length > 0 && (
+            <div className={styles.suggestedTags}>
+              {suggestedTags.slice(0, 12).map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className={styles.suggestedTagButton}
+                  onClick={() => handleAddTag(tag)}
+                >
+                  + {tag}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <form
+            className={styles.tagForm}
+            onSubmit={(event) => {
+              event.preventDefault()
+              handleAddTag(tagInput)
+            }}
+          >
+            <input
+              className={styles.tagInput}
+              value={tagInput}
+              onChange={(event) => setTagInput(event.target.value)}
+              placeholder="Add tag, e.g. FI or SAR"
+              maxLength={32}
+            />
+            <button
+              type="submit"
+              className={styles.addTagButton}
+              disabled={!tagInput.trim() || tagsSaving}
+            >
+              Add
+            </button>
+          </form>
+
+          {tagsError && <div className={styles.tagsError}>{tagsError}</div>}
+        </section>
 
         {/* Options */}
         <div className={styles.optionsContainer}>

@@ -27,6 +27,7 @@ model User {
   progress   UserProgress[]
   chats      QuestionChat[]
   wrong_book WrongBook[]
+  tags       UserQuestionTag[]
 
   @@index([email])
   @@index([last_active_at])
@@ -53,6 +54,7 @@ model Question {
   progress   UserProgress[]
   chats      QuestionChat[]
   wrong_book WrongBook[]
+  tags       UserQuestionTag[]
 
   @@index([domain])
   @@index([is_complete])
@@ -128,6 +130,25 @@ model WrongBook {
 
   @@unique([user_id, question_id])
   @@index([user_id, wrong_count(sort: Desc), last_wrong_at(sort: Desc)])
+  @@index([question_id])
+}
+
+// ============================================
+// User Question Tag Model
+// ============================================
+model UserQuestionTag {
+  id          String   @id @default(uuid())
+  user_id     String
+  question_id Int
+  tag         String
+  created_at  DateTime @default(now())
+
+  // Relations
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, question_id, tag])
+  @@index([user_id, tag])
   @@index([question_id])
 }
 
