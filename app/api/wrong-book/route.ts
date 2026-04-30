@@ -44,6 +44,27 @@ export async function GET(request: NextRequest) {
             id: true,
             domain: true,
             question_text: true,
+            tags: {
+              where: {
+                user_id: user.id,
+              },
+              select: {
+                tag: true,
+              },
+              orderBy: {
+                tag: 'asc',
+              },
+            },
+            notes: {
+              where: {
+                user_id: user.id,
+              },
+              select: {
+                content: true,
+                updated_at: true,
+              },
+              take: 1,
+            },
           },
         },
       },
@@ -60,6 +81,9 @@ export async function GET(request: NextRequest) {
       last_wrong_at: wrong.last_wrong_at.toISOString(),
       domain: wrong.question.domain,
       question_text: wrong.question.question_text,
+      tags: wrong.question.tags.map((item) => item.tag),
+      has_note: wrong.question.notes.length > 0 && wrong.question.notes[0].content.trim().length > 0,
+      note_updated_at: wrong.question.notes[0]?.updated_at.toISOString() || null,
     }))
 
     return NextResponse.json({

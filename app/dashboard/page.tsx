@@ -342,6 +342,23 @@ export default function DashboardPage() {
           >
             Continue Learning
           </button>
+
+          <div className={styles.reviewActions}>
+            <button
+              className={styles.reviewButton}
+              onClick={() => router.push('/wrong-book')}
+              type="button"
+            >
+              Wrong Book
+            </button>
+            <button
+              className={styles.reviewButton}
+              onClick={() => router.push('/review/sprint')}
+              type="button"
+            >
+              Sprint Review
+            </button>
+          </div>
           
           <button
             className={styles.resetButton}

@@ -22,6 +22,9 @@ interface WrongQuestion {
   last_wrong_at: string
   domain: string
   question_text: string
+  tags: string[]
+  has_note: boolean
+  note_updated_at: string | null
 }
 
 interface WrongBookData {
@@ -110,8 +113,16 @@ export default function WrongBookPage() {
         <p className={styles.subtitle}>
           {total === 0
             ? 'No wrong answers yet. Keep practicing!'
-            : `You have ${total} question${total > 1 ? 's' : ''} with wrong answers`}
+            : `Review ${total} question${total > 1 ? 's' : ''} you missed, with your notes and tags`}
         </p>
+        <div className={styles.headerActions}>
+          <Link href="/review/sprint" className={styles.headerButton}>
+            Sprint Review
+          </Link>
+          <Link href="/review/queue" className={styles.headerButtonPrimary}>
+            Daily Queue
+          </Link>
+        </div>
       </div>
 
       {total === 0 ? (
@@ -137,6 +148,19 @@ export default function WrongBookPage() {
                 </div>
               </div>
               <div className={styles.questionText}>{question.question_text}</div>
+              {(question.tags.length > 0 || question.has_note) && (
+                <div className={styles.studyMeta}>
+                  {question.tags.map((tag) => (
+                    <span key={tag} className={styles.tagChip}>{tag}</span>
+                  ))}
+                  {question.has_note && (
+                    <span className={styles.noteBadge}>
+                      Note saved
+                      {question.note_updated_at && ` ${formatDate(question.note_updated_at)}`}
+                    </span>
+                  )}
+                </div>
+              )}
               <div className={styles.questionFooter}>
                 <div className={styles.questionDate}>
                   Last wrong: {formatDate(question.last_wrong_at)}

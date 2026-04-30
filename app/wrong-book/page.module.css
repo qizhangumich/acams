@@ -40,6 +40,45 @@
   margin-bottom: 2rem;
 }
 
+.headerActions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.headerButton,
+.headerButtonPrimary {
+  display: inline-block;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.headerButton {
+  background-color: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.headerButton:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.headerButtonPrimary {
+  background-color: #2563eb;
+  color: white;
+  border: 1px solid #2563eb;
+}
+
+.headerButtonPrimary:hover {
+  background-color: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
 .title {
   font-size: 2rem;
   font-weight: 700;
@@ -144,6 +183,36 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.studyMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tagChip,
+.noteBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.tagChip {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.noteBadge {
+  background-color: #f0fdf4;
+  color: #047857;
+  border: 1px solid #bbf7d0;
 }
 
 .questionFooter {
