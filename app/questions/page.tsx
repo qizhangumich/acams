@@ -114,6 +114,10 @@ export default function QuestionPage() {
   const [tagInput, setTagInput] = useState('')
   const [tagsSaving, setTagsSaving] = useState(false)
   const [tagsError, setTagsError] = useState<string | null>(null)
+  const [noteDraft, setNoteDraft] = useState('')
+  const [noteSavedAt, setNoteSavedAt] = useState<string | null>(null)
+  const [noteSaving, setNoteSaving] = useState(false)
+  const [noteError, setNoteError] = useState<string | null>(null)
   
   // Explanation panel state (UI-only, not persisted)
   const [isExplanationOpen, setIsExplanationOpen] = useState(false)
@@ -220,10 +224,13 @@ export default function QuestionPage() {
     if (question?.id) {
       loadChatHistory(question.id)
       loadQuestionTags(question.id)
+      loadQuestionNote(question.id)
     } else {
       // Reset chat when question is cleared
       setChatMessages([])
       setCustomTags([])
+      setNoteDraft('')
+      setNoteSavedAt(null)
     }
   }, [question?.id])
 
@@ -302,6 +309,67 @@ export default function QuestionPage() {
 
   function handleRemoveTag(tag: string) {
     saveQuestionTags(customTags.filter((item) => item !== tag))
+  }
+
+  async function loadQuestionNote(questionId: number) {
+    try {
+      setNoteError(null)
+      const response = await fetch(`/api/questions/${questionId}/note`, {
+        method: 'GET',
+        credentials: 'include',
+      })
+
+      if (response.status === 401) {
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to load note')
+      }
+
+      const data = await response.json()
+      if (data.success) {
+        setNoteDraft(data.note?.content || '')
+        setNoteSavedAt(data.note?.updated_at || null)
+      }
+    } catch (err) {
+      console.error('Error loading note:', err)
+      setNoteError(err instanceof Error ? err.message : 'Failed to load note')
+    }
+  }
+
+  async function saveQuestionNote() {
+    if (!question) {
+      return
+    }
+
+    setNoteSaving(true)
+    setNoteError(null)
+
+    try {
+      const response = await fetch(`/api/questions/${question.id}/note`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ content: noteDraft }),
+      })
+
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.message || 'Failed to save note')
+      }
+
+      setNoteDraft(data.note?.content || '')
+      setNoteSavedAt(data.note?.updated_at || null)
+    } catch (err) {
+      console.error('Error saving note:', err)
+      setNoteError(err instanceof Error ? err.message : 'Failed to save note')
+    } finally {
+      setNoteSaving(false)
+    }
   }
 
   // Load question by index (from dashboard)
@@ -985,6 +1053,37 @@ export default function QuestionPage() {
           </form>
 
           {tagsError && <div className={styles.tagsError}>{tagsError}</div>}
+        </section>
+
+        <section className={styles.notesPanel} aria-label="Personal study notes">
+          <div className={styles.notesHeader}>
+            <span>Personal Notes</span>
+            {noteSavedAt && (
+              <span className={styles.noteSavedAt}>
+                Saved {new Date(noteSavedAt).toLocaleString()}
+              </span>
+            )}
+          </div>
+          <textarea
+            className={styles.noteTextarea}
+            value={noteDraft}
+            onChange={(event) => setNoteDraft(event.target.value)}
+            placeholder="Write your own study note for future review..."
+            maxLength={5000}
+            rows={5}
+          />
+          <div className={styles.noteActions}>
+            <span className={styles.noteCount}>{noteDraft.length} / 5000</span>
+            <button
+              type="button"
+              className={styles.saveNoteButton}
+              onClick={saveQuestionNote}
+              disabled={noteSaving}
+            >
+              {noteSaving ? 'Saving...' : 'Save Note'}
+            </button>
+          </div>
+          {noteError && <div className={styles.noteError}>{noteError}</div>}
         </section>
 
         {/* Options */}

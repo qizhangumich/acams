@@ -28,6 +28,7 @@ model User {
   chats      QuestionChat[]
   wrong_book WrongBook[]
   tags       UserQuestionTag[]
+  notes      UserQuestionNote[]
 
   @@index([email])
   @@index([last_active_at])
@@ -55,6 +56,7 @@ model Question {
   chats      QuestionChat[]
   wrong_book WrongBook[]
   tags       UserQuestionTag[]
+  notes      UserQuestionNote[]
 
   @@index([domain])
   @@index([is_complete])
@@ -149,6 +151,26 @@ model UserQuestionTag {
 
   @@unique([user_id, question_id, tag])
   @@index([user_id, tag])
+  @@index([question_id])
+}
+
+// ============================================
+// User Question Note Model
+// ============================================
+model UserQuestionNote {
+  id          String   @id @default(uuid())
+  user_id     String
+  question_id Int
+  content     String   @db.Text
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now()) @updatedAt
+
+  // Relations
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, question_id])
+  @@index([user_id, updated_at])
   @@index([question_id])
 }
 
