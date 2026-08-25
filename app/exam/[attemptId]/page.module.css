@@ -1,0 +1,456 @@
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.error {
+  background-color: #fee;
+  color: #c33;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border: 1px solid #fcc;
+}
+
+.backButton {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background-color: #f3f4f6;
+  color: #374151;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.backButton:hover {
+  background-color: #e5e7eb;
+}
+
+/* ---------- Runner ---------- */
+
+.runnerHeader {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.progressLabel {
+  flex: 1;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.answeredLabel {
+  color: #6b7280;
+  font-weight: 400;
+}
+
+.clock {
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #1f2937;
+}
+
+.clockLow {
+  color: #ef4444;
+}
+
+.submitButton {
+  background-color: #10b981;
+  color: white;
+  padding: 0.6rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: #059669;
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.questionCard {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.questionDomain {
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.questionText {
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+  white-space: pre-wrap;
+}
+
+.navButtons {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.navButton {
+  background-color: #f3f4f6;
+  color: #374151;
+  padding: 0.6rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.navButton:hover:not(:disabled) {
+  background-color: #e5e7eb;
+}
+
+.navButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.navGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.5rem, 1fr));
+  gap: 0.4rem;
+  margin-bottom: 2rem;
+}
+
+.navCell {
+  aspect-ratio: 1;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  color: #6b7280;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.navCell:hover {
+  border-color: #2563eb;
+}
+
+.navCellAnswered {
+  background-color: #dbeafe;
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+.navCellCurrent {
+  background-color: #2563eb;
+  border-color: #2563eb;
+  color: white;
+}
+
+/* ---------- Modal ---------- */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 420px;
+  width: 100%;
+}
+
+.modalTitle {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+}
+
+.modalText {
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.modalButtons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.modalCancel {
+  background-color: #f3f4f6;
+  color: #374151;
+  padding: 0.6rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.modalConfirm {
+  background-color: #10b981;
+  color: white;
+  padding: 0.6rem 1.25rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.modalConfirm:hover:not(:disabled) {
+  background-color: #059669;
+}
+
+/* ---------- Report ---------- */
+
+.scoreCard {
+  text-align: center;
+  border-radius: 16px;
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  border: 2px solid;
+}
+
+.scoreCardPass {
+  background-color: #ecfdf5;
+  border-color: #10b981;
+}
+
+.scoreCardFail {
+  background-color: #fef2f2;
+  border-color: #ef4444;
+}
+
+.scoreValue {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #1f2937;
+  line-height: 1;
+}
+
+.scoreVerdict {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  margin: 0.5rem 0;
+}
+
+.scoreCardPass .scoreVerdict {
+  color: #10b981;
+}
+
+.scoreCardFail .scoreVerdict {
+  color: #ef4444;
+}
+
+.scoreDetail {
+  color: #6b7280;
+}
+
+.sectionTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.domainSection {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.domainRow {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.domainName {
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.domainBarTrack {
+  height: 0.6rem;
+  background-color: #f3f4f6;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.domainBar {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.domainBarGood {
+  background-color: #10b981;
+}
+
+.domainBarBad {
+  background-color: #f59e0b;
+}
+
+.domainPct {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.reviewSection {
+  margin-bottom: 2rem;
+}
+
+.reviewItem {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-left-width: 6px;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.reviewCorrect {
+  border-left-color: #10b981;
+}
+
+.reviewWrong {
+  border-left-color: #ef4444;
+}
+
+.reviewHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.reviewNumber {
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.reviewDomain {
+  flex: 1;
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.badgeCorrect {
+  background-color: #ecfdf5;
+  color: #10b981;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.badgeWrong {
+  background-color: #fef2f2;
+  color: #ef4444;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.reviewQuestion {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  white-space: pre-wrap;
+}
+
+.explanation {
+  margin-top: 1rem;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.explanationTitle {
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.explanationText {
+  color: #4b5563;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.reviewQueueLink {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.reviewQueueLink:hover {
+  text-decoration: underline;
+}

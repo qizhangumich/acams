@@ -1,0 +1,229 @@
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.error {
+  background-color: #fee;
+  color: #c33;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border: 1px solid #fcc;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: 1.125rem;
+  color: #6b7280;
+}
+
+.activeCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #eff6ff;
+  border: 2px solid #2563eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.activeTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e40af;
+  margin-bottom: 0.25rem;
+}
+
+.activeDetail {
+  color: #3b82f6;
+}
+
+.resumeButton {
+  background-color: #2563eb;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.resumeButton:hover {
+  background-color: #1d4ed8;
+}
+
+.sizeGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.sizeCard {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+}
+
+.sizeCard:hover:not(:disabled) {
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+.sizeCard:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.sizeLabel {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.sizeDetail {
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.sizeAction {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.historySection {
+  margin-bottom: 2rem;
+}
+
+.historyTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.emptyHistory {
+  color: #9ca3af;
+  padding: 2rem;
+  text-align: center;
+  background: white;
+  border: 2px dashed #e5e7eb;
+  border-radius: 12px;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.historyItem {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  text-decoration: none;
+  transition: border-color 0.2s;
+}
+
+.historyItem:hover {
+  border-color: #93c5fd;
+}
+
+.historyDate {
+  flex: 1;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.historyDetail {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.historyScore {
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.scorePass {
+  color: #10b981;
+}
+
+.scoreFail {
+  color: #ef4444;
+}
+
+.passLabel {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  background-color: currentColor;
+}
+
+.passLabel {
+  color: white;
+}
+
+.scorePass .passLabel {
+  background-color: #10b981;
+}
+
+.scoreFail .passLabel {
+  background-color: #ef4444;
+}
+
+.footer {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.backButton {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background-color: #f3f4f6;
+  color: #374151;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.backButton:hover {
+  background-color: #e5e7eb;
+}

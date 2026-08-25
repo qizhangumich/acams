@@ -346,6 +346,20 @@ export default function DashboardPage() {
           <div className={styles.reviewActions}>
             <button
               className={styles.reviewButton}
+              onClick={() => router.push('/exam')}
+              type="button"
+            >
+              Mock Exam
+            </button>
+            <button
+              className={styles.reviewButton}
+              onClick={() => router.push('/review/queue')}
+              type="button"
+            >
+              Review Queue
+            </button>
+            <button
+              className={styles.reviewButton}
               onClick={() => router.push('/wrong-book')}
               type="button"
             >

@@ -1,0 +1,222 @@
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.error {
+  background-color: #fee;
+  color: #c33;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  border: 1px solid #fcc;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.progressLabel {
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 0.5rem;
+  background-color: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background-color: #2563eb;
+  border-radius: 999px;
+  transition: width 0.3s;
+}
+
+.exitLink {
+  color: #6b7280;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.exitLink:hover {
+  color: #374151;
+}
+
+.questionCard {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.75rem;
+}
+
+.questionDomain {
+  font-size: 0.8rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.questionText {
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+  white-space: pre-wrap;
+}
+
+.primaryButton {
+  display: block;
+  width: 100%;
+  margin-top: 1.25rem;
+  background-color: #2563eb;
+  color: white;
+  padding: 0.85rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background-color: #1d4ed8;
+}
+
+.primaryButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.resultCorrect {
+  margin-top: 1.25rem;
+  background-color: #ecfdf5;
+  border: 1px solid #10b981;
+  color: #065f46;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.resultWrong {
+  margin-top: 1.25rem;
+  background-color: #fef2f2;
+  border: 1px solid #ef4444;
+  color: #991b1b;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.explanation {
+  margin-top: 1rem;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.explanationHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.explanationTitle {
+  font-weight: 700;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.langToggle {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.langToggle:hover {
+  background-color: #f3f4f6;
+}
+
+.explanationText {
+  color: #4b5563;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.doneCard {
+  text-align: center;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 3rem 2rem;
+}
+
+.doneIcon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+
+.doneTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+}
+
+.doneText {
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.doneButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.doneButtons .primaryButton {
+  display: inline-block;
+  width: auto;
+  margin-top: 0;
+}
+
+.backButton {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background-color: #f3f4f6;
+  color: #374151;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.backButton:hover {
+  background-color: #e5e7eb;
+}

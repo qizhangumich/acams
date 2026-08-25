@@ -1,26 +1,26 @@
-/**
- * Question Page
- * 
- * Phase 3A: Question display and answer submission ONLY
- * 
- * Features:
- * - Load question from backend on page load
- * - Display question and options
- * - Allow answer selection
- * - Submit answer to backend
- * - Display correct/incorrect status from backend
- * - Show read-only state after submission
- */
-
 'use client'
+
+/**
+ * Question practice page.
+ *
+ * Owns question loading (resume / by-index / by-id), answer submission,
+ * and navigation. The side panels (tags, notes, chat, explanation) and
+ * the option list live in ./components and manage their own state.
+ */
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import styles from './page.module.css'
+import QuestionOptions from './components/QuestionOptions'
+import DoneNavigator, { DoneQuestion } from './components/DoneNavigator'
+import TagsPanel from './components/TagsPanel'
+import NotesPanel from './components/NotesPanel'
+import ChatPanel from './components/ChatPanel'
+import ExplanationPanel from './components/ExplanationPanel'
 
 interface Question {
   id: number
-  index?: number // Array position in questions.json (0-based), optional for backwards compatibility
+  index?: number // Array position in questions.json (0-based)
   domain: string
   question_text: string
   options: Record<string, string>
@@ -42,57 +42,7 @@ interface ResumeResponse {
   question: Question
   progress?: Progress
   totalQuestions?: number
-  // Optional error/message field returned when success is false
   message?: string
-}
-
-interface ProgressResponse {
-  success: boolean
-  progress: {
-    status: 'correct' | 'wrong'
-    selected_answer: string[]
-    wrong_count?: number
-  }
-}
-
-interface DoneQuestion {
-  id: number
-  index: number
-  status: 'correct' | 'wrong'
-}
-
-const DEFAULT_TAG_ALIASES: Record<string, string> = {
-  FIS: 'FI',
-}
-
-function normalizeTag(tag: string) {
-  return tag.trim().replace(/\s+/g, ' ').toUpperCase()
-}
-
-function getSuggestedTags(question: Question | null) {
-  if (!question) {
-    return []
-  }
-
-  const text = [
-    question.domain,
-    question.question_text,
-    question.explanation,
-    ...Object.values(question.options || {}),
-  ].join(' ')
-
-  const tagSet = new Set<string>()
-  const acronymMatches = text.match(/\b[A-Z]{2,6}s?\b/g) || []
-  const parentheticalMatches = text.match(/\(([A-Z]{2,6}s?)\)/g) || []
-
-  for (const rawTag of [...acronymMatches, ...parentheticalMatches.map((tag) => tag.slice(1, -1))]) {
-    const normalized = normalizeTag(DEFAULT_TAG_ALIASES[rawTag] || rawTag)
-    if (normalized.length >= 2 && normalized.length <= 8) {
-      tagSet.add(normalized)
-    }
-  }
-
-  return Array.from(tagSet).sort()
 }
 
 export default function QuestionPage() {
@@ -101,7 +51,7 @@ export default function QuestionPage() {
   const [loading, setLoading] = useState(true)
   const [question, setQuestion] = useState<Question | null>(null)
   const [currentIndex, setCurrentIndex] = useState<number | null>(null)
-  const [totalQuestions, setTotalQuestions] = useState<number>(860) // Default to known total
+  const [totalQuestions, setTotalQuestions] = useState<number>(860)
   const [progress, setProgress] = useState<Progress | null>(null)
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
@@ -110,29 +60,6 @@ export default function QuestionPage() {
   const [completionMessage, setCompletionMessage] = useState<string | null>(null)
   const [user, setUser] = useState<{ id: string; email: string } | null>(null)
   const [doneQuestions, setDoneQuestions] = useState<DoneQuestion[]>([])
-  const [customTags, setCustomTags] = useState<string[]>([])
-  const [tagInput, setTagInput] = useState('')
-  const [tagsSaving, setTagsSaving] = useState(false)
-  const [tagsError, setTagsError] = useState<string | null>(null)
-  const [noteDraft, setNoteDraft] = useState('')
-  const [noteSavedAt, setNoteSavedAt] = useState<string | null>(null)
-  const [noteSaving, setNoteSaving] = useState(false)
-  const [noteError, setNoteError] = useState<string | null>(null)
-  
-  // Explanation panel state (UI-only, not persisted)
-  const [isExplanationOpen, setIsExplanationOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<'official' | 'ai_ch'>('official')
-  
-  // Chat state
-  const [chatMessages, setChatMessages] = useState<Array<{
-    id: string
-    role: 'user' | 'assistant'
-    content: string
-    created_at: string
-  }>>([])
-  const [chatInput, setChatInput] = useState('')
-  const [chatLoading, setChatLoading] = useState(false)
-  const [isChatOpen, setIsChatOpen] = useState(false)
 
   // Load user context on page load
   useEffect(() => {
@@ -142,24 +69,17 @@ export default function QuestionPage() {
           method: 'GET',
           credentials: 'include',
         })
-
         if (response.status === 401) {
-          // Not authenticated, redirect to login
           router.push('/login')
           return
         }
-
         if (!response.ok) {
           console.error('Failed to load user')
           return
         }
-
         const data = await response.json()
         if (data.success && data.user) {
-          setUser({
-            id: data.user.id,
-            email: data.user.email,
-          })
+          setUser({ id: data.user.id, email: data.user.email })
         }
       } catch (err) {
         console.error('Error loading user:', err)
@@ -169,39 +89,11 @@ export default function QuestionPage() {
     loadUser()
   }, [router])
 
-  async function loadDoneQuestions() {
-    try {
-      const response = await fetch('/api/questions?filter=done', {
-        method: 'GET',
-        credentials: 'include',
-      })
-
-      if (!response.ok) {
-        return
-      }
-
-      const data = await response.json()
-      if (data.success && Array.isArray(data.questions)) {
-        setDoneQuestions(
-          data.questions
-            .filter((item: DoneQuestion) => item.status === 'correct' || item.status === 'wrong')
-            .map((item: DoneQuestion) => ({
-              id: item.id,
-              index: item.index,
-              status: item.status,
-            }))
-        )
-      }
-    } catch (err) {
-      console.error('Error loading done questions:', err)
-    }
-  }
-
   // Load question and progress on page load
   useEffect(() => {
     const questionIdParam = searchParams.get('questionId')
     const indexParam = searchParams.get('index')
-    
+
     if (questionIdParam) {
       // Load specific question (from Wrong Book navigation)
       loadSpecificQuestion(parseInt(questionIdParam))
@@ -217,162 +109,38 @@ export default function QuestionPage() {
       // Use resume logic (normal flow)
       loadQuestion()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
 
-  // Load chat history when question changes
-  useEffect(() => {
-    if (question?.id) {
-      loadChatHistory(question.id)
-      loadQuestionTags(question.id)
-      loadQuestionNote(question.id)
-    } else {
-      // Reset chat when question is cleared
-      setChatMessages([])
-      setCustomTags([])
-      setNoteDraft('')
-      setNoteSavedAt(null)
-    }
-  }, [question?.id])
-
-  async function loadQuestionTags(questionId: number) {
+  async function loadDoneQuestions() {
     try {
-      setTagsError(null)
-      const response = await fetch(`/api/questions/${questionId}/tags`, {
+      const response = await fetch('/api/questions?filter=done', {
         method: 'GET',
         credentials: 'include',
       })
-
-      if (response.status === 401) {
-        return
-      }
-
-      if (!response.ok) {
-        throw new Error('Failed to load tags')
-      }
-
+      if (!response.ok) return
       const data = await response.json()
-      if (data.success && Array.isArray(data.tags)) {
-        setCustomTags(data.tags)
+      if (data.success && Array.isArray(data.questions)) {
+        setDoneQuestions(
+          data.questions
+            .filter((item: DoneQuestion) => item.status === 'correct' || item.status === 'wrong')
+            .map((item: DoneQuestion) => ({ id: item.id, index: item.index, status: item.status }))
+        )
       }
     } catch (err) {
-      console.error('Error loading tags:', err)
-      setTagsError(err instanceof Error ? err.message : 'Failed to load tags')
+      console.error('Error loading done questions:', err)
     }
   }
 
-  async function saveQuestionTags(nextTags: string[]) {
-    if (!question) {
-      return
-    }
-
-    const normalizedTags = Array.from(new Set(nextTags.map(normalizeTag).filter(Boolean))).slice(0, 20)
-    setCustomTags(normalizedTags)
-    setTagsSaving(true)
-    setTagsError(null)
-
-    try {
-      const response = await fetch(`/api/questions/${question.id}/tags`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ tags: normalizedTags }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to save tags')
-      }
-
-      const data = await response.json()
-      if (data.success && Array.isArray(data.tags)) {
-        setCustomTags(data.tags)
-      }
-    } catch (err) {
-      console.error('Error saving tags:', err)
-      setTagsError(err instanceof Error ? err.message : 'Failed to save tags')
-    } finally {
-      setTagsSaving(false)
-    }
+  function applyQuestionState(nextQuestion: Question, index: number | null, restored: Progress) {
+    setQuestion(nextQuestion)
+    setCurrentIndex(index)
+    setProgress(restored)
+    setSelectedAnswers(restored.selected_answer || [])
+    setHasSubmitted(restored.status === 'correct' || restored.status === 'wrong')
   }
 
-  function handleAddTag(tag: string) {
-    const normalizedTag = normalizeTag(tag)
-    if (!normalizedTag || customTags.includes(normalizedTag)) {
-      setTagInput('')
-      return
-    }
-
-    saveQuestionTags([...customTags, normalizedTag])
-    setTagInput('')
-  }
-
-  function handleRemoveTag(tag: string) {
-    saveQuestionTags(customTags.filter((item) => item !== tag))
-  }
-
-  async function loadQuestionNote(questionId: number) {
-    try {
-      setNoteError(null)
-      const response = await fetch(`/api/questions/${questionId}/note`, {
-        method: 'GET',
-        credentials: 'include',
-      })
-
-      if (response.status === 401) {
-        return
-      }
-
-      if (!response.ok) {
-        throw new Error('Failed to load note')
-      }
-
-      const data = await response.json()
-      if (data.success) {
-        setNoteDraft(data.note?.content || '')
-        setNoteSavedAt(data.note?.updated_at || null)
-      }
-    } catch (err) {
-      console.error('Error loading note:', err)
-      setNoteError(err instanceof Error ? err.message : 'Failed to load note')
-    }
-  }
-
-  async function saveQuestionNote() {
-    if (!question) {
-      return
-    }
-
-    setNoteSaving(true)
-    setNoteError(null)
-
-    try {
-      const response = await fetch(`/api/questions/${question.id}/note`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ content: noteDraft }),
-      })
-
-      const data = await response.json().catch(() => null)
-
-      if (!response.ok || !data?.success) {
-        throw new Error(data?.message || 'Failed to save note')
-      }
-
-      setNoteDraft(data.note?.content || '')
-      setNoteSavedAt(data.note?.updated_at || null)
-    } catch (err) {
-      console.error('Error saving note:', err)
-      setNoteError(err instanceof Error ? err.message : 'Failed to save note')
-    } finally {
-      setNoteSaving(false)
-    }
-  }
-
-  // Load question by index (from dashboard)
+  // Load question by index (from dashboard / navigation)
   async function loadQuestionByIndex(index: number) {
     try {
       setLoading(true)
@@ -387,31 +155,23 @@ export default function QuestionPage() {
         router.push('/login')
         return
       }
-
       if (!response.ok) {
         throw new Error(`Failed to load question: ${response.status} ${response.statusText}`)
       }
 
       const data = await response.json()
-
       if (!data.success || !data.question) {
         throw new Error('Failed to load question')
       }
 
-      setQuestion(data.question)
-      setCurrentIndex(data.index)
       if (typeof data.totalQuestions === 'number') {
         setTotalQuestions(data.totalQuestions)
       }
-      const restoredProgress = data.progress || { status: 'not_started' }
-      setProgress(restoredProgress)
-      setSelectedAnswers(restoredProgress.selected_answer || [])
-      setHasSubmitted(restoredProgress.status === 'correct' || restoredProgress.status === 'wrong')
+      applyQuestionState(data.question, data.index, data.progress || { status: 'not_started' })
       await loadDoneQuestions()
     } catch (err) {
       console.error('Error loading question by index:', err)
       setError(err instanceof Error ? err.message : 'Failed to load question')
-      // Fallback to normal load
       loadQuestion()
     } finally {
       setLoading(false)
@@ -424,12 +184,10 @@ export default function QuestionPage() {
       setLoading(true)
       setError(null)
 
-      // First, get the question
       const questionResponse = await fetch(`/api/questions/${questionId}`, {
         method: 'GET',
         credentials: 'include',
       })
-
       if (!questionResponse.ok) {
         if (questionResponse.status === 401) {
           router.push('/login')
@@ -439,42 +197,26 @@ export default function QuestionPage() {
       }
 
       const questionData = await questionResponse.json()
-
       if (!questionData.success || !questionData.question) {
         throw new Error('Question not found')
       }
 
-      // Then, get progress for this question
       const progressResponse = await fetch(`/api/progress?questionId=${questionId}`, {
         method: 'GET',
         credentials: 'include',
       })
 
-      let progress: Progress | null = null
+      let restored: Progress = { status: 'not_started' }
       if (progressResponse.ok) {
         const progressData = await progressResponse.json()
         if (progressData.success && progressData.progress) {
-          progress = progressData.progress
+          restored = progressData.progress
         }
       }
 
-      setQuestion(questionData.question)
-      if (typeof questionData.question.index === 'number') {
-        setCurrentIndex(questionData.question.index)
-      }
-      setProgress(progress || { status: 'not_started' })
-
-      // If progress exists and has selected_answer, restore it
-      if (progress?.selected_answer) {
-        setSelectedAnswers(progress.selected_answer)
-      } else {
-        setSelectedAnswers([])
-      }
-
-      // Load chat history for this question
-      if (questionData.question.id) {
-        loadChatHistory(questionData.question.id)
-      }
+      const index =
+        typeof questionData.question.index === 'number' ? questionData.question.index : null
+      applyQuestionState(questionData.question, index, restored)
       await loadDoneQuestions()
     } catch (err) {
       console.error('Error loading specific question:', err)
@@ -496,12 +238,10 @@ export default function QuestionPage() {
       })
 
       if (response.status === 401) {
-        // User not authenticated, redirect to login
         router.push('/login')
         return
       }
 
-      // Parse response JSON
       let data: ResumeResponse
       try {
         data = await response.json()
@@ -509,40 +249,34 @@ export default function QuestionPage() {
         throw new Error('Invalid response from server')
       }
 
-      // Check if success is false (new user with no progress)
-      // or if the API explicitly returns 404 (no questions / no progress)
+      // New user with no progress (or explicit 404): fall back to the first question
       if (response.status === 404 || !data.success) {
-        // Try to load the first question from database for new users
         try {
           const firstQuestionResponse = await fetch('/api/questions/first', {
             method: 'GET',
             credentials: 'include',
           })
-
           if (firstQuestionResponse.status === 401) {
             router.push('/login')
             return
           }
-
           const firstQuestionData = await firstQuestionResponse.json()
-
           if (!firstQuestionResponse.ok || !firstQuestionData.success || !firstQuestionData.question) {
-            // No questions in database or failed to load first question
-            setError(firstQuestionData.message || data.message || 'No questions available. Please ensure the database is seeded.')
+            setError(
+              firstQuestionData.message ||
+                data.message ||
+                'No questions available. Please ensure the database is seeded.'
+            )
             return
           }
 
-          // Successfully loaded first question for new user
-          setQuestion(firstQuestionData.question)
-          setCurrentIndex(typeof firstQuestionData.index === 'number' ? firstQuestionData.index : 0)
           if (typeof firstQuestionData.totalQuestions === 'number') {
             setTotalQuestions(firstQuestionData.totalQuestions)
           }
-          const restoredProgress = firstQuestionData.progress || { status: 'not_started' }
-          setProgress(restoredProgress)
-          setSelectedAnswers(restoredProgress.selected_answer || [])
-          setHasSubmitted(
-            restoredProgress.status === 'correct' || restoredProgress.status === 'wrong'
+          applyQuestionState(
+            firstQuestionData.question,
+            typeof firstQuestionData.index === 'number' ? firstQuestionData.index : 0,
+            firstQuestionData.progress || { status: 'not_started' }
           )
           await loadDoneQuestions()
           return
@@ -553,41 +287,23 @@ export default function QuestionPage() {
         }
       }
 
-      // For other non-OK statuses, surface as an error
       if (!response.ok) {
         throw new Error(`Failed to load question: ${response.status} ${response.statusText}`)
       }
-
-      // Success case: user has progress
       if (!data.question) {
         throw new Error('No question found')
       }
 
-      setQuestion(data.question)
-      // Use index from API response if available, otherwise try to get from question object
-      const questionIndex = typeof data.currentIndex === 'number' 
-        ? data.currentIndex 
-        : (data.question.index !== undefined ? data.question.index : null)
-      setCurrentIndex(questionIndex)
-      
-      // Use totalQuestions from API response if available
+      const questionIndex =
+        typeof data.currentIndex === 'number'
+          ? data.currentIndex
+          : data.question.index !== undefined
+            ? data.question.index
+            : null
       if (typeof data.totalQuestions === 'number') {
         setTotalQuestions(data.totalQuestions)
       }
-      
-      setProgress(data.progress || { status: 'not_started' })
-
-      // If progress exists and has selected_answer, restore it
-      if (data.progress?.selected_answer) {
-        setSelectedAnswers(data.progress.selected_answer)
-        // If progress exists, mark as submitted
-        if (data.progress.status === 'correct' || data.progress.status === 'wrong') {
-          setHasSubmitted(true)
-        }
-      } else {
-        setSelectedAnswers([])
-        setHasSubmitted(false)
-      }
+      applyQuestionState(data.question, questionIndex, data.progress || { status: 'not_started' })
       await loadDoneQuestions()
     } catch (err) {
       console.error('Error loading question:', err)
@@ -599,17 +315,12 @@ export default function QuestionPage() {
 
   // Handle answer selection
   function handleAnswerToggle(optionKey: string) {
-    // If already submitted, don't allow changes
     if (progress?.status === 'correct' || progress?.status === 'wrong') {
       return
     }
-
-    // Toggle selection
-    if (selectedAnswers.includes(optionKey)) {
-      setSelectedAnswers(selectedAnswers.filter((key) => key !== optionKey))
-    } else {
-      setSelectedAnswers([...selectedAnswers, optionKey])
-    }
+    setSelectedAnswers((prev) =>
+      prev.includes(optionKey) ? prev.filter((key) => key !== optionKey) : [...prev, optionKey]
+    )
   }
 
   async function submitCurrentAnswer() {
@@ -619,9 +330,7 @@ export default function QuestionPage() {
 
     const response = await fetch('/api/questions/submit', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({
         questionId: question.id,
@@ -635,13 +344,11 @@ export default function QuestionPage() {
         router.push('/login')
         return false
       }
-
       const errorData = await response.json().catch(() => null)
       throw new Error(errorData?.message || 'Failed to submit answer')
     }
 
     const data = await response.json()
-
     if (!data.success) {
       throw new Error(data.message || 'Failed to submit answer')
     }
@@ -649,21 +356,17 @@ export default function QuestionPage() {
     if (typeof data.currentIndex === 'number') {
       setCurrentIndex(data.currentIndex)
     }
-
     setProgress(data.progress)
     setSelectedAnswers(data.progress?.selected_answer || [])
     setHasSubmitted(true)
     await loadDoneQuestions()
-
     return true
   }
 
-  // Submit answer to backend
   async function handleSubmit() {
     if (!question || selectedAnswers.length === 0) {
       return
     }
-
     try {
       setSubmitting(true)
       setError(null)
@@ -671,110 +374,16 @@ export default function QuestionPage() {
     } catch (err) {
       console.error('Error submitting answer:', err)
       setError(err instanceof Error ? err.message : 'Failed to submit answer')
-      // DO NOT mark as submitted if API call fails
     } finally {
       setSubmitting(false)
     }
   }
 
-  // Load chat history for current question
-  async function loadChatHistory(questionId: number) {
-    try {
-      const response = await fetch(`/api/chat/${questionId}`, {
-        method: 'GET',
-        credentials: 'include',
-      })
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          router.push('/login')
-          return
-        }
-        throw new Error('Failed to load chat history')
-      }
-
-      const data = await response.json()
-
-      if (data.success && data.messages) {
-        setChatMessages(data.messages)
-      } else {
-        setChatMessages([])
-      }
-    } catch (err) {
-      console.error('Error loading chat history:', err)
-      setChatMessages([])
-    }
-  }
-
-  // Send chat message
-  async function handleSendMessage(e: React.FormEvent) {
-    e.preventDefault()
-    if (!question || !chatInput.trim() || chatLoading) {
-      return
-    }
-
-    const userMessage = chatInput.trim()
-    setChatInput('')
-    setChatLoading(true)
-
-    // Optimistically add user message
-    const tempUserMessage = {
-      id: `temp-${Date.now()}`,
-      role: 'user' as const,
-      content: userMessage,
-      created_at: new Date().toISOString(),
-    }
-    setChatMessages((prev) => [...prev, tempUserMessage])
-
-    try {
-      const response = await fetch(`/api/chat/${question.id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          message: userMessage,
-        }),
-      })
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          router.push('/login')
-          return
-        }
-        throw new Error('Failed to send message')
-      }
-
-      const data = await response.json()
-
-      if (data.success) {
-        // Reload chat history to get both messages from backend
-        await loadChatHistory(question.id)
-      } else {
-        throw new Error(data.message || 'Failed to get AI response')
-      }
-    } catch (err) {
-      console.error('Error sending message:', err)
-      // Remove optimistic message on error
-      setChatMessages((prev) => prev.filter((msg) => msg.id !== tempUserMessage.id))
-      setChatInput(userMessage) // Restore input
-      alert(err instanceof Error ? err.message : 'Failed to send message. Please try again.')
-    } finally {
-      setChatLoading(false)
-    }
-  }
-
-  // Check if answer is submitted
   const isSubmitted = progress?.status === 'correct' || progress?.status === 'wrong'
   const isCorrect = progress?.status === 'correct'
   const isWrong = progress?.status === 'wrong'
-  
-  // Determine if there's a next question available
-  // Only show Next button if we have an index and there are more questions
   const hasNextQuestion = currentIndex !== null && currentIndex + 1 < totalQuestions
   const hasPreviousQuestion = currentIndex !== null && currentIndex > 0
-  const suggestedTags = getSuggestedTags(question).filter((tag) => !customTags.includes(tag))
 
   async function submitBeforeNavigation() {
     if (!hasSubmitted && question && selectedAnswers.length > 0) {
@@ -790,44 +399,24 @@ export default function QuestionPage() {
         setSubmitting(false)
       }
     }
-
     return true
   }
 
   async function handlePreviousQuestion() {
-    if (!hasPreviousQuestion || currentIndex === null) {
-      return
-    }
-
-    const canNavigate = await submitBeforeNavigation()
-    if (!canNavigate) {
-      return
-    }
-
+    if (!hasPreviousQuestion || currentIndex === null) return
+    if (!(await submitBeforeNavigation())) return
     await loadQuestionByIndex(currentIndex - 1)
   }
 
   async function handleQuestionJump(index: number) {
-    const canNavigate = await submitBeforeNavigation()
-    if (!canNavigate) {
-      return
-    }
-
+    if (!(await submitBeforeNavigation())) return
     await loadQuestionByIndex(index)
   }
 
   async function handleNextQuestion() {
-    if (currentIndex === null) {
-      // Index is unknown (e.g., resumed from DB); do not attempt next
-      return
-    }
+    if (currentIndex === null) return
+    if (!(await submitBeforeNavigation())) return
 
-    const canNavigate = await submitBeforeNavigation()
-    if (!canNavigate) {
-      return
-    }
-
-    // If already submitted or no answer selected, proceed to next question
     try {
       setLoading(true)
       setError(null)
@@ -844,7 +433,6 @@ export default function QuestionPage() {
       }
 
       const data = await response.json()
-
       if (!response.ok || !data.success) {
         if (data.message === 'No more questions') {
           setCompletionMessage('You have completed all questions.')
@@ -853,31 +441,22 @@ export default function QuestionPage() {
         throw new Error(data.message || 'Failed to load next question')
       }
 
-      setQuestion(data.question)
       const newIndex = typeof data.index === 'number' ? data.index : currentIndex + 1
-      setCurrentIndex(newIndex)
       if (typeof data.totalQuestions === 'number') {
         setTotalQuestions(data.totalQuestions)
       }
-      setProgress({ status: 'not_started' })
-      setSelectedAnswers([])
-      setHasSubmitted(false) // Reset submission state for new question
+      applyQuestionState(data.question, newIndex, { status: 'not_started' })
       await loadDoneQuestions()
 
-      // Update progress: save the new index so user can resume from here
+      // Save the new index so the user can resume from here (non-critical)
       try {
         await fetch('/api/progress/update', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({
-            currentIndex: newIndex,
-          }),
+          body: JSON.stringify({ currentIndex: newIndex }),
         })
       } catch (updateErr) {
-        // Non-critical: progress update failed, but question loaded successfully
         console.error('Failed to update progress index:', updateErr)
       }
     } catch (err) {
@@ -918,7 +497,6 @@ export default function QuestionPage() {
   return (
     <div className={styles.container}>
       <div className={styles.questionCard}>
-        {/* User Identity Header */}
         {user && (
           <div className={styles.userHeader}>
             <span className={styles.userLabel}>Logged in as:</span>
@@ -926,7 +504,6 @@ export default function QuestionPage() {
           </div>
         )}
 
-        {/* Question Number */}
         {currentIndex !== null && (
           <div className={styles.questionNumber}>
             Question {currentIndex + 1} of {totalQuestions}
@@ -952,185 +529,26 @@ export default function QuestionPage() {
           </button>
         </div>
 
-        {doneQuestions.length > 0 && (
-          <div className={styles.doneNavigator} aria-label="Answered question navigation">
-            <div className={styles.doneNavigatorHeader}>
-              <span>Answered Questions</span>
-              <span>{doneQuestions.length} done</span>
-            </div>
-            <div className={styles.doneQuestionGrid}>
-              {doneQuestions.map((item) => {
-                const isCurrent = currentIndex === item.index
-                const buttonClass = [
-                  styles.doneQuestionButton,
-                  item.status === 'correct' ? styles.doneQuestionCorrect : styles.doneQuestionWrong,
-                  isCurrent ? styles.doneQuestionCurrent : '',
-                ].filter(Boolean).join(' ')
+        <DoneNavigator
+          doneQuestions={doneQuestions}
+          currentIndex={currentIndex}
+          onJump={handleQuestionJump}
+        />
 
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={buttonClass}
-                    onClick={() => handleQuestionJump(item.index)}
-                    aria-label={`Go to question ${item.index + 1}, ${item.status}`}
-                  >
-                    {item.index + 1}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Domain */}
         <div className={styles.domain}>{question.domain}</div>
-
-        {/* Question Text */}
         <h1 className={styles.questionText}>{question.question_text}</h1>
 
-        <section className={styles.tagsPanel} aria-label="Question tags">
-          <div className={styles.tagsHeader}>
-            <span>Tags</span>
-            {tagsSaving && <span className={styles.tagsSaving}>Saving...</span>}
-          </div>
+        <TagsPanel question={question} />
+        <NotesPanel questionId={question.id} />
 
-          {customTags.length > 0 ? (
-            <div className={styles.tagList}>
-              {customTags.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  className={styles.tagChip}
-                  onClick={() => handleRemoveTag(tag)}
-                  title={`Remove ${tag}`}
-                >
-                  {tag}
-                  <span aria-hidden="true">x</span>
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className={styles.noTags}>No custom tags yet.</div>
-          )}
+        <QuestionOptions
+          options={question.options}
+          correctAnswers={question.correct_answers}
+          selectedAnswers={selectedAnswers}
+          isSubmitted={isSubmitted}
+          onToggle={handleAnswerToggle}
+        />
 
-          {suggestedTags.length > 0 && (
-            <div className={styles.suggestedTags}>
-              {suggestedTags.slice(0, 12).map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  className={styles.suggestedTagButton}
-                  onClick={() => handleAddTag(tag)}
-                >
-                  + {tag}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <form
-            className={styles.tagForm}
-            onSubmit={(event) => {
-              event.preventDefault()
-              handleAddTag(tagInput)
-            }}
-          >
-            <input
-              className={styles.tagInput}
-              value={tagInput}
-              onChange={(event) => setTagInput(event.target.value)}
-              placeholder="Add tag, e.g. FI or SAR"
-              maxLength={32}
-            />
-            <button
-              type="submit"
-              className={styles.addTagButton}
-              disabled={!tagInput.trim() || tagsSaving}
-            >
-              Add
-            </button>
-          </form>
-
-          {tagsError && <div className={styles.tagsError}>{tagsError}</div>}
-        </section>
-
-        <section className={styles.notesPanel} aria-label="Personal study notes">
-          <div className={styles.notesHeader}>
-            <span>Personal Notes</span>
-            {noteSavedAt && (
-              <span className={styles.noteSavedAt}>
-                Saved {new Date(noteSavedAt).toLocaleString()}
-              </span>
-            )}
-          </div>
-          <textarea
-            className={styles.noteTextarea}
-            value={noteDraft}
-            onChange={(event) => setNoteDraft(event.target.value)}
-            placeholder="Write your own study note for future review..."
-            maxLength={5000}
-            rows={5}
-          />
-          <div className={styles.noteActions}>
-            <span className={styles.noteCount}>{noteDraft.length} / 5000</span>
-            <button
-              type="button"
-              className={styles.saveNoteButton}
-              onClick={saveQuestionNote}
-              disabled={noteSaving}
-            >
-              {noteSaving ? 'Saving...' : 'Save Note'}
-            </button>
-          </div>
-          {noteError && <div className={styles.noteError}>{noteError}</div>}
-        </section>
-
-        {/* Options */}
-        <div className={styles.optionsContainer}>
-          {question.options && Object.entries(question.options)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([key, value]) => {
-            const isSelected = selectedAnswers.includes(key)
-            const isCorrectAnswer = question.correct_answers.includes(key)
-            const showCorrectness = isSubmitted
-
-            let optionClass = styles.option
-            if (isSelected) {
-              optionClass += ` ${styles.selected}`
-            }
-            if (showCorrectness && isCorrectAnswer) {
-              optionClass += ` ${styles.correct}`
-            }
-            if (showCorrectness && isSelected && !isCorrectAnswer) {
-              optionClass += ` ${styles.incorrect}`
-            }
-            if (isSubmitted) {
-              optionClass += ` ${styles.readOnly}`
-            }
-
-            return (
-              <button
-                key={key}
-                className={optionClass}
-                onClick={() => handleAnswerToggle(key)}
-                disabled={isSubmitted}
-                type="button"
-              >
-                <span className={styles.optionKey}>{key}</span>
-                <span className={styles.optionText}>{value}</span>
-                {showCorrectness && isCorrectAnswer && (
-                  <span className={styles.correctBadge}>✓ Correct</span>
-                )}
-                {showCorrectness && isSelected && !isCorrectAnswer && (
-                  <span className={styles.incorrectBadge}>✗ Your Answer</span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Submit Button - Only show when NOT submitted */}
         {!hasSubmitted && (
           <button
             className={styles.submitButton}
@@ -1141,7 +559,6 @@ export default function QuestionPage() {
           </button>
         )}
 
-        {/* Status Display - Only show when submitted */}
         {hasSubmitted && (
           <>
             <div className={styles.statusContainer}>
@@ -1156,10 +573,8 @@ export default function QuestionPage() {
                   <span className={styles.statusIcon}>✗</span>
                   <span className={styles.statusText}>
                     Incorrect
-                    {progress.wrong_count && progress.wrong_count > 1 && (
-                      <span className={styles.wrongCount}>
-                        {' '}(Wrong {progress.wrong_count} times)
-                      </span>
+                    {progress?.wrong_count && progress.wrong_count > 1 && (
+                      <span className={styles.wrongCount}> (Wrong {progress.wrong_count} times)</span>
                     )}
                   </span>
                 </div>
@@ -1169,8 +584,7 @@ export default function QuestionPage() {
               </div>
             </div>
 
-            {/* Next Question Button - Only show when submitted and there's a next question */}
-            {hasSubmitted && hasNextQuestion && (
+            {hasNextQuestion && (
               <button
                 type="button"
                 className={styles.nextButton}
@@ -1180,155 +594,24 @@ export default function QuestionPage() {
                 {loading ? 'Loading...' : 'Next Question'}
               </button>
             )}
-            
-            {/* Completion Message - Show when submitted but no next question */}
-            {hasSubmitted && !hasNextQuestion && currentIndex !== null && (
+
+            {!hasNextQuestion && currentIndex !== null && (
               <div className={styles.completionMessage}>
-                🎉 You've completed all questions! Great work!
+                🎉 You&apos;ve completed all questions! Great work!
               </div>
             )}
           </>
         )}
 
-        {/* Error Message */}
         {error && <div className={styles.error}>{error}</div>}
-
-        {/* Completion Message */}
         {completionMessage && <div className={styles.completionMessage}>{completionMessage}</div>}
 
-        {/* Chat Panel */}
-        <div className={styles.chatSection}>
-          {!isChatOpen ? (
-            <button
-              className={styles.showChatButton}
-              onClick={() => setIsChatOpen(true)}
-              type="button"
-            >
-              💬 Ask AI about this question
-            </button>
-          ) : (
-            <div className={styles.chatPanel}>
-              <div className={styles.chatHeader}>
-                <h2 className={styles.chatTitle}>Chat about this question</h2>
-                <button
-                  className={styles.hideChatButton}
-                  onClick={() => setIsChatOpen(false)}
-                  type="button"
-                >
-                  Hide
-                </button>
-              </div>
-
-              <div className={styles.chatMessages}>
-                {chatMessages.length === 0 ? (
-                  <div className={styles.chatEmpty}>
-                    No messages yet. Ask a question about this problem!
-                  </div>
-                ) : (
-                  chatMessages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`${styles.chatMessage} ${
-                        msg.role === 'user' ? styles.chatMessageUser : styles.chatMessageAssistant
-                      }`}
-                    >
-                      <div className={styles.chatMessageRole}>
-                        {msg.role === 'user' ? 'You' : 'AI'}
-                      </div>
-                      <div className={styles.chatMessageContent}>{msg.content}</div>
-                    </div>
-                  ))
-                )}
-                {chatLoading && (
-                  <div className={`${styles.chatMessage} ${styles.chatMessageAssistant}`}>
-                    <div className={styles.chatMessageRole}>AI</div>
-                    <div className={styles.chatMessageContent}>
-                      <span className={styles.chatLoading}>Thinking...</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <form onSubmit={handleSendMessage} className={styles.chatForm}>
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Ask a question about this problem..."
-                  className={styles.chatInput}
-                  disabled={chatLoading}
-                />
-                <button
-                  type="submit"
-                  className={styles.chatSendButton}
-                  disabled={!chatInput.trim() || chatLoading}
-                >
-                  Send
-                </button>
-              </form>
-            </div>
-          )}
-        </div>
-
-        {/* Explanation Panel */}
-        <div className={styles.explanationSection}>
-          {!isExplanationOpen ? (
-            <button
-              className={styles.showExplanationButton}
-              onClick={() => setIsExplanationOpen(true)}
-              type="button"
-            >
-              Show Explanation
-            </button>
-          ) : (
-            <div className={styles.explanationPanel}>
-              <div className={styles.explanationHeader}>
-                <h2 className={styles.explanationTitle}>Explanation</h2>
-                <button
-                  className={styles.hideExplanationButton}
-                  onClick={() => setIsExplanationOpen(false)}
-                  type="button"
-                >
-                  Hide
-                </button>
-              </div>
-
-              {/* Tabs */}
-              <div className={styles.tabs}>
-                <button
-                  className={`${styles.tab} ${activeTab === 'official' ? styles.tabActive : ''}`}
-                  onClick={() => setActiveTab('official')}
-                  type="button"
-                >
-                  Official
-                </button>
-                <button
-                  className={`${styles.tab} ${activeTab === 'ai_ch' ? styles.tabActive : ''}`}
-                  onClick={() => setActiveTab('ai_ch')}
-                  type="button"
-                >
-                  AI (中文)
-                </button>
-              </div>
-
-              {/* Tab Content */}
-              <div className={styles.tabContent}>
-                {activeTab === 'official' && (
-                  <div className={styles.explanationText}>
-                    {question.explanation || 'No official explanation available.'}
-                  </div>
-                )}
-                {activeTab === 'ai_ch' && (
-                  <div className={styles.explanationText}>
-                    {question.explanation_ai_ch || 'AI 中文解释暂不可用。'}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+        <ChatPanel questionId={question.id} />
+        <ExplanationPanel
+          explanation={question.explanation}
+          explanationAiCh={question.explanation_ai_ch}
+        />
       </div>
     </div>
   )
 }
-

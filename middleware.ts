@@ -20,7 +20,9 @@ export async function middleware(request: NextRequest) {
   if (
     pathname.startsWith('/questions') ||
     pathname.startsWith('/dashboard') ||
-    pathname.startsWith('/wrong-book')
+    pathname.startsWith('/wrong-book') ||
+    pathname.startsWith('/review') ||
+    pathname.startsWith('/exam')
   ) {
     const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)
     const sessionToken = sessionCookie?.value
@@ -42,10 +44,10 @@ export async function middleware(request: NextRequest) {
   if (
     pathname.startsWith('/api/progress') ||
     pathname.startsWith('/api/chat') ||
-    pathname.startsWith('/api/dashboard') ||
     pathname.startsWith('/api/wrong-book') ||
     pathname.startsWith('/api/questions') ||
-    pathname.startsWith('/api/review')
+    pathname.startsWith('/api/review') ||
+    pathname.startsWith('/api/exam')
   ) {
     const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)
     const sessionToken = sessionCookie?.value
@@ -85,11 +87,13 @@ export const config = {
     '/questions/:path*',
     '/dashboard/:path*',
     '/wrong-book/:path*',
+    '/review/:path*',
+    '/exam/:path*',
     '/api/progress/:path*',
     '/api/chat/:path*',
-    '/api/dashboard/:path*',
     '/api/wrong-book/:path*',
     '/api/questions/:path*',
     '/api/review/:path*',
+    '/api/exam/:path*',
   ],
 }

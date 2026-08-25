@@ -1,0 +1,93 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #1f2937;
+  transition: all 0.15s;
+}
+
+.option:hover:not(:disabled) {
+  border-color: #93c5fd;
+  background-color: #f8fafc;
+}
+
+.option:disabled {
+  cursor: default;
+}
+
+.selected {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+}
+
+.correct {
+  border-color: #10b981;
+  background-color: #ecfdf5;
+}
+
+.incorrect {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.letter {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.selected .letter {
+  background-color: #2563eb;
+  color: white;
+}
+
+.correct .letter {
+  background-color: #10b981;
+  color: white;
+}
+
+.incorrect .letter {
+  background-color: #ef4444;
+  color: white;
+}
+
+.text {
+  flex: 1;
+}
+
+.mark {
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.correct .mark {
+  color: #10b981;
+}
+
+.incorrect .mark {
+  color: #ef4444;
+}

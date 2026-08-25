@@ -1,272 +1,141 @@
-# ACAMS Learning System
+# ACAMS Learning Platform
 
-A comprehensive learning system for ACAMS certification exam preparation with AI-powered explanations, progress tracking, and review modes.
+A web platform for ACAMS (CAMS) certification exam preparation: an 860-question practice bank with progress tracking, a wrong-answer book, review modes, and per-question AI explanations and chat.
 
-## 🚀 Features
+**Live site**: https://acams.vercel.app
 
-### Core Features
-- **Question Bank**: Practice questions from `questions.json`
-- **Progress Tracking**: Persistent learning progress per user
-- **Email Magic Link Authentication**: Passwordless login via email
-- **AI Explanations**: AI-powered explanations for incorrect answers (English & Chinese)
-- **Question Chat**: Per-question AI chat for deeper understanding
-- **Dashboard**: Overall progress statistics and domain-level aggregation
-- **Wrong Book**: Track and review incorrect answers
-- **Review Mode**: Exam sprint review with high-risk question identification
+## Features
 
-### Technical Stack
-- **Framework**: Next.js 14 (App Router)
-- **Database**: PostgreSQL (Neon) - The database server
-- **Database Access**: Prisma ORM - The access layer (replaces direct connections)
-- **Authentication**: JWT-based session with HTTP-only cookies
-- **AI**: OpenAI GPT-4o-mini for explanations and chat
-- **Email**: Resend for magic link delivery
-- **Deployment**: Vercel
+- **Question practice** (`/questions`) — answer questions one by one, submit, see the correct answer and explanation, and resume where you left off
+- **Mock exams** (`/exam`) — timed simulations (30 / 60 / full 120-question, 210-minute exam) with domain-weighted sampling, a navigation grid, auto-submit at zero, and a scored report (75% pass mark) with per-domain breakdown; misses feed the review schedule
+- **Spaced repetition** (`/review/queue`, `/review/session`) — every missed question becomes a review card (SM-2-style scheduling: correct answers push the card out 1d → 3d → interval×ease; wrong answers make it due again immediately)
+- **Magic-link login** (`/login`) — passwordless email authentication (Resend), JWT session in an HTTP-only cookie
+- **Dashboard** (`/dashboard`) — overall and per-domain progress statistics
+- **Wrong book** (`/wrong-book`) — every question you've missed, with wrong counts
+- **Sprint review** (`/review/sprint`) — exam-sprint dashboard highlighting high-risk questions
+- **AI chat & explanations** — per-question chat and AI-generated explanations (English and Chinese) via OpenAI
+- **Personal tags & notes** — tag questions and keep a private note per question
 
-> **Architecture Note**: PostgreSQL is the database. Prisma is the access layer (not a database replacement). See [DATABASE_ARCHITECTURE.md](./DATABASE_ARCHITECTURE.md) for details.
+## Tech stack
 
----
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 14 (App Router) |
+| Database | PostgreSQL on Neon (Prisma ORM, pooled connection) |
+| Auth | Magic-link email + JWT session cookie (`jose`) |
+| AI | OpenAI (`gpt-4o-mini`) |
+| Email | Resend |
+| Hosting | Vercel |
 
-## 📋 Prerequisites
+## Local development
 
-- Node.js 18+ 
-- PostgreSQL database (Neon recommended)
-- OpenAI API key
-- Resend API key (for email)
-
----
-
-## 🛠️ Local Development
-
-### 1. Clone Repository
-
-```bash
-git clone https://github.com/qizhangumich/acams.git
-cd acams
-```
-
-### 2. Install Dependencies
+### 1. Install
 
 ```bash
 npm install
 ```
 
-### 3. Set Up Environment Variables
+### 2. Environment variables
 
-Create `.env.local`:
+Create `.env`:
 
 ```env
-# Database
-DATABASE_URL="postgresql://user:password@host:port/database?schema=public"
+# Neon Postgres — DATABASE_URL must use the -pooler host; DIRECT_URL the direct host
+DATABASE_URL="postgresql://USER:PASSWORD@ep-xxx-pooler.REGION.aws.neon.tech/neondb?sslmode=require&pgbouncer=true"
+DIRECT_URL="postgresql://USER:PASSWORD@ep-xxx.REGION.aws.neon.tech/neondb?sslmode=require"
 
-# JWT Secret (min 32 characters)
-JWT_SECRET="your-strong-random-secret-min-32-characters"
-
-# Email (Resend)
-RESEND_API_KEY="re_xxxxxxxxxxxxx"
+JWT_SECRET="min-32-character-random-secret"
+OPENAI_API_KEY="sk-..."
+RESEND_API_KEY="re_..."
 RESEND_FROM_EMAIL="noreply@yourdomain.com"
-
-# OpenAI
-OPENAI_API_KEY="sk-xxxxxxxxxxxxx"
-
-# App URL
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-### 4. Set Up Database
+Notes (Windows/Neon):
+- `DATABASE_URL` uses the pooler host (`-pooler`) with `pgbouncer=true`; `DIRECT_URL` uses the direct host — the seed script prefers it for bulk writes.
+- Avoid `channel_binding=require` in connection strings if Prisma reports TLS credential errors.
+
+### 3. Database
 
 ```bash
-# Generate Prisma Client
-npm run db:generate
-
-# Run migrations
-npm run db:migrate
-
-# Seed questions from questions.json
-npm run db:seed
+npm run db:generate   # generate Prisma client
+npm run db:migrate    # apply migrations
+npm run db:seed       # load questions.json into the Question table
 ```
 
-### 5. Start Development Server
+### 4. Run
 
 ```bash
-npm run dev
+npm run dev           # http://localhost:3000
+npx next build        # production build check (use this if `npm run build` hits a locked Prisma engine on Windows)
 ```
 
-Visit http://localhost:3000
-
----
-
-## 🚀 Deployment to Vercel
-
-### Quick Deploy
-
-1. **Push to GitHub**
-   ```bash
-   git push origin main
-   ```
-
-2. **Import to Vercel**
-   - Go to https://vercel.com
-   - Click "Add New..." → "Project"
-   - Select `qizhangumich/acams` repository
-   - Click "Import"
-
-3. **Configure Environment Variables**
-   - Add all required environment variables (see `.env.local` above)
-   - Ensure all environments are selected (Production, Preview, Development)
-
-4. **Deploy**
-   - Click "Deploy"
-   - Wait for build to complete
-
-5. **Set Up Database**
-   - Create Neon PostgreSQL database
-   - Run migrations: `npm run db:migrate`
-   - Seed data: `npm run db:seed`
-
-**详细部署指南**: 查看 [VERCEL_DEPLOYMENT_GUIDE.md](./VERCEL_DEPLOYMENT_GUIDE.md)
-
----
-
-## 📁 Project Structure
+## Project structure
 
 ```
 ├── app/
 │   ├── api/
-│   │   ├── auth/              # Authentication (magic link, verify, me, logout)
-│   │   ├── progress/          # Progress tracking (save, resume, get)
-│   │   ├── chat/             # Question-level chat
-│   │   ├── questions/        # Question data
-│   │   ├── dashboard/        # Dashboard statistics
-│   │   ├── wrong-book/       # Wrong book data
-│   │   └── review/           # Review mode (sprint dashboard, queue)
-│   ├── questions/            # Question practice page
-│   ├── dashboard/            # Dashboard page
-│   ├── wrong-book/           # Wrong book page
-│   ├── review/               # Review mode pages
-│   └── login/                # Login page
+│   │   ├── auth/          # send-magic-link, verify, me, logout
+│   │   ├── questions/     # question fetch/submit, per-question tags & notes
+│   │   ├── progress/      # save/resume/reset/summary
+│   │   ├── exam/          # mock exams: start, state, answer, submit
+│   │   ├── chat/          # per-question AI chat
+│   │   ├── wrong-book/    # wrong answers
+│   │   ├── review/        # SRS queue, review answers, sprint dashboard
+│   │   └── health/        # health + DB health checks
+│   ├── questions/         # practice UI (+ components/: options, tags, notes, chat, explanation)
+│   ├── exam/              # exam home, runner, and report UIs
+│   ├── dashboard/         # stats UI
+│   ├── wrong-book/        # wrong book UI
+│   ├── review/            # review UIs (queue, session player, sprint, per-question)
+│   ├── components/        # shared UI (OptionList)
+│   └── login/, auth/      # login + magic-link verify pages
 ├── lib/
-│   ├── prisma.ts             # Prisma client
-│   ├── auth/                 # Authentication utilities
-│   ├── progress/              # Progress restoration logic
-│   └── db-client.ts          # Database client wrapper
-├── prisma/
-│   ├── schema.prisma         # Database schema
-│   ├── seed.ts               # Seed script
-│   └── migrations/           # Database migrations
-├── scripts/
-│   └── test-api-flow.ts      # API testing script
-└── questions.json            # Question content (immutable)
+│   ├── prisma.ts          # Prisma client singleton (the only PrismaClient instance)
+│   ├── auth/              # session (JWT), magic-link, email, route auth helper
+│   ├── exam/              # exam sampling, timing, scoring
+│   ├── review/            # spaced-repetition scheduling (SM-2 lite)
+│   └── progress/          # progress service + restore logic
+├── middleware.ts          # auth gate for protected pages and API routes
+├── prisma/                # schema, migrations, seed
+├── scripts/               # maintenance scripts (see below)
+└── questions.json         # question bank source of truth (860 questions)
 ```
 
----
+## Data model (Prisma)
 
-## 🗄️ Database Schema
+- **User** — email identity plus resume state (`current_index`, `current_answers`)
+- **Question** — the bank, seeded from `questions.json` (domain, options, correct answers, explanations incl. AI EN/CH)
+- **UserProgress** — per-user per-question status (`not_started` / `correct` / `wrong`)
+- **WrongBook** — wrong-answer counts and recency per user
+- **ExamAttempt** — mock exam state: sampled question ids, answers, timing, score, per-domain stats
+- **ReviewCard** — spaced-repetition schedule per missed question (interval, ease, reps, lapses, due date)
+- **QuestionChat** — per-question chat history
+- **UserQuestionTag / UserQuestionNote** — personal tags and notes
+- **MagicLinkToken** — single-use login tokens with expiry
 
-### Models
+## Auth flow
 
-- **User**: User accounts (email, last_question_id, last_active_at)
-- **Question**: Question bank (read-only, loaded from JSON)
-- **UserProgress**: Per-question progress tracking
-- **WrongBook**: Wrong answer tracking (wrong_count, last_wrong_at)
-- **QuestionChat**: Per-question chat history
-- **MagicLinkToken**: Magic link authentication tokens
+1. `POST /api/auth/send-magic-link` — emails a single-use token link
+2. `GET /api/auth/verify?token=…` — verifies token, upserts user, sets 30-day JWT cookie
+3. `middleware.ts` guards `/questions`, `/dashboard`, `/wrong-book` pages and all data API routes; it injects `x-user-id` / `x-user-email` headers for handlers and never mutates auth state
 
-See `prisma/schema.prisma` for full schema.
-
----
-
-## 🔐 Authentication Flow
-
-1. User enters email → `POST /api/auth/send-magic-link`
-2. System sends magic link email
-3. User clicks link → `GET /api/auth/verify?token=xxx`
-4. System creates/updates user, sets JWT session cookie
-5. User is authenticated (session persists for 30 days)
-
----
-
-## 📊 API Endpoints
-
-### Authentication
-- `POST /api/auth/send-magic-link` - Send magic link email
-- `GET /api/auth/verify` - Verify magic link token
-- `GET /api/auth/me` - Get current user
-- `POST /api/auth/logout` - Log out
-
-### Progress
-- `GET /api/progress/resume` - Resume from last question
-- `POST /api/progress` - Save answer
-- `GET /api/progress?questionId=X` - Get progress for specific question
-
-### Questions
-- `GET /api/questions/[questionId]` - Get specific question
-
-### Chat
-- `GET /api/chat/[questionId]` - Get chat history
-- `POST /api/chat/[questionId]` - Send chat message
-
-### Dashboard
-- `GET /api/dashboard` - Get dashboard statistics
-
-### Wrong Book
-- `GET /api/wrong-book` - Get wrong questions
-
-### Review
-- `GET /api/review/sprint-dashboard` - Get sprint dashboard
-- `GET /api/review/queue` - Generate daily review queue
-
----
-
-## 🧪 Testing
-
-### API Flow Test
+## Maintenance scripts
 
 ```bash
-# Start dev server
-npm run dev
-
-# In another terminal, run tests
-npm run test:api
+npm run db:seed                                  # (re)seed questions from questions.json
+python scripts/clean_questions.py                # dry-run OCR cleanup of questions.json (--apply to write)
+npx tsx scripts/smoke-exam.ts                    # read-only smoke test of exam sampling/scoring
+npx tsx scripts/update-database-from-json.ts     # push questions.json edits to the DB
+npx tsx scripts/check-env.ts                     # validate env vars
+npx tsx scripts/test-db-connection.ts            # DB connectivity check
+npm run test:api                                 # API flow test (dev server must be running)
+npx tsx scripts/add-english-explanations.ts      # backfill AI explanations (EN)
+npx tsx scripts/add-chinese-explanations.ts      # backfill AI explanations (CH)
 ```
 
----
+Workflow for editing question content: edit `questions.json` → `npm run db:seed` → spot-check in the app.
 
-## 📚 Documentation
+## Deployment
 
-- [PHASE2_VERIFICATION.md](./PHASE2_VERIFICATION.md) - Phase 2 completion checklist
-- [PHASE3A_IMPLEMENTATION.md](./PHASE3A_IMPLEMENTATION.md) - Phase 3A implementation
-- [PHASE3B_VERIFICATION.md](./PHASE3B_VERIFICATION.md) - Phase 3B verification
-- [PHASE3C_VERIFICATION.md](./PHASE3C_VERIFICATION.md) - Phase 3C verification
-- [PHASE3D_VERIFICATION.md](./PHASE3D_VERIFICATION.md) - Phase 3D verification
-- [PHASE4_VERIFICATION.md](./PHASE4_VERIFICATION.md) - Phase 4 verification
-- [VERCEL_DEPLOYMENT_GUIDE.md](./VERCEL_DEPLOYMENT_GUIDE.md) - Deployment guide
-- [ENV_SETUP.md](./ENV_SETUP.md) - Environment variables setup
-
----
-
-## 🔒 Security
-
-- JWT tokens stored in HTTP-only cookies
-- Session tokens expire after 30 days
-- All API routes require authentication (except magic link)
-- Database queries use parameterized statements (Prisma)
-- No sensitive data in client-side code
-
----
-
-## 📝 License
-
-Private project - All rights reserved
-
----
-
-## 🔗 Links
-
-- **Live Site**: https://acams.vercel.app
-- **GitHub**: https://github.com/qizhangumich/acams
-
----
-
-**Built with ❤️ for ACAMS exam preparation**
-
+Push to `main` → Vercel builds automatically (`prisma generate && next build`). Set all env vars from step 2 in the Vercel project settings. Migrations are applied manually with `npm run db:migrate` against the Neon database.

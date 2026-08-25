@@ -24,11 +24,13 @@ model User {
   current_answers  Json? // Selected answers for current question
 
   // Relations
-  progress   UserProgress[]
-  chats      QuestionChat[]
-  wrong_book WrongBook[]
-  tags       UserQuestionTag[]
-  notes      UserQuestionNote[]
+  progress      UserProgress[]
+  chats         QuestionChat[]
+  wrong_book    WrongBook[]
+  tags          UserQuestionTag[]
+  notes         UserQuestionNote[]
+  exam_attempts ExamAttempt[]
+  review_cards  ReviewCard[]
 
   @@index([email])
   @@index([last_active_at])
@@ -52,11 +54,12 @@ model Question {
   normalized_question String?  @db.Text
 
   // Relations
-  progress   UserProgress[]
-  chats      QuestionChat[]
-  wrong_book WrongBook[]
-  tags       UserQuestionTag[]
-  notes      UserQuestionNote[]
+  progress     UserProgress[]
+  chats        QuestionChat[]
+  wrong_book   WrongBook[]
+  tags         UserQuestionTag[]
+  notes        UserQuestionNote[]
+  review_cards ReviewCard[]
 
   @@index([domain])
   @@index([is_complete])
@@ -171,6 +174,56 @@ model UserQuestionNote {
 
   @@unique([user_id, question_id])
   @@index([user_id, updated_at])
+  @@index([question_id])
+}
+
+// ============================================
+// Exam Attempt Model (timed mock exams)
+// ============================================
+model ExamAttempt {
+  id           String     @id @default(uuid())
+  user_id      String
+  status       ExamStatus @default(in_progress)
+  question_ids Int[] // ordered sampled question ids
+  answers      Json       @default("{}") // { "<questionId>": ["A","C"], ... }
+  duration_min Int        @default(210)
+  started_at   DateTime   @default(now())
+  submitted_at DateTime?
+  score        Float? // percent correct, 0-100
+  passed       Boolean?
+  domain_stats Json? // { "<domain>": { "correct": n, "total": n } }
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, started_at(sort: Desc)])
+  @@index([user_id, status])
+}
+
+enum ExamStatus {
+  in_progress
+  submitted
+}
+
+// ============================================
+// Review Card Model (spaced repetition)
+// ============================================
+model ReviewCard {
+  id               String    @id @default(uuid())
+  user_id          String
+  question_id      Int
+  interval_days    Float     @default(0)
+  ease             Float     @default(2.5)
+  reps             Int       @default(0) // consecutive correct reviews
+  lapses           Int       @default(0) // times answered wrong
+  due_at           DateTime  @default(now())
+  last_reviewed_at DateTime?
+  created_at       DateTime  @default(now())
+
+  user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, question_id])
+  @@index([user_id, due_at])
   @@index([question_id])
 }
 

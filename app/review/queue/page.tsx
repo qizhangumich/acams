@@ -1,15 +1,9 @@
-/**
- * Focus Queue Page
- * 
- * Phase 4: Daily review queue (no persistence)
- * 
- * Features:
- * - Generate daily review list
- * - Sort by risk_score, wrong_count, and recency
- * - Click to start review
- */
-
 'use client'
+
+/**
+ * Review queue: spaced-repetition cards that are due now.
+ * Start a session to work through them, or open a single question.
+ */
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -18,20 +12,28 @@ import styles from './page.module.css'
 
 interface QueueItem {
   question_id: number
-  wrong_count: number
-  last_wrong_at: string
   domain: string
   question_text: string
-  risk_score: number
+  due_at: string
+  reps: number
+  lapses: number
+  wrong_count: number
+}
+
+interface QueueStats {
+  due_count: number
+  total_cards: number
+  next_due_at: string | null
 }
 
 interface QueueData {
   success: boolean
   queue: QueueItem[]
   total: number
+  stats: QueueStats
 }
 
-export default function FocusQueuePage() {
+export default function ReviewQueuePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<QueueData | null>(null)
@@ -60,7 +62,6 @@ export default function FocusQueuePage() {
       }
 
       const queueData: QueueData = await response.json()
-
       if (!queueData.success) {
         throw new Error('Failed to load queue data')
       }
@@ -75,8 +76,7 @@ export default function FocusQueuePage() {
   }
 
   function formatDate(dateString: string) {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -86,7 +86,7 @@ export default function FocusQueuePage() {
   if (loading) {
     return (
       <div className={styles.container}>
-        <div className={styles.loading}>Generating daily review queue...</div>
+        <div className={styles.loading}>Loading review queue...</div>
       </div>
     )
   }
@@ -102,23 +102,41 @@ export default function FocusQueuePage() {
     )
   }
 
-  const { queue, total } = data
+  const { queue, stats } = data
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Daily Review Queue</h1>
+        <h1 className={styles.title}>Review Queue</h1>
         <p className={styles.subtitle}>
-          {total === 0
-            ? 'No high-risk questions to review'
-            : `${total} question${total > 1 ? 's' : ''} ready for review`}
+          Spaced repetition over every question you have missed — cards come back right before you
+          would forget them.
         </p>
       </div>
 
-      {total === 0 ? (
+      <div className={styles.statsRow}>
+        <div className={styles.statCard}>
+          <div className={styles.statValue}>{stats.due_count}</div>
+          <div className={styles.statLabel}>due now</div>
+        </div>
+        <div className={styles.statCard}>
+          <div className={styles.statValue}>{stats.total_cards}</div>
+          <div className={styles.statLabel}>cards in rotation</div>
+        </div>
+        {stats.due_count > 0 && (
+          <Link href="/review/session" className={styles.startButton}>
+            Start Review Session →
+          </Link>
+        )}
+      </div>
+
+      {queue.length === 0 ? (
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>✓</div>
-          <p className={styles.emptyText}>Great job! No high-risk questions at the moment.</p>
+          <p className={styles.emptyText}>
+            Nothing due right now.
+            {stats.next_due_at && ` Next card due ${formatDate(stats.next_due_at)}.`}
+          </p>
           <Link href="/review/sprint" className={styles.backButton}>
             Back to Sprint Dashboard
           </Link>
@@ -131,22 +149,19 @@ export default function FocusQueuePage() {
                 <div className={styles.queueItemNumber}>#{index + 1}</div>
                 <div className={styles.queueItemDomain}>{item.domain}</div>
                 <div className={styles.queueItemBadge}>
-                  Risk: {item.risk_score}
+                  Missed {item.wrong_count} time{item.wrong_count > 1 ? 's' : ''}
                 </div>
-                <div className={styles.queueItemBadge}>
-                  Wrong {item.wrong_count} time{item.wrong_count > 1 ? 's' : ''}
-                </div>
+                {item.reps > 0 && (
+                  <div className={styles.queueItemBadgeGood}>
+                    {item.reps} correct streak
+                  </div>
+                )}
               </div>
               <div className={styles.queueItemText}>{item.question_text}</div>
               <div className={styles.queueItemFooter}>
-                <div className={styles.queueItemDate}>
-                  Last wrong: {formatDate(item.last_wrong_at)}
-                </div>
-                <Link
-                  href={`/review/${item.question_id}`}
-                  className={styles.reviewButton}
-                >
-                  Review →
+                <div className={styles.queueItemDate}>Due since {formatDate(item.due_at)}</div>
+                <Link href={`/review/${item.question_id}`} className={styles.reviewButton}>
+                  Open →
                 </Link>
               </div>
             </div>
@@ -156,10 +171,12 @@ export default function FocusQueuePage() {
 
       <div className={styles.footer}>
         <Link href="/review/sprint" className={styles.backButton}>
-          ← Back to Sprint Dashboard
+          ← Sprint Dashboard
+        </Link>
+        <Link href="/dashboard" className={styles.backButton}>
+          Dashboard
         </Link>
       </div>
     </div>
   )
 }
-

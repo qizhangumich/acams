@@ -1,5 +1,6 @@
 import { Prisma, ProgressStatus } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { recordAnswerForSrs } from '@/lib/review/srs'
 
 export const questionDetailSelect = {
   id: true,
@@ -310,6 +311,8 @@ export async function submitQuestionAnswer(input: SubmitAnswerInput) {
         })
       }
     }
+
+    await recordAnswerForSrs(tx, input.userId, question.id, status === 'correct')
   })
 
   const progress = await prisma.userProgress.findUnique({

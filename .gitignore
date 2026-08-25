@@ -33,6 +33,14 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Prisma
-prisma/migrations/
+# Python (legacy data-cleaning scripts)
+__pycache__/
+
+# Data backups
+*.backup
+*.bak
+
+# Local tooling
+.agents/
+.claude/
 

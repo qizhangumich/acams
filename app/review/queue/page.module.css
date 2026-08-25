@@ -87,6 +87,59 @@
   background-color: #e5e7eb;
 }
 
+.statsRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.statCard {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.85rem 1.5rem;
+  text-align: center;
+}
+
+.statValue {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.startButton {
+  margin-left: auto;
+  display: inline-block;
+  padding: 0.85rem 1.75rem;
+  background-color: #2563eb;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.startButton:hover {
+  background-color: #1d4ed8;
+}
+
+.queueItemBadgeGood {
+  padding: 0.25rem 0.75rem;
+  background-color: #ecfdf5;
+  color: #10b981;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
 .queueList {
   display: flex;
   flex-direction: column;
