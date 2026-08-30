@@ -9,7 +9,7 @@ A web platform for ACAMS (CAMS) certification exam preparation: an 860-question 
 - **Question practice** (`/questions`) — answer questions one by one, submit, see the correct answer and explanation, and resume where you left off
 - **Mock exams** (`/exam`) — timed simulations (30 / 60 / full 120-question, 210-minute exam) with domain-weighted sampling, a navigation grid, auto-submit at zero, and a scored report (75% pass mark) with per-domain breakdown; misses feed the review schedule
 - **Spaced repetition** (`/review/queue`, `/review/session`) — every missed question becomes a review card (SM-2-style scheduling: correct answers push the card out 1d → 3d → interval×ease; wrong answers make it due again immediately)
-- **Magic-link login** (`/login`) — passwordless email authentication (Resend), JWT session in an HTTP-only cookie
+- **Admin login** (`/login`) — single-user username/password sign-in (credentials via `ADMIN_USERNAME` / `ADMIN_PASSWORD`), JWT session in an HTTP-only cookie
 - **Dashboard** (`/dashboard`) — overall and per-domain progress statistics
 - **Wrong book** (`/wrong-book`) — every question you've missed, with wrong counts
 - **Sprint review** (`/review/sprint`) — exam-sprint dashboard highlighting high-risk questions
@@ -22,9 +22,8 @@ A web platform for ACAMS (CAMS) certification exam preparation: an 860-question 
 |---|---|
 | Framework | Next.js 14 (App Router) |
 | Database | PostgreSQL on Neon (Prisma ORM, pooled connection) |
-| Auth | Magic-link email + JWT session cookie (`jose`) |
+| Auth | Single-admin username/password + JWT session cookie (`jose`) |
 | AI | OpenAI (`gpt-4o-mini`) |
-| Email | Resend |
 | Hosting | Vercel |
 
 ## Local development
@@ -44,11 +43,18 @@ Create `.env`:
 DATABASE_URL="postgresql://USER:PASSWORD@ep-xxx-pooler.REGION.aws.neon.tech/neondb?sslmode=require&pgbouncer=true"
 DIRECT_URL="postgresql://USER:PASSWORD@ep-xxx.REGION.aws.neon.tech/neondb?sslmode=require"
 
-JWT_SECRET="min-32-character-random-secret"
+AUTH_SECRET="min-32-character-random-secret"   # signs the session JWT
 OPENAI_API_KEY="sk-..."
-RESEND_API_KEY="re_..."
-RESEND_FROM_EMAIL="noreply@yourdomain.com"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# Login credentials (all optional)
+# ADMIN_USERNAME defaults to "admin".
+# The password is verified against ADMIN_PASSWORD if set, otherwise against
+# the SHA-256 digest in ADMIN_PASSWORD_SHA256 (a default digest is built in,
+# so the app works with no configuration).
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD="..."
+ADMIN_EMAIL="zhangqi362@gmail.com"             # the account progress is stored under
 ```
 
 Notes (Windows/Neon):
@@ -112,13 +118,11 @@ npx next build        # production build check (use this if `npm run build` hits
 - **ReviewCard** — spaced-repetition schedule per missed question (interval, ease, reps, lapses, due date)
 - **QuestionChat** — per-question chat history
 - **UserQuestionTag / UserQuestionNote** — personal tags and notes
-- **MagicLinkToken** — single-use login tokens with expiry
 
 ## Auth flow
 
-1. `POST /api/auth/send-magic-link` — emails a single-use token link
-2. `GET /api/auth/verify?token=…` — verifies token, upserts user, sets 30-day JWT cookie
-3. `middleware.ts` guards `/questions`, `/dashboard`, `/wrong-book` pages and all data API routes; it injects `x-user-id` / `x-user-email` headers for handlers and never mutates auth state
+1. `POST /api/auth/login` — checks `{ username, password }` against `ADMIN_USERNAME` / `ADMIN_PASSWORD`, upserts the `ADMIN_EMAIL` account, and sets a 30-day JWT cookie
+2. `middleware.ts` guards all app pages and data API routes; it injects `x-user-id` / `x-user-email` headers for handlers and never mutates auth state
 
 ## Maintenance scripts
 

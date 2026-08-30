@@ -1,104 +1,69 @@
-/**
- * Login Page (Placeholder for Phase 3A)
- * 
- * This is a minimal placeholder to allow testing.
- * Full login implementation is not part of Phase 3A scope.
- */
-
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+/**
+ * Login page: single-admin username/password sign-in.
+ */
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import styles from './page.module.css'
 
 export default function LoginPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
-  const [errorCode, setErrorCode] = useState<string | null>(null)
 
-  // Read error from URL parameters
+  // Already signed in? Go straight to the dashboard.
   useEffect(() => {
-    const error = searchParams.get('error')
-    if (error) {
-      const errorMessages: Record<string, string> = {
-        missing_token: 'Missing token. Please request a new magic link.',
-        missing_parameters: 'Missing token or email. Please request a new magic link.',
-        verification_failed: 'Verification failed. The link may be invalid or expired.',
-        invalid_magic_link: 'This login link is invalid or has expired. Please request a new one.',
-        'Invalid magic link': 'This login link is invalid or has expired. Please request a new one.',
-        'Magic link expired': 'This login link has expired. Please request a new one.',
-        'Magic link already used': 'This login link has already been used. Please request a new one.',
-        user_not_found: 'User not found. Please try again.',
-      }
-      setMessage(errorMessages[error] || `Error: ${decodeURIComponent(error)}`)
-      setErrorCode(error)
-    }
-  }, [searchParams])
-
-  // Development-only convenience:
-  // If already authenticated and we hit /login?error=Invalid magic link,
-  // automatically redirect to /questions to avoid blocking local testing.
-  useEffect(() => {
-    // Only in development, and only for this specific error string
-    if (process.env.NODE_ENV !== 'development') return
-    if (errorCode !== 'Invalid magic link') return
-
     let cancelled = false
 
-    async function checkSessionAndRedirect() {
+    async function checkSession() {
       try {
-        const res = await fetch('/api/auth/me', {
-          method: 'GET',
-          credentials: 'include',
-        })
-
+        const res = await fetch('/api/auth/me', { method: 'GET', credentials: 'include' })
         if (!res.ok) return
-
         const data = await res.json()
         if (!cancelled && data?.success) {
-          router.replace('/questions')
+          router.replace('/dashboard')
         }
       } catch {
-        // Silently ignore in development; user can still see the message and request a new link
+        // Not signed in; stay on the login page.
       }
     }
 
-    checkSessionAndRedirect()
-
+    checkSession()
     return () => {
       cancelled = true
     }
-  }, [errorCode, router])
+  }, [router])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!email) return
+    if (!username || !password || loading) return
 
     try {
       setLoading(true)
       setMessage(null)
 
-      const response = await fetch('/api/auth/send-magic-link', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username, password }),
       })
 
-      const data = await response.json()
+      const data = await response.json().catch(() => null)
 
-      if (data.success) {
-        setMessage('Magic link sent! Check your email. (Note: In development, check console for token)')
-      } else {
-        setMessage(data.message || 'Failed to send magic link')
+      if (response.ok && data?.success) {
+        router.replace('/dashboard')
+        return
       }
+
+      setMessage(data?.message || 'Invalid username or password')
     } catch (error) {
-      setMessage('Error sending magic link')
       console.error(error)
+      setMessage('Login failed. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -108,37 +73,36 @@ export default function LoginPage() {
     <div className={styles.container}>
       <div className={styles.card}>
         <h1 className={styles.title}>ACAMS Learning System</h1>
-        <p className={styles.subtitle}>Enter your email to sign in</p>
+        <p className={styles.subtitle}>Sign in to continue</p>
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <input
-            type="email"
-            placeholder="your@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className={styles.input}
+            autoComplete="username"
             required
             disabled={loading}
           />
-          <button
-            type="submit"
-            className={styles.button}
-            disabled={loading || !email}
-          >
-            {loading ? 'Sending...' : 'Send Magic Link'}
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={styles.input}
+            autoComplete="current-password"
+            required
+            disabled={loading}
+          />
+          <button type="submit" className={styles.button} disabled={loading || !username || !password}>
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
-        {message && (
-          <div className={styles.message}>{message}</div>
-        )}
-
-        <div className={styles.note}>
-          <p>Note: This is a placeholder login page for Phase 3A testing.</p>
-          <p>For full authentication flow, check the magic link in your email or use the API directly.</p>
-        </div>
+        {message && <div className={styles.message}>{message}</div>}
       </div>
     </div>
   )
 }
-

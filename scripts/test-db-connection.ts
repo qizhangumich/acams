@@ -15,20 +15,23 @@ async function testConnection() {
     console.log(`✅ Database connection successful!`)
     console.log(`✅ User count: ${userCount}`)
     
-    // Test 2: Check if MagicLinkToken table exists
+    // Test 2: Check if the question bank is seeded
     try {
-      const tokenCount = await prisma.magicLinkToken.count()
-      console.log(`✅ MagicLinkToken table exists!`)
-      console.log(`✅ Token count: ${tokenCount}`)
+      const questionCount = await prisma.question.count()
+      console.log(`✅ Question table exists!`)
+      console.log(`✅ Question count: ${questionCount}`)
+      if (questionCount === 0) {
+        console.warn('⚠️  Question bank is empty. Run: npm run db:seed')
+      }
     } catch (error: any) {
       if (error.code === 'P2021' || error.message?.includes('does not exist')) {
-        console.error('❌ MagicLinkToken table does not exist!')
+        console.error('❌ Question table does not exist!')
         console.error('   Run: npm run db:migrate')
         process.exit(1)
       }
       throw error
     }
-    
+
     console.log('\n✅ All tests passed! Database is ready.')
     process.exit(0)
   } catch (error: any) {
