@@ -242,20 +242,21 @@
   {
     "id": 13,
     "domain": "Risks and Methods of Money Laundering and Terrorist Financing",
-    "question": "An AML compliance officer for a large bank has recently received an internal audit report on the private banking unit. The report revealed that the unit staff were not following risk-based due diligence procedures, so that the unit was not operating effectively. Which immediate actions should the AML compliance officer consider to address these findings? (Select Two.) Management Should implement a quality assurance program in the private banking unit",
+    "question": "An AML compliance officer for a large bank has recently received an internal audit report on the private banking unit. The report revealed that the unit staff were not following risk-based due diligence procedures, so that the unit was not operating effectively. Which immediate actions should the AML compliance officer consider to address these findings? (Select Two.)",
     "options": {
-      "A": "Private bankers should receive training on AML procedures.",
-      "B": "All employees should receive refresher AML training.",
-      "C": "The board should review and approve a revised AML policy to change customer due diligence requirements in private banking.",
-      "D": "The legal department should conduct a review to assess potential legal consequences."
+      "A": "Management should implement a quality assurance program in the private banking unit.",
+      "B": "Private bankers should receive training on AML procedures.",
+      "C": "All employees should receive refresher AML training.",
+      "D": "The board should review and approve a revised AML policy to change customer due diligence requirements in private banking.",
+      "E": "The legal department should conduct a review to assess potential legal consequences."
     },
     "correct_answers": [
-      "B",
-      "C"
+      "A",
+      "B"
     ],
-    "explanation": "",
+    "explanation": "The audit found staff were not following existing risk-based due diligence procedures, so the immediate fixes are operational: train the private bankers on the procedures (option B) and have management implement a quality assurance program in the unit to monitor that the procedures are actually followed (option A). Revising policy at board level and a legal-consequences review are longer-term or reactive steps, and refresher training for all employees is broader than the finding requires.",
     "is_complete": true,
-    "normalized_question": "An AML compliance officer for a large bank has recently received an internal audit report on the private banking unit. The report revealed that the unit staff were not following risk-based due diligence procedures, so that the unit was not operating effectively. Which immediate actions should the AML compliance officer consider to address these findings? (Select Two.) Management Should implement a quality assurance program in the private banking unit",
+    "normalized_question": "An AML compliance officer for a large bank has recently received an internal audit report on the private banking unit. The report revealed that the unit staff were not following risk-based due diligence procedures, so that the unit was not operating effectively. Which immediate actions should the AML compliance officer consider to address these findings? (Select Two.)",
     "explanation_ai_en": "Correct answer(s): B, C",
     "explanation_ai_ch": "解释: #正确答案: B 和 C **B: 所有员工应接受更新的AML培训。** 这个选项是正确的，因为内部审计报告指出私人银行部门的员工未遵循基于风险的尽职调查程序。为所有员工提供更新培训对于确保他们充分理解并遵守AML程序至关重要，尤其是在洗钱风险显著的领域。这种培训可以强化遵循既定协议的重要性，并确保员工及时了解任何法规或内部政策的变化。 **C: 董事会应审查并批准修订的AML政策，以改变私人银行的客户尽职调查要求。** 这个选项也是正确的，因为审计结果表明当前客户尽职调查（CDD）实践存在系统性问题。通过让董事会审查并批准修订的AML政策，银行可以确保其CDD要求稳健、有效，并与监管期望保持一致。这一步骤对于建立指导私人银行部门运营的清晰框架至关重要，并强化最高组织层级的合规承诺。 #不正确选项: A 和 **A: 私人银行家应接受AML程序的培训。** 虽然这个选项似乎相关，但它不如选项B全面。仅针对私人银行家的培训并未解决单位内所有员工统一培训的更广泛需求。AML合规需要集体努力，所有员工，而不仅仅是私人银行家，必须理解并实施必要的程序。因此，选项B是一种更具包容性和有效的方法。 **D: 法律部门应进行审查以评估潜在法律后果。** 尽管评估潜在法律后果很重要，但这一行动并未直接解决改善私人银行部门合规实践的紧迫需求。优先事项应集中在实施立即的纠正措施（如培训和政策修订）上，以提高该部门的运营有效性并确保遵守AML法规。法律审查可以作为持续风险管理的一部分在这些行动之后进行，但不应成为对审计发现的直接响应。 总结 总之，正确答案B和C关注于立即的培训和政策修订，以纠正内部审计中识别的不足。相比之下，选项A和D虽然相关，但在解决私人银行部门内全面合规改进的紧迫需求方面效果较差。"
   },
@@ -4430,7 +4431,7 @@
   {
     "id": 227,
     "domain": "Compliance Standards for Anti-Money Laundering (AML) and Combating the Financing of Terrorism (CFT)",
-    "question": "Why do organized crime groups often use front companies? (Choose two).",
+    "question": "Why do organized crime groups often use front companies? (Choose two)",
     "options": {
       "A": "Because they are not registered, front companies are not subject to income and other sales taxes.",
       "B": "Because using multiple front companies can make it easier to control an entire sector of the economy.",
@@ -4444,7 +4445,7 @@
     ],
     "explanation": "Organized crime groups often use front companies to disguise the origin and destination of their illicit funds, and to integrate them into the legitimate economy. Front companies are businesses that appear to be engaged in lawful activities, but are actually controlled by criminals for money laundering purposes. One reason why organized crime groups use front companies is to gain control over an entire sector of the economy, such as construction, transportation, or gambling. By using multiple front companies, they can create a network of interrelated businesses that can manipulate prices, evade taxes, and influence public contracts. This can give them a competitive advantage over legitimate businesses, and allow them to launder large amounts of money through seemingly legitimate transactions. Another reason why organized crime groups use front companies is to comingle their illicit funds with those of legal businesses. By using the bank accounts of front companies, they can deposit cash from criminal activities along with the revenues from legitimate operations, making it harder to trace the source of the funds. They can also transfer funds between different front companies, or use them to pay for goods and services, creating layers of transactions that obscure the money trail. CAMS Study Guide - 6th Edition, Chapter 2, Section 2. 2, page 43 A Guide to the 6th Anti-Money Laundering Directive, Part 2, page 9 Money Laundering and Financial Crimes, Chapter 2, page 29",
     "is_complete": true,
-    "normalized_question": "Why do organized crime groups often use front companies? (Choose two).",
+    "normalized_question": "Why do organized crime groups often use front companies? (Choose two)",
     "explanation_ai_en": "Correct answer(s): B, E\n\nOrganized crime groups often use front companies to disguise the origin and destination of their illicit funds,\nand to integrate them into the legitimate economy. Front companies are businesses that appear to be engaged\nin lawful activities, but are actually controlled by criminals for money laundering purposes.\nOne reason why organized crime groups use front companies is to gain control over an entire sector of the\neconomy, such as construction, transportation, or gambling. By using multiple front companies, they can\ncreate a network of interrelated businesses that can manipulate prices, evade taxes, and influence public\ncontracts. This can give them a competitive advantage over legitimate businesses, and allow them to launder\nlarge amounts of money through seemingly legitimate transactions.\nAnother reason why organized crime groups use front companies is to comingle their illicit funds with those\nof legal businesses. By using the bank accounts of front companies, they can deposit cash from criminal\nactivities along with the revenues from legitimate operations, making it harder to trace the source of the funds.\nThey can also transfer funds between different front companies, or use them to pay for goods and services,\ncreating layers of transactions that obscure the money trail.\nCAMS Study Guide - 6th Edition, Chapter 2, Section 2.2, page 43\nA Guide to the 6th Anti-Money Laundering Directive, Part 2, page 9\nMoney Laundering and Financial Crimes, Chapter 2, page 29",
     "explanation_ai_ch": "**解释：** **正确答案：B和E** 1. **选项B：因为使用多个前台公司可以更容易地控制整个经济部门。** - 有组织犯罪团伙通常会建立多个前台公司，以创建一个网络，使他们能够对整个经济部门施加控制。通过这样做，他们可以操纵市场条件、影响定价，并在合法企业中获得不公平的优势。这种控制使他们能够巩固自己的权力并进一步进行非法活动，例如洗钱，通过以模糊金融交易的方式将这些企业互相联系，从而使当局更难以发现犯罪活动。 2. **选项E：因为他们可以利用公司的银行账户将存款与合法企业的存款混合。** - 前台公司为有组织犯罪团伙提供了一种机制，以将非法资金与合法收入流整合。通过将来自犯罪活动的现金存入前台公司的银行账户，并与合法企业的收入一起存入，他们创建了一个复杂的交易网络，模糊了资金的来源。这种混合的做法使金融机构和执法部门追踪和调查资金来源变得具有挑战性，从而促进了洗钱。 **不正确选项：** 1. **选项A：因为他们没有注册，前台公司不受所得税和其他销售税的限制。** - 这个说法具有误导性。虽然一些前台公司可能在没有适当注册的情况下运营，但许多公司实际上是注册的，并且如果他们从事合法商业活动，仍然可能受到税收的限制。前台公司的主要目的是掩盖犯罪活动，而不仅仅是逃避税收。因此，这个选项并没有准确反映前台公司在有组织犯罪中的战略用途。 2. **选项C：因为他们通常受到银行和其他金融服务提供商的尽职调查要求较轻的限制。** - 这个说法并不完全准确。虽然一些前台公司可能面临较少的审查，但金融机构通常被要求对所有客户进行尽职调查，特别是那些被怀疑参与洗钱或其他非法活动的客户。在许多司法管辖区，前台公司由于与有组织犯罪的联系，可能会触发增强的尽职调查。因此，这个选项并没有有效捕捉到使用前台公司的合理性。 3. **选项D：因为前台公司通常收取比合法公司更高的价格，因此利润率更高。** - 这个选项与使用前台公司的主要原因缺乏相关性。虽然一些前台公司可能收取更高的价格，但其使用背后的真正动机是促进洗钱和掩盖非法活动，而不是最大化利润率。有组织犯罪团伙更关注将资金整合到合法经济中并保持运营控制，而不是定价策略。总之，正确答案突出了前台公司在控制经济部门和模糊非法资金来源方面的战略用途，而不正确的选项要么误解了前台公司的功能，要么误解了它们在有组织犯罪中使用的动机。"
   },
@@ -9015,7 +9016,7 @@
   {
     "id": 460,
     "domain": "International AML/CFT Standards",
-    "question": "Which statements relate to the mandate, roles, and responsibilities of the Financial Action Task Force (FATF) and the FATF-Style Regional Bodies (FSRBs)? (Select Two).",
+    "question": "Which statements relate to the mandate, roles, and responsibilities of the Financial Action Task Force (FATF) and the FATF-Style Regional Bodies (FSRBs)? (Select Two)",
     "options": {
       "A": "In the process of setting standards. FATF will only consider inputs from its member countries as part of the consultation process.",
       "B": "FSRBs have the right to develop standards with which their member countries are bound to comply.",
@@ -9029,7 +9030,7 @@
     ],
     "explanation": "C. FSRBs play an essential role in identifying and addressing AML technical assistance needs for their individual member countries. The FSRBs are responsible for promoting the effective implementation of the FATF Recommendations at the regional level, including by assisting member countries in identifying technical assistance needs and facilitating the provision of such assistance. D. FATF and FSRBs are free-standing organizations that share the common goals of combating money laundering and the financing of terrorism and proliferation. The FATF is an intergovernmental body that sets global standards for AML/CFT and promotes their effective implementation, while the FSRBs are regional organizations that work to promote the effective implementation of the FATF Recommendations at the regional level.",
     "is_complete": true,
-    "normalized_question": "Which statements relate to the mandate, roles, and responsibilities of the Financial Action Task Force (FATF) and the FATF-Style Regional Bodies (FSRBs)? (Select Two).",
+    "normalized_question": "Which statements relate to the mandate, roles, and responsibilities of the Financial Action Task Force (FATF) and the FATF-Style Regional Bodies (FSRBs)? (Select Two)",
     "explanation_ai_en": "Correct answer(s): C, D\n\nC. FSRBs play an essential role in identifying and addressing AML technical assistance needs for their\nindividual member countries. The FSRBs are responsible for promoting the effective implementation of the\nFATF Recommendations at the regional level, including by assisting member countries in identifying\ntechnical assistance needs and facilitating the provision of such assistance.\nD. FATF and FSRBs are free-standing organizations that share the common goals of combating money\nlaundering and the financing of terrorism and proliferation. The FATF is an intergovernmental body that sets\nglobal standards for AML/CFT and promotes their effective implementation, while the FSRBs are regional\norganizations that work to promote the effective implementation of the FATF Recommendations at the\nregional level.",
     "explanation_ai_ch": "** 解释： ** 1. **正确答案：** - **C：FSRB在识别和解决其各个成员国的AML技术援助需求方面发挥着至关重要的作用。** - 该声明是正确的，因为金融行动特别工作组（FATF）风格的区域机构（FSRB）旨在支持其成员国实施FATF设定的AML/CFT标准。它们评估成员国的技术援助需求并促进支持，从而增强区域对国际标准的遵守。这一角色对于能力建设至关重要，确保各国，尤其是资源较少的国家，能够有效打击洗钱和恐怖主义融资。 - **D：FATF和FSRB是独立的组织，共同致力于打击洗钱和恐怖主义融资以及扩散。** - 该声明是正确的，因为它准确描述了FATF和FSRB的运营独立性，同时强调了它们的共同目标。FATF是一个全球性政府间机构，设定AML/CFT努力的标准，而FSRB则在区域层面上促进这些标准的有效实施。它们的合作框架允许针对打击金融犯罪的区域挑战采取量身定制的方法。 2. **错误答案：** - **A：在设定标准的过程中，FATF只会考虑其成员国的意见作为咨询过程的一部分。** - 该声明是错误的，因为虽然FATF主要考虑其成员国的意见，但在咨询过程中，它还与包括非成员国、国际组织和私营部门在内的多种利益相关者进行接触。这种更广泛的参与确保所设定的标准是全面的，并考虑到不同的观点和经验。 - **B：FSRB有权制定其成员国必须遵守的标准。** - 该声明具有误导性，因为FSRB没有权力独立创建具有约束力的标准。相反，它们的工作是促进FATF现有标准在区域层面的实施。虽然FSRB可以提供指导和支持，但任何具有约束力的义务必须与FATF的建议保持一致，而FSRB的任务是实施这些建议，而不是制定新的自主标准。 - **E：FATF成员国不能同时成为FSRB的成员。** - 该声明是错误的，因为FATF成员国确实可以成为FSRB的成员。事实上，许多FATF成员也是区域机构的一部分，以增强其在特定地理背景下的AML/CFT能力。这种成员资格促进了在全球和区域层面上应对洗钱和恐怖主义融资的协调方法。总之，选项C可以正确代表FATF和FSRB的角色和责任，而选项A、B和E则包含有关这些组织的运营框架和权威的准确性。"
   },
@@ -13187,13 +13188,14 @@
   {
     "id": 673,
     "domain": "Compliance Standards for Anti-Money Laundering (AML) and Combating the Financing of Terrorism (CFT)",
-    "question": "A bank’s transaction surveillance system triggers an alert for a deposit of 250.000 USO into a client's account. According to the bank's KYC information, the client works for afinancial advisory firm, and earns approximately 100,000 USD per year. Which actions should be taken? (Select Three.) File the suspicious transaction immediately to the financial intelligence unit.",
+    "question": "A bank’s transaction surveillance system triggers an alert for a deposit of 250.000 USO into a client's account. According to the bank's KYC information, the client works for afinancial advisory firm, and earns approximately 100,000 USD per year. Which actions should be taken? (Select Three.)",
     "options": {
       "A": "Discard the alert as a false positive hit",
       "B": "Request information and documentation from the client on the background of the transaction.",
       "C": "Contact the client advisor to learn if he has any insight on the transaction background.",
       "D": "Review the alert if the deposit is made in cash.",
-      "E": "Review the transaction background in the bank's transaction platform."
+      "E": "Review the transaction background in the bank's transaction platform.",
+      "F": "File the suspicious transaction immediately to the financial intelligence unit."
     },
     "correct_answers": [
       "B",
@@ -13202,7 +13204,7 @@
     ],
     "explanation": "According to the Certified Anti-Money Laundering Specialist (CAMS) Manual, 6th edition, if a bank's transaction surveillance system triggers an alert for a deposit of 250. 000 USD into a client's account, the bank should take the following actions: Request information and documentation from the client on the background of the transaction (CAMS Manual, 6th edition, page 46). Contact the client advisor to learn if he has any insight on the transaction background (CAMS Manual, 6th edition, page 47). Review the transaction background in the bank's transaction platform (CAMS Manual, 6th edition, page 47). Discarding the alert as a false positive hit and reviewing the alert if the deposit is made in cash should not be done. The bank should request additional information and documentation from the client to better understand the nature of the transaction. Additionally, the bank should reach out to the client advisor to learn if they have any insight on the transaction background. Finally, the bank should review the transaction background in the bank's transaction platform to determine if any additional alerts or anomalies are present. (CAMS Manual, 6th Edition, Pages 117-118)",
     "is_complete": true,
-    "normalized_question": "A bank’s transaction surveillance system triggers an alert for a deposit of 250.000 USO into a client's account. According to the bank's KYC information, the client works for afinancial advisory firm, and earns approximately 100,000 USD per year. Which actions should be taken? (Select Three.) File the suspicious transaction immediately to the financial intelligence unit.",
+    "normalized_question": "A bank’s transaction surveillance system triggers an alert for a deposit of 250.000 USO into a client's account. According to the bank's KYC information, the client works for afinancial advisory firm, and earns approximately 100,000 USD per year. Which actions should be taken? (Select Three.)",
     "explanation_ai_en": "Correct answer(s): B, C, E\n\nAccording to the Certified Anti-Money Laundering Specialist (CAMS) Manual, 6th edition, if a bank's\ntransaction surveillance system triggers an alert for a deposit of 250.000 USD into a client's account, the bank\nshould take the following actions:\nRequest information and documentation from the client on the background of the transaction (CAMS Manual,\n6th edition, page 46).\nContact the client advisor to learn if he has any insight on the transaction background (CAMS Manual, 6th\nedition, page 47).\nReview the transaction background in the bank's transaction platform (CAMS Manual, 6th edition, page 47).\nDiscarding the alert as a false positive hit and reviewing the alert if the deposit is made in cash should not be\ndone.\nThe bank should request additional information and documentation from the client to better understand the\nnature of the transaction. Additionally, the bank should reach out to the client advisor to learn if they have any\ninsight on the transaction background. Finally, the bank should review the transaction background in the\nbank's transaction platform to determine if any additional alerts or anomalies are present. (CAMS Manual, 6th\nEdition, Pages 117-118)",
     "explanation_ai_ch": "正确答案：B、C、E。\n\n该题的原始中文 AI 解释质量较差，现已重建为简版。\n对应正确选项：\n- B: Request information and documentation from the client on the background of the transaction.\n- C: Contact the client advisor to learn if he has any insight on the transaction background.\n- E: Review the transaction background in the bank's transaction platform.\n\n如需完整推理，请结合英文解释或题目聊天继续查看。"
   },
