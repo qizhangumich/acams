@@ -591,7 +591,7 @@ export default function QuestionPage() {
                 onClick={handleNextQuestion}
                 disabled={loading || submitting}
               >
-                {loading ? 'Loading...' : 'Next Question'}
+                {loading ? 'Loading...' : 'Next Question →'}
               </button>
             )}
 
