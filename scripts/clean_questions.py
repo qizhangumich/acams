@@ -17,12 +17,18 @@ Usage:
   python scripts/clean_questions.py --apply   # write questions.json in place
 """
 import json
+import os
 import re
 import sys
 import collections
 
 APPLY = "--apply" in sys.argv
 PATH = "questions.json"
+
+# Hand-vetted merged-word fixes (token -> replacement), applied unconditionally
+# with word boundaries and first-letter case preservation. Curated from scan
+# candidates after manually rejecting real English words and proper nouns.
+APPROVED_SPLITS_PATH = os.path.join(os.path.dirname(__file__), "approved_splits.json")
 
 OCR_FIELDS = ["question", "explanation", "normalized_question"]  # OCR-derived text
 JUNK_FIELDS = ["normalized", "raw_block"]
@@ -119,11 +125,32 @@ def main():
     stats = collections.Counter()
     split_log = []
 
+    approved_splits = {}
+    if os.path.exists(APPROVED_SPLITS_PATH):
+        with open(APPROVED_SPLITS_PATH, encoding="utf-8") as fh:
+            approved_splits = json.load(fh)
+
+    def apply_approved(m):
+        token = m.group(0)
+        replacement = approved_splits.get(token.lower())
+        if not replacement:
+            return token
+        stats["approved_split"] += 1
+        return (token[0] + replacement[1:]) if token[0].isupper() else replacement
+
+    approved_pattern = (
+        re.compile(r"\b(?:" + "|".join(map(re.escape, approved_splits)) + r")\b", re.IGNORECASE)
+        if approved_splits
+        else None
+    )
+
     def clean(text, qid, field):
         for old, new in TARGETED:
             if old in text:
                 stats["targeted"] += text.count(old)
                 text = text.replace(old, new)
+        if approved_pattern:
+            text = approved_pattern.sub(apply_approved, text)
         # spacing around parentheses
         text, n = re.subn(r"([A-Za-z,.;:])\(", r"\1 (", text)
         stats["paren_before"] += n
