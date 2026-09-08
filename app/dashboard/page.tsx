@@ -42,6 +42,8 @@ export default function DashboardPage() {
   const [questions, setQuestions] = useState<Question[]>([])
   const [loadingQuestions, setLoadingQuestions] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
+  const [resetting, setResetting] = useState(false)
 
   // Load user and progress summary
   useEffect(() => {
@@ -174,12 +176,9 @@ export default function DashboardPage() {
     }
   }
 
-  // Reset learning progress
+  // Reset learning progress (only reachable through the confirmation modal)
   async function handleReset() {
-    // Show confirmation dialog
-    const ok = confirm('This will permanently reset your learning progress. Continue?')
-    if (!ok) return
-
+    setResetting(true)
     try {
       const res = await fetch('/api/progress/reset', {
         method: 'POST',
@@ -216,6 +215,9 @@ export default function DashboardPage() {
     } catch (err) {
       console.error('Error resetting progress:', err)
       alert('Reset failed. Please try again.')
+    } finally {
+      setResetting(false)
+      setResetConfirmOpen(false)
     }
   }
 
@@ -376,13 +378,47 @@ export default function DashboardPage() {
           
           <button
             className={styles.resetButton}
-            onClick={handleReset}
+            onClick={() => setResetConfirmOpen(true)}
             type="button"
           >
             Reset Learning Progress
           </button>
         </div>
       </div>
+
+      {resetConfirmOpen && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => !resetting && setResetConfirmOpen(false)}
+        >
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalTitle}>⚠️ Really reset everything?</div>
+            <div className={styles.modalText}>
+              This permanently deletes your answer history for all{' '}
+              {summary ? summary.total : 860} questions, your wrong book, your review schedule,
+              and your AI chat history. <strong>This cannot be undone.</strong>
+            </div>
+            <div className={styles.modalButtons}>
+              <button
+                className={styles.modalCancel}
+                onClick={() => setResetConfirmOpen(false)}
+                disabled={resetting}
+                type="button"
+              >
+                Cancel — keep my progress
+              </button>
+              <button
+                className={styles.modalDanger}
+                onClick={handleReset}
+                disabled={resetting}
+                type="button"
+              >
+                {resetting ? 'Resetting...' : 'Yes, reset everything'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

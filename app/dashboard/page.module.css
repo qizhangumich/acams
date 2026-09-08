@@ -331,3 +331,81 @@
 .button:hover {
   background-color: #1d4ed8;
 }
+
+/* ---------- Reset confirmation modal ---------- */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  border-top: 6px solid #ef4444;
+  padding: 2rem;
+  max-width: 460px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+
+.modalTitle {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+}
+
+.modalText {
+  color: #4b5563;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.modalButtons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.modalCancel {
+  background-color: #f3f4f6;
+  color: #1f2937;
+  padding: 0.65rem 1.25rem;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.modalCancel:hover:not(:disabled) {
+  background-color: #e5e7eb;
+}
+
+.modalDanger {
+  background-color: #ef4444;
+  color: white;
+  padding: 0.65rem 1.25rem;
+  border: 2px solid #ef4444;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.modalDanger:hover:not(:disabled) {
+  background-color: #dc2626;
+  border-color: #dc2626;
+}
+
+.modalCancel:disabled,
+.modalDanger:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

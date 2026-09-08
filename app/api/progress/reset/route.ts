@@ -64,6 +64,10 @@ export async function POST(request: NextRequest) {
       prisma.questionChat.deleteMany({
         where: { user_id: userId },
       }),
+      // Delete all spaced-repetition cards for this user
+      prisma.reviewCard.deleteMany({
+        where: { user_id: userId },
+      }),
       // Reset User.current_index and User.current_answers to null
       prisma.user.update({
         where: { id: userId },
