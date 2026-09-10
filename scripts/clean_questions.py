@@ -51,6 +51,11 @@ recordkeeping dowell""".split())
 TARGETED = [
     ("Acton Task Force", "Action Task Force"),
     ("John Mc Dowell", "John McDowell"),
+    ("AMI measures", "AML measures"),
+    ("AM L/C FT", "AML/CFT"),
+    ("AU.S.", "A U.S."),
+    ("the unalignment", "the alignment"),
+    ("enforcementandaccountabilityacross", "enforcement and accountability across"),
 ]
 
 # Canonical domain names (whitespace is normalized first, then aliases applied).
