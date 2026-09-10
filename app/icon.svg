@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- ACAMS Learning System favicon: blue badge, letter A, green check -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <path d="M17 46 L30 14 L34 14 L47 46" fill="none" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="23.5" y1="35" x2="40.5" y2="35" stroke="white" stroke-width="5.5" stroke-linecap="round"/>
+  <circle cx="47" cy="47" r="12.5" fill="#10b981" stroke="white" stroke-width="3"/>
+  <path d="M41 47 L45.5 51.5 L53 43.5" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
