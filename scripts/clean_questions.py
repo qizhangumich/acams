@@ -56,6 +56,10 @@ TARGETED = [
     ("AU.S.", "A U.S."),
     ("the unalignment", "the alignment"),
     ("enforcementandaccountabilityacross", "enforcement and accountability across"),
+    ("beclosedif", "be closed if"),
+    ("filingsindicatehigh", "filings indicate high"),
+    ("theU.S.", "the U.S."),
+    ("ChiefExecutive", "Chief Executive"),
 ]
 
 # Canonical domain names (whitespace is normalized first, then aliases applied).
