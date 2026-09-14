@@ -11057,22 +11057,22 @@
   {
     "id": 564,
     "domain": "Compliance Standards for Anti-Money Laundering (AML) and Combating the Financing of Terrorism (CFT)",
-    "question": "An employee at a financial institution (Fl) suspects that one of their co-workers is involved in a financial investment scam syndicate. Which step should be taken next by the employee who has the suspicion?",
+    "question": "An employee at a financial institution (FI) suspects that one of their co-workers is involved in a financial investment scam syndicate. Which step should be taken next by the employee who has the suspicion?",
     "options": {
-      "A": "Question their co-worker to determine If their suspicions are correct before reporting to the Fl's Human Resources department",
-      "B": "Use the Fl's whistle blowing channel to report the suspected employee",
-      "C": "Warn colleagues and customers of the F1 that the employee's suspicious financial investment proposals could be a scam",
+      "A": "Question their co-worker to determine If their suspicions are correct before reporting to the FI's Human Resources department",
+      "B": "Use the FI's whistle blowing channel to report the suspected employee",
+      "C": "Warn colleagues and customers of the FI that the employee's suspicious financial investment proposals could be a scam",
       "D": "Conduct an open-source intelligence investigation using artificial intelligence tools to gain more information on the activities of the suspected employee",
-      "E": "Report the suspected employee to the line manager of the F1 to take the required action"
+      "E": "Report the suspected employee to the line manager of the FI to take the required action"
     },
     "correct_answers": [
-      "A"
+      "B"
     ],
-    "explanation": "",
+    "explanation": "Suspecting a co-worker of involvement in a scam syndicate is exactly what the FI’s whistle-blowing channel is for: it lets the employee report confidentially (often anonymously), outside the normal hierarchy, with protection against retaliation. Questioning the co-worker first (A) tips off the suspect and lets them destroy evidence; warning colleagues and customers (C) spreads the tip-off and creates defamation risk; running your own open-source/AI investigation (D) is not the employee’s role and may compromise a real investigation; and reporting to the line manager (E) is unreliable here because the manager may be conflicted or even involved - the whistle-blowing channel bypasses that risk.",
     "is_complete": true,
     "normalized_question": "An employee at a financial institution (Fl) suspects that one of their co-workers is involved in a financial investment scam syndicate. Which step should be taken next by the employee who has the suspicion?",
-    "explanation_ai_en": "Correct answer(s): A",
-    "explanation_ai_ch": "解释 **正确答案：A- 在向FI的人力资源部门报告之前，询问他们的同事以确定他们的怀疑是否正确。** **为什么这是正确的：** 在升级情况之前，员工通常应该通过直接与同事讨论他们的担忧来非正式地收集更多信息。这种方法可以提供有关情况的清晰度，并可能有助于评估是否存在合理的担忧或误解。然而，重要的是要注意，这应该谨慎进行，以避免潜在的后果或干扰任何正在进行的调查。如果员工在讨论后仍然认为存在有效的担忧，他们可以向人力资源部门报告，该部门通常负责处理此类事务。 - - **不正确的选项：** **B- 使用FI的举报渠道报告涉嫌的员工。** 虽然举报渠道对于报告不当行为至关重要，但员工理想情况下应该首先进行对话以确认怀疑。直接跳到举报渠道而不进一步询问可能导致不必要的情况升级，并可能对工作场所关系造成伤害。 **C- 警告FI的同事和客户，员工的可疑财务投资提案可能是骗局。** 这个选项是不合适的，因为它可能导致诽谤并在没有证据的情况下引发恐慌。公开分享怀疑可能会危及调查的完整性，并违反保密协议，这在维护机构的信任和合规性方面至关重要。 **D- 进行开放源代码的情报调查，使用人工智能工具获取关于涉嫌员工活动的更多信息。** 这个方法对于非调查性质的员工来说并不可取。进行个人调查可能是不道德的，并可能违反隐私法或公司政策。员工通常没有权利进行此类调查，应该依赖正式渠道报告担忧。 **E- 向FI的直线经理报告涉嫌员工以采取必要的行动。** 虽然向直线经理升级似乎合适，但最好首先直接与同事确认怀疑。过早报告可能导致误解，并可能未能为直线经理提供足够的背景以采取知情行动。总体而言，选项A促进了一种负责任和审慎的方法来处理涉嫌的不当行为，同时遵循合规协议。"
+    "explanation_ai_en": "Correct answer(s): B\n\nSuspecting a co-worker of involvement in a scam syndicate is exactly what the FI’s whistle-blowing channel is for: it lets the employee report confidentially (often anonymously), outside the normal hierarchy, with protection against retaliation. Questioning the co-worker first (A) tips off the suspect and lets them destroy evidence; warning colleagues and customers (C) spreads the tip-off and creates defamation risk; running your own open-source/AI investigation (D) is not the employee’s role and may compromise a real investigation; and reporting to the line manager (E) is unreliable here because the manager may be conflicted or even involved - the whistle-blowing channel bypasses that risk.",
+    "explanation_ai_ch": "正确答案：B — 使用金融机构的举报（吹哨人）渠道报告可疑员工。\n\n- 举报渠道就是为怀疑同事违规而设：保密（常可匿名）、绕过正常层级、有反报复保护。\n- A（先质问同事）：会打草惊蛇，让对方销毁证据——这是典型的“通风报信”错误。\n- C（警告同事和客户）：扩大泄密范围，还有诽谤风险。\n- D（自行用AI做公开来源调查）：调查不是普通员工的职责，可能破坏正式调查。\n- E（报告直线经理）：经理可能有利益冲突甚至牵涉其中，举报渠道正是为绕开这一风险而存在。"
   },
   {
     "id": 565,
