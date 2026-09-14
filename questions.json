@@ -10657,10 +10657,10 @@
       "A",
       "C"
     ],
-    "explanation": "",
+    "explanation": "Cash-intensive businesses are the classic transaction-monitoring risk: large, frequent cash flows can disguise placement of illicit funds, so they require enhanced or additional monitoring scenarios - and this applies whether the business is subject to a licensing requirement (C) or not (A); a license does not reduce the cash-monitoring risk (an unlicensed one is even riskier). Hospitals and health-care services (B), pharmaceutical/mining companies (D), and countrywide retail chains (E) settle mostly through traceable, invoiced channels and do not inherently need additional scenarios.",
     "is_complete": true,
     "normalized_question": "Which of the following businesses require enhanced or additional scenarios for identifying anomalous transactions? (Select Two.)",
-    "explanation_ai_en": "Correct answer(s): A, C",
+    "explanation_ai_en": "Correct answer(s): A, C\n\nCash-intensive businesses are the classic transaction-monitoring risk: large, frequent cash flows can disguise placement of illicit funds, so they require enhanced or additional monitoring scenarios - and this applies whether the business is subject to a licensing requirement (C) or not (A); a license does not reduce the cash-monitoring risk (an unlicensed one is even riskier). Hospitals and health-care services (B), pharmaceutical/mining companies (D), and countrywide retail chains (E) settle mostly through traceable, invoiced channels and do not inherently need additional scenarios.",
     "explanation_ai_ch": "解释：1. **正确答案：A和C** - **A：经营现金密集型业务的公司不受许可要求的约束**：- 现金密集型业务，如酒吧、餐馆和便利店，由于大量现金交易，固有地面临更高的洗钱风险。当这些业务不受许可要求的约束时，监管监督较少，使得监控和检测异常或可疑活动变得更加困难。需要进行增强尽职调查（EDD）以有效识别潜在的洗钱计划。 - **C：经营现金密集型业务的公司受许可要求的约束**：- 类似于选项A，要求许可的现金密集型业务也面临增加的洗钱风险。许可过程可能提供一定程度的监督，但这些业务仍然处理大量现金，这些现金可能被用来掩盖非法资金。此处需要进行EDD以审查交易模式并确保遵守反洗钱（AML）法规，因为它们仍可能参与促进洗钱的活动。2. **不正确的选项：B、D和E** - **B：经营医院和医疗保健服务的公司**：- 虽然医院和医疗保健服务确实是受监管的实体，但它们通常不会像选项A和C中列出的业务那样进行现金密集型交易。医疗保健服务的性质涉及通过保险和政府项目进行账单处理，这提供了更清晰的交易踪迹，从而降低了与现金密集型业务相比的即时洗钱风险。 - **D：生产药品和医疗设备的公司，活跃于采矿行业的公司**：- 这些行业虽然可能有监管要求，但通常不会经历与现金密集型业务相同水平的现金交易。制药公司和采矿行业的公司通常在更结构化的金融环境中运作，往往有显著的监督和资金可追溯性，降低了需要增强尽职调查的异常交易的可能性。 - **E：在全国范围内经营零售店的公司**：- 零售店虽然可能处理现金，但并不符合选项A和C所定义的现金密集型业务。零售运营通常有多种支付方式，并受到各种法规的约束，这有助于降低洗钱风险。因此，它们不需要与现金密集型业务相同水平的增强场景来识别异常交易。总结，选项A和C因其高现金交易量及相关的洗钱风险而被选中，而选项B、D和E则未呈现相同水平的风险或在典型的AML框架下需要增强审查。"
   },
   {
