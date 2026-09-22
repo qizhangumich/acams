@@ -122,12 +122,13 @@ enum ChatRole {
 // Wrong Book Model
 // ============================================
 model WrongBook {
-  id            String   @id @default(uuid())
+  id            String    @id @default(uuid())
   user_id       String
   question_id   Int
-  wrong_count   Int      @default(1)
-  last_wrong_at DateTime @default(now())
-  created_at    DateTime @default(now())
+  wrong_count   Int       @default(1)
+  last_wrong_at DateTime  @default(now())
+  retested_at   DateTime? // set whenever the user re-answers this question (right or wrong)
+  created_at    DateTime  @default(now())
 
   // Relations
   user     User     @relation(fields: [user_id], references: [id], onDelete: Cascade)

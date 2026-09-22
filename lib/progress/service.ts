@@ -274,42 +274,37 @@ export async function submitQuestionAnswer(input: SubmitAnswerInput) {
       },
     })
 
-    if (status === 'wrong') {
-      const existingWrong = await tx.wrongBook.findUnique({
-        where: {
-          user_id_question_id: {
-            user_id: input.userId,
-            question_id: question.id,
-          },
-        },
-        select: {
-          wrong_count: true,
+    const wrongBookWhere = {
+      user_id_question_id: {
+        user_id: input.userId,
+        question_id: question.id,
+      },
+    }
+    const existingWrong = await tx.wrongBook.findUnique({
+      where: wrongBookWhere,
+      select: { wrong_count: true },
+    })
+
+    if (existingWrong) {
+      // Re-answering a wrong-book question counts as a retest (right or wrong)
+      await tx.wrongBook.update({
+        where: wrongBookWhere,
+        data: {
+          retested_at: new Date(),
+          ...(status === 'wrong'
+            ? { wrong_count: existingWrong.wrong_count + 1, last_wrong_at: new Date() }
+            : {}),
         },
       })
-
-      if (existingWrong) {
-        await tx.wrongBook.update({
-          where: {
-            user_id_question_id: {
-              user_id: input.userId,
-              question_id: question.id,
-            },
-          },
-          data: {
-            wrong_count: existingWrong.wrong_count + 1,
-            last_wrong_at: new Date(),
-          },
-        })
-      } else {
-        await tx.wrongBook.create({
-          data: {
-            user_id: input.userId,
-            question_id: question.id,
-            wrong_count: 1,
-            last_wrong_at: new Date(),
-          },
-        })
-      }
+    } else if (status === 'wrong') {
+      await tx.wrongBook.create({
+        data: {
+          user_id: input.userId,
+          question_id: question.id,
+          wrong_count: 1,
+          last_wrong_at: new Date(),
+        },
+      })
     }
 
     await recordAnswerForSrs(tx, input.userId, question.id, status === 'correct')

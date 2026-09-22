@@ -7,8 +7,8 @@
  * wrong -> due again now).
  */
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import OptionList from '@/app/components/OptionList'
 import styles from './page.module.css'
@@ -37,7 +37,17 @@ interface AnswerResult {
 }
 
 export default function ReviewSessionPage() {
+  return (
+    <Suspense fallback={<div className={styles.container}><div className={styles.loading}>Preparing review session...</div></div>}>
+      <ReviewSession />
+    </Suspense>
+  )
+}
+
+function ReviewSession() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const wrongBookMode = searchParams.get('mode') === 'wrongbook'
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [queue, setQueue] = useState<QueueItem[]>([])
@@ -57,7 +67,10 @@ export default function ReviewSessionPage() {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch('/api/review/queue', { credentials: 'include' })
+      const response = await fetch(
+        wrongBookMode ? '/api/review/queue?mode=wrongbook' : '/api/review/queue',
+        { credentials: 'include' }
+      )
       if (!response.ok) {
         if (response.status === 401) {
           router.push('/login')
@@ -149,10 +162,16 @@ export default function ReviewSessionPage() {
       <div className={styles.container}>
         <div className={styles.doneCard}>
           <div className={styles.doneIcon}>✓</div>
-          <div className={styles.doneTitle}>Nothing due for review</div>
-          <div className={styles.doneText}>Come back when the next cards fall due.</div>
-          <Link href="/review/queue" className={styles.backButton}>
-            ← Back to Review Queue
+          <div className={styles.doneTitle}>
+            {wrongBookMode ? 'Wrong book cleared' : 'Nothing due for review'}
+          </div>
+          <div className={styles.doneText}>
+            {wrongBookMode
+              ? 'Every wrong-book question has been retested. Great work!'
+              : 'Come back when the next cards fall due.'}
+          </div>
+          <Link href={wrongBookMode ? '/wrong-book' : '/review/queue'} className={styles.backButton}>
+            ← Back to {wrongBookMode ? 'Wrong Book' : 'Review Queue'}
           </Link>
         </div>
       </div>
@@ -168,15 +187,17 @@ export default function ReviewSessionPage() {
           <div className={styles.doneIcon}>🎉</div>
           <div className={styles.doneTitle}>Session complete</div>
           <div className={styles.doneText}>
-            {correctCount} / {queue.length} correct ({pct}%). Missed questions are due again now —
-            run another session to clear them.
+            {correctCount} / {queue.length} correct ({pct}%).{' '}
+            {wrongBookMode
+              ? 'Every question in this pass is now marked as retested in the wrong book.'
+              : 'Missed questions are due again now — run another session to clear them.'}
           </div>
           <div className={styles.doneButtons}>
             <button className={styles.primaryButton} onClick={() => window.location.reload()}>
-              Review again
+              {wrongBookMode ? 'Check for remaining' : 'Review again'}
             </button>
-            <Link href="/dashboard" className={styles.backButton}>
-              Back to Dashboard
+            <Link href={wrongBookMode ? '/wrong-book' : '/dashboard'} className={styles.backButton}>
+              {wrongBookMode ? 'Back to Wrong Book' : 'Back to Dashboard'}
             </Link>
           </div>
         </div>
@@ -191,12 +212,12 @@ export default function ReviewSessionPage() {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.progressLabel}>
-          Card {position + 1} / {queue.length}
+          {wrongBookMode ? 'Wrong Book' : 'Card'} {position + 1} / {queue.length}
         </div>
         <div className={styles.progressTrack}>
           <div className={styles.progressBar} style={{ width: `${(position / queue.length) * 100}%` }} />
         </div>
-        <Link href="/review/queue" className={styles.exitLink}>
+        <Link href={wrongBookMode ? '/wrong-book' : '/review/queue'} className={styles.exitLink}>
           Exit
         </Link>
       </div>
@@ -235,7 +256,9 @@ export default function ReviewSessionPage() {
                         ? `${Math.round(result.interval_days)} day${Math.round(result.interval_days) > 1 ? 's' : ''}`
                         : 'this session'
                     }.`
-                  : 'Wrong — this card stays due until you get it right.'}
+                  : wrongBookMode
+                    ? 'Wrong again — marked as retested anyway; it stays in the spaced-repetition schedule.'
+                    : 'Wrong — this card stays due until you get it right.'}
               </div>
 
               {explanationEn && (

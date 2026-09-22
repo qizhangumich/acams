@@ -62,11 +62,26 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      if (!isCorrect) {
-        await tx.wrongBook.upsert({
-          where: { user_id_question_id: { user_id: user.id, question_id: question.id } },
-          update: { wrong_count: { increment: 1 }, last_wrong_at: new Date() },
-          create: { user_id: user.id, question_id: question.id },
+      const wrongBookWhere = {
+        user_id_question_id: { user_id: user.id, question_id: question.id },
+      }
+      const existingWrong = await tx.wrongBook.findUnique({
+        where: wrongBookWhere,
+        select: { id: true },
+      })
+
+      if (existingWrong) {
+        // Re-answering a wrong-book question counts as a retest (right or wrong)
+        await tx.wrongBook.update({
+          where: wrongBookWhere,
+          data: {
+            retested_at: new Date(),
+            ...(isCorrect ? {} : { wrong_count: { increment: 1 }, last_wrong_at: new Date() }),
+          },
+        })
+      } else if (!isCorrect) {
+        await tx.wrongBook.create({
+          data: { user_id: user.id, question_id: question.id },
         })
       }
 

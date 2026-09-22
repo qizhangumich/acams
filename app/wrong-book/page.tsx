@@ -18,8 +18,10 @@ import styles from './page.module.css'
 
 interface WrongQuestion {
   question_id: number
+  question_index: number
   wrong_count: number
   last_wrong_at: string
+  retested_at: string | null
   domain: string
   question_text: string
   tags: string[]
@@ -31,6 +33,7 @@ interface WrongBookData {
   success: boolean
   questions: WrongQuestion[]
   total: number
+  stats: { total: number; retested: number; pending: number }
 }
 
 export default function WrongBookPage() {
@@ -104,7 +107,7 @@ export default function WrongBookPage() {
     )
   }
 
-  const { questions, total } = data
+  const { questions, total, stats } = data
 
   return (
     <div className={styles.container}>
@@ -113,13 +116,18 @@ export default function WrongBookPage() {
         <p className={styles.subtitle}>
           {total === 0
             ? 'No wrong answers yet. Keep practicing!'
-            : `Review ${total} question${total > 1 ? 's' : ''} you missed, with your notes and tags`}
+            : `${stats.pending} of ${stats.total} still to retest — pending questions first, in question order`}
         </p>
         <div className={styles.headerActions}>
+          {stats.pending > 0 && (
+            <Link href="/review/session?mode=wrongbook" className={styles.headerButtonPrimary}>
+              ▶ Retest {stats.pending} Pending in Order
+            </Link>
+          )}
           <Link href="/review/sprint" className={styles.headerButton}>
             Sprint Review
           </Link>
-          <Link href="/review/queue" className={styles.headerButtonPrimary}>
+          <Link href="/review/queue" className={styles.headerButton}>
             Daily Queue
           </Link>
         </div>
@@ -139,10 +147,16 @@ export default function WrongBookPage() {
             <Link
               key={question.question_id}
               href={`/questions?questionId=${question.question_id}`}
-              className={styles.questionCard}
+              className={`${styles.questionCard} ${question.retested_at ? styles.questionCardDone : ''}`}
             >
               <div className={styles.questionHeader}>
+                <div className={styles.questionNumber}>Q{question.question_index + 1}</div>
                 <div className={styles.questionDomain}>{question.domain}</div>
+                {question.retested_at ? (
+                  <div className={styles.retestedBadge}>✓ Retested</div>
+                ) : (
+                  <div className={styles.pendingBadge}>Pending</div>
+                )}
                 <div className={styles.questionBadge}>
                   Wrong {question.wrong_count} time{question.wrong_count > 1 ? 's' : ''}
                 </div>

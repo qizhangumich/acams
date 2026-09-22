@@ -23,6 +23,39 @@ export async function GET(request: NextRequest) {
     const { user, error } = await requireUser(request)
     if (error) return error
 
+    // Wrong-book mode: every not-yet-retested wrong-book question, in
+    // question order — a sequential redo pass, independent of SRS due dates.
+    if (request.nextUrl.searchParams.get('mode') === 'wrongbook') {
+      const pending = await prisma.wrongBook.findMany({
+        where: { user_id: user.id, retested_at: null },
+        include: {
+          question: { select: { id: true, index: true, domain: true, question_text: true } },
+        },
+        orderBy: { question: { index: 'asc' } },
+      })
+      const retestedCount = await prisma.wrongBook.count({
+        where: { user_id: user.id, retested_at: { not: null } },
+      })
+      return NextResponse.json({
+        success: true,
+        queue: pending.map((w) => ({
+          question_id: w.question_id,
+          domain: w.question.domain,
+          question_text: w.question.question_text,
+          due_at: w.last_wrong_at.toISOString(),
+          reps: 0,
+          lapses: w.wrong_count,
+          wrong_count: w.wrong_count,
+        })),
+        total: pending.length,
+        stats: {
+          due_count: pending.length,
+          total_cards: pending.length + retestedCount,
+          next_due_at: null,
+        },
+      })
+    }
+
     await ensureCardsForWrongBook(prisma, user.id)
 
     const now = new Date()
