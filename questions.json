@@ -5113,7 +5113,7 @@
   {
     "id": 262,
     "domain": "Compliance Standards for Anti-Money Laundering (AML) and Combating the Financing of Terrorism (CFT)",
-    "question": "What types of things should an institution incorporate in it AML policies and procedures? (Choose Three.)",
+    "question": "What types of things should an institution incorporate in its AML policies and procedures? (Choose Three.)",
     "options": {
       "A": "On-going training, as well as initial training of new employees",
       "B": "Periodic audits, to be performed by independent staff at least once a year",
@@ -5122,14 +5122,14 @@
     },
     "correct_answers": [
       "A",
-      "B",
-      "C"
+      "C",
+      "D"
     ],
-    "explanation": "An institution should incorporate on-going training, periodic audits, and ability to incorporate relevant legislative and regulatory AML changes in its AML policies and procedures. These are essential elements of an effective AML program, as they ensure that the staff are aware of their roles and responsibilities, the institution is compliant with the applicable laws and regulations, and the AML program is updated and adapted to the changing risks and environment. = CAMS Certification Package - 6th Edition | ACAMS1 CAMS Certifications: How to Get CAMS Certified | ACAMS2 ACAMS CAMS Certification Video Training Course - Exam-Labs3 Exam CAMS: Certified Anti-Money Laundering Specialist (the 6th edition)4",
+    "explanation": "AML policies and procedures should build in ongoing plus new-hire training (A), a mechanism to incorporate legislative and regulatory changes so the program stays current (C), and review and approval of the AML policy by the Board of Directors (D) - board oversight and approval of the program is a core requirement in most regimes (e.g., the written BSA program must be board-approved). B is the planted flaw: independent testing is indeed required, but its FREQUENCY is risk-based - there is no blanket rule that audits happen \"at least once a year,\" so the rigid annual requirement makes the statement wrong.",
     "is_complete": true,
-    "normalized_question": "What types of things should an institution incorporate in it AML policies and procedures? (Choose Three.)",
-    "explanation_ai_en": "Correct answer(s): A, B, C\n\nAn institution should incorporate on-going training, periodic audits, and ability to incorporate relevant\nlegislative and regulatory AML changes in its AML policies and procedures. These are essential elements of\nan effective AML program, as they ensure that the staff are aware of their roles and responsibilities, the\ninstitution is compliant with the applicable laws and regulations, and the AML program is updated and\nadapted to the changing risks and environment.\n=\nCAMS Certification Package - 6th Edition | ACAMS1\nCAMS Certifications: How to Get CAMS Certified | ACAMS2\nACAMS CAMS Certification Video Training Course - Exam-Labs3\nExam CAMS: Certified Anti-Money Laundering Specialist (the 6th edition)4",
-    "explanation_ai_ch": "在反洗钱（AML）和打击恐怖主义融资（CFT）的背景下，机构拥有全面的政策和程序以应对合规的各个方面至关重要。关于应纳入AML政策和程序的正确答案是A、B和C。以下是每个选项的详细说明： ### 正确答案： **A：持续培训，以及新员工的初始培训** 持续培训对于确保所有员工了解他们的职责以及最新的AML法规和实践至关重要。新员工的初始培训同样重要，因为它为理解机构的AML框架奠定了基础。定期的培训更新有助于降低因知识差距导致的不合规风险，确保员工能够有效识别和报告可疑活动。 **B：定期审计，由独立人员每年至少进行一次** 定期审计是有效AML合规程序的关键组成部分。它们用于评估现有AML政策和程序的有效性和效率。独立审计提供了对机构合规状态的客观评估，识别潜在的弱点和改进领域。至少每年进行这样的审计确保机构能够适应监管期望和操作风险的变化。 **C：能够纳入相关的立法和监管AML变更** 金融犯罪的环境是动态的，法规会根据新的风险和威胁不断演变。具备将相关立法和监管变更纳入AML政策的能力对于持续合规至关重要。这种灵活性使机构能够与当前法律保持一致，从而降低监管处罚的风险，并增强其AML程序的整体完整性。 ### 不正确选项： **D：董事会对AML政策的审查** 虽然董事会对AML政策的审查对于治理和监督很重要，但通常不被视为AML政策和程序的核心组成部分。董事会的角色是确保AML框架到位并有效运作，但这一行动本身并不会像其他三个选项那样直接促进AML程序的操作有效性。因此，虽然对于监督很重要，但它并不符合持续培训、审计和监管适应性所构成的相同操作框架。总之，选项A、B和C对于建立和维护强有力的AML合规框架是不可或缺的，而选项D虽然对治理重要，但并不直接增强AML程序的操作方面。"
+    "normalized_question": "What types of things should an institution incorporate in its AML policies and procedures? (Choose Three.)",
+    "explanation_ai_en": "Correct answer(s): A, C, D\n\nAML policies and procedures should build in ongoing plus new-hire training (A), a mechanism to incorporate legislative and regulatory changes so the program stays current (C), and review and approval of the AML policy by the Board of Directors (D) - board oversight and approval of the program is a core requirement in most regimes (e.g., the written BSA program must be board-approved). B is the planted flaw: independent testing is indeed required, but its FREQUENCY is risk-based - there is no blanket rule that audits happen \"at least once a year,\" so the rigid annual requirement makes the statement wrong.",
+    "explanation_ai_ch": "正确答案：A、C、D。\n\n- A：持续培训 + 新员工入职培训，是 AML 程序的基本支柱。\n- C：政策程序须能及时吸收法律法规变化，保持有效性。\n- D：董事会对 AML 政策的审阅和批准是核心要求（如美国 BSA 要求书面程序经董事会批准）。\n- B 是埋设的陷阱：独立审计本身是必需的，但审计频率应基于风险，并无\"每年至少一次\"的硬性规定——这个僵化表述使该选项错误。"
   },
   {
     "id": 263,
