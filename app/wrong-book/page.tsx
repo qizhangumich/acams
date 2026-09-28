@@ -41,6 +41,24 @@ export default function WrongBookPage() {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<WrongBookData | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [restarting, setRestarting] = useState(false)
+
+  async function restartRound() {
+    if (!confirm('Start a new round? All ✓ Retested marks will be cleared so you can redo every wrong question in order. (Wrong counts and review schedule stay.)')) {
+      return
+    }
+    try {
+      setRestarting(true)
+      const res = await fetch('/api/wrong-book/restart', { method: 'POST', credentials: 'include' })
+      const result = await res.json().catch(() => null)
+      if (!res.ok || !result?.success) throw new Error(result?.message || 'Failed to restart round')
+      await loadWrongBook()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to restart round')
+    } finally {
+      setRestarting(false)
+    }
+  }
 
   useEffect(() => {
     loadWrongBook()
@@ -123,6 +141,16 @@ export default function WrongBookPage() {
             <Link href="/review/session?mode=wrongbook" className={styles.headerButtonPrimary}>
               ▶ Retest {stats.pending} Pending in Order
             </Link>
+          )}
+          {stats.pending === 0 && stats.total > 0 && (
+            <button
+              type="button"
+              onClick={restartRound}
+              disabled={restarting}
+              className={styles.headerButtonPrimary}
+            >
+              {restarting ? 'Resetting...' : '🔄 Round complete — Start New Round'}
+            </button>
           )}
           <Link href="/review/sprint" className={styles.headerButton}>
             Sprint Review
