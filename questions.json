@@ -4860,21 +4860,21 @@
   {
     "id": 249,
     "domain": "Risks and Methods of Money Laundering and Terrorist Financing",
-    "question": "The Board of Directors for a small private bank has asked the management to no longer apply the identity requirements for high net worth individuals to protect their privacy. Which of the following Financial Action Task =once 40 Recommendations should cause an anti-money laundering specialist the most concern?",
+    "question": "The Board of Directors for a small private bank has asked the management to no longer apply the identity requirements for high net worth individuals to protect their privacy. Which of the following Financial Action Task Force 40 Recommendations should cause an anti-money laundering specialist the most concern?",
     "options": {
       "A": "Financial institutions should not warn their customers when information relating to them is being reported to the competent authorities.",
       "B": "Financial institutions should not keep anonymous accounts.",
-      "C": "Financial institutions should maintain all necessary suspicious transaction report records on transactions, both domestic are international, for at least 5 years.",
+      "C": "Financial institutions should maintain all necessary suspicious transaction report records on transactions, both domestic and international, for at least 5 years.",
       "D": "If financial institutions suspect that funds stem from criminal activity, they should be required to close the account."
     },
     "correct_answers": [
-      "C"
+      "B"
     ],
-    "explanation": "",
+    "explanation": "Waiving identity requirements for high-net-worth customers is a customer due diligence failure, and the FATF Recommendation it violates most directly is the prohibition on anonymous accounts (Recommendation 10): institutions may not keep anonymous accounts or accounts in obviously fictitious names, and must identify and verify every customer - privacy is no exemption. Tipping-off rules (A), five-year STR record retention (C), and handling of suspected criminal funds (D) are real FATF requirements, but none of them is implicated by skipping identification. Note D is also misstated: suspicion triggers reporting, not mandatory account closure.",
     "is_complete": true,
-    "normalized_question": "The Board of Directors for a small private bank has asked the management to no longer apply the identity requirements for high net worth individuals to protect their privacy. Which of the following Financial Action Task =once 40 Recommendations should cause an anti-money laundering specialist the most concern?",
-    "explanation_ai_en": "Correct answer(s): C",
-    "explanation_ai_ch": "在金融行动特别工作组（FATF）建议的背景下，以及围绕董事会决定放宽高净值个人身份要求的担忧，选项C引发了反洗钱（AML）专家最显著的担忧。以下是原因的详细分析：1. **正确答案解释（C）**：- **保持记录的要求**：选项C强调金融机构必须保留可疑交易报告（STR）的记录至少五年。这在AML框架中至关重要，因为保持详细记录使金融机构能够有效调查和追踪可疑活动。如果身份要求被放宽，非法资金通过银行的风险将增加。由于记录保存不充分而无法追踪这些资金的来源，可能会妨碍执法机构打击洗钱和恐怖融资的能力。因此，确保强有力的记录保存实践对于合规和风险管理至关重要。2. **不正确选项解释**：- **选项A（金融机构不应在向主管当局报告与客户相关的信息时警告客户）**：虽然这是FATF下的有效建议，但它与身份验证和客户隐私的担忧没有直接关系。在AML中，不警告客户有关向当局报告的情况是一种标准做法，以防止潜在犯罪分子被警觉，因此与记录保存相比，这并未引发立即的担忧。- **选项B（金融机构不应保留匿名账户）**：这一建议与AML原则高度一致，因为匿名账户可能促进洗钱。然而，在此背景下，它并不是一个紧迫的担忧，因为这里的重点是未应用身份要求的影响，而不是匿名账户的存在，后者在FATF指南下已经被禁止。- **选项D（如果金融机构怀疑资金源于犯罪活动，则应要求关闭账户）**：虽然这也是AML实践的一个关键方面，但它更多的是一种反应措施。它并未解决对充分记录保存和身份验证的前瞻性需求，而这些对于防止非法资金的接受至关重要。总之，选项C是最令人担忧的，因为它突出了全面记录保存实践的关键需求，而这些实践对于有效的AML合规至关重要，尤其是在董事会决定放宽身份验证要求的情况下。这可能显著增加银行被利用进行洗钱活动的风险。"
+    "normalized_question": "The Board of Directors for a small private bank has asked the management to no longer apply the identity requirements for high net worth individuals to protect their privacy. Which of the following Financial Action Task Force 40 Recommendations should cause an anti-money laundering specialist the most concern?",
+    "explanation_ai_en": "Correct answer(s): B\n\nWaiving identity requirements for high-net-worth customers is a customer due diligence failure, and the FATF Recommendation it violates most directly is the prohibition on anonymous accounts (Recommendation 10): institutions may not keep anonymous accounts or accounts in obviously fictitious names, and must identify and verify every customer - privacy is no exemption. Tipping-off rules (A), five-year STR record retention (C), and handling of suspected criminal funds (D) are real FATF requirements, but none of them is implicated by skipping identification. Note D is also misstated: suspicion triggers reporting, not mandatory account closure.",
+    "explanation_ai_ch": "正确答案：B — 金融机构不得开立/保留匿名账户。\n\n- 免除高净值客户的身份识别要求，直接违反 FATF 第10项建议（CDD）：禁止匿名账户或明显虚构姓名的账户，必须识别并核实每一位客户，\"保护隐私\"不是豁免理由。\n- A（禁止通风报信）、C（STR 记录保存至少5年）、D（可疑资金处理）都是真实的 FATF 要求，但与\"跳过身份识别\"无关。\n- D 本身表述也有误：产生怀疑应触发报告义务，而不是强制关户。"
   },
   {
     "id": 250,
