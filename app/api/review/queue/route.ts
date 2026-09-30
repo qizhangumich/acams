@@ -26,8 +26,9 @@ export async function GET(request: NextRequest) {
     // Wrong-book mode: every not-yet-retested wrong-book question, in
     // question order — a sequential redo pass, independent of SRS due dates.
     if (request.nextUrl.searchParams.get('mode') === 'wrongbook') {
+      const minWrong = Number(request.nextUrl.searchParams.get('min_wrong')) || 1
       const pending = await prisma.wrongBook.findMany({
-        where: { user_id: user.id, retested_at: null },
+        where: { user_id: user.id, retested_at: null, wrong_count: { gte: minWrong } },
         include: {
           question: { select: { id: true, index: true, domain: true, question_text: true } },
         },

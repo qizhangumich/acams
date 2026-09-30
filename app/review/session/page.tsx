@@ -48,6 +48,7 @@ function ReviewSession() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const wrongBookMode = searchParams.get('mode') === 'wrongbook'
+  const minWrong = Number(searchParams.get('min')) || 1
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [queue, setQueue] = useState<QueueItem[]>([])
@@ -68,7 +69,9 @@ function ReviewSession() {
       setLoading(true)
       setError(null)
       const response = await fetch(
-        wrongBookMode ? '/api/review/queue?mode=wrongbook' : '/api/review/queue',
+        wrongBookMode
+          ? `/api/review/queue?mode=wrongbook${minWrong > 1 ? `&min_wrong=${minWrong}` : ''}`
+          : '/api/review/queue',
         { credentials: 'include' }
       )
       if (!response.ok) {

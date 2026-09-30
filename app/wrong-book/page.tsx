@@ -126,6 +126,52 @@ export default function WrongBookPage() {
   }
 
   const { questions, total, stats } = data
+  const repeatQuestions = questions.filter((q) => q.wrong_count > 1)
+  const singleQuestions = questions.filter((q) => q.wrong_count === 1)
+  const repeatPending = repeatQuestions.filter((q) => !q.retested_at).length
+
+  function renderCard(question: WrongQuestion) {
+    return (
+      <Link
+        key={question.question_id}
+        href={`/questions?questionId=${question.question_id}`}
+        className={`${styles.questionCard} ${question.retested_at ? styles.questionCardDone : ''}`}
+      >
+        <div className={styles.questionHeader}>
+          <div className={styles.questionNumber}>Q{question.question_index + 1}</div>
+          <div className={styles.questionDomain}>{question.domain}</div>
+          {question.retested_at ? (
+            <div className={styles.retestedBadge}>✓ Retested</div>
+          ) : (
+            <div className={styles.pendingBadge}>Pending</div>
+          )}
+          <div className={styles.questionBadge}>
+            Wrong {question.wrong_count} time{question.wrong_count > 1 ? 's' : ''}
+          </div>
+        </div>
+        <div className={styles.questionText}>{question.question_text}</div>
+        {(question.tags.length > 0 || question.has_note) && (
+          <div className={styles.studyMeta}>
+            {question.tags.map((tag) => (
+              <span key={tag} className={styles.tagChip}>{tag}</span>
+            ))}
+            {question.has_note && (
+              <span className={styles.noteBadge}>
+                Note saved
+                {question.note_updated_at && ` ${formatDate(question.note_updated_at)}`}
+              </span>
+            )}
+          </div>
+        )}
+        <div className={styles.questionFooter}>
+          <div className={styles.questionDate}>
+            Last wrong: {formatDate(question.last_wrong_at)}
+          </div>
+          <div className={styles.questionLink}>View Question →</div>
+        </div>
+      </Link>
+    )
+  }
 
   return (
     <div className={styles.container}>
@@ -137,6 +183,11 @@ export default function WrongBookPage() {
             : `${stats.pending} of ${stats.total} still to retest — pending questions first, in question order`}
         </p>
         <div className={styles.headerActions}>
+          {repeatPending > 0 && (
+            <Link href="/review/session?mode=wrongbook&min=2" className={styles.headerButtonDanger}>
+              🔥 Retest {repeatPending} Repeat Misses First
+            </Link>
+          )}
           {stats.pending > 0 && (
             <Link href="/review/session?mode=wrongbook" className={styles.headerButtonPrimary}>
               ▶ Retest {stats.pending} Pending in Order
@@ -170,48 +221,24 @@ export default function WrongBookPage() {
           </Link>
         </div>
       ) : (
-        <div className={styles.questionsList}>
-          {questions.map((question) => (
-            <Link
-              key={question.question_id}
-              href={`/questions?questionId=${question.question_id}`}
-              className={`${styles.questionCard} ${question.retested_at ? styles.questionCardDone : ''}`}
-            >
-              <div className={styles.questionHeader}>
-                <div className={styles.questionNumber}>Q{question.question_index + 1}</div>
-                <div className={styles.questionDomain}>{question.domain}</div>
-                {question.retested_at ? (
-                  <div className={styles.retestedBadge}>✓ Retested</div>
-                ) : (
-                  <div className={styles.pendingBadge}>Pending</div>
-                )}
-                <div className={styles.questionBadge}>
-                  Wrong {question.wrong_count} time{question.wrong_count > 1 ? 's' : ''}
-                </div>
-              </div>
-              <div className={styles.questionText}>{question.question_text}</div>
-              {(question.tags.length > 0 || question.has_note) && (
-                <div className={styles.studyMeta}>
-                  {question.tags.map((tag) => (
-                    <span key={tag} className={styles.tagChip}>{tag}</span>
-                  ))}
-                  {question.has_note && (
-                    <span className={styles.noteBadge}>
-                      Note saved
-                      {question.note_updated_at && ` ${formatDate(question.note_updated_at)}`}
-                    </span>
-                  )}
-                </div>
-              )}
-              <div className={styles.questionFooter}>
-                <div className={styles.questionDate}>
-                  Last wrong: {formatDate(question.last_wrong_at)}
-                </div>
-                <div className={styles.questionLink}>View Question →</div>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <>
+          {repeatQuestions.length > 0 && (
+            <>
+              <h2 className={styles.sectionHeading}>
+                🔥 Missed more than once ({repeatQuestions.length})
+              </h2>
+              <div className={styles.questionsList}>{repeatQuestions.map(renderCard)}</div>
+            </>
+          )}
+          {singleQuestions.length > 0 && (
+            <>
+              <h2 className={styles.sectionHeading}>
+                Missed once ({singleQuestions.length})
+              </h2>
+              <div className={styles.questionsList}>{singleQuestions.map(renderCard)}</div>
+            </>
+          )}
+        </>
       )}
 
       <div className={styles.footer}>
