@@ -14894,14 +14894,14 @@
       "E": "Customer requests payment of proceeds to an unrelated third party"
     },
     "correct_answers": [
-      "B",
-      "D"
+      "A",
+      "C"
     ],
-    "explanation": "",
+    "explanation": "Both correct options come straight from the red-flag indicators in FATF’s 2020 report on money laundering and the illegal wildlife trade: large wire transfers between licensed wildlife farms and companies operating in inconsistent lines of business (A) - the front-company pattern used to dress trafficking proceeds as legitimate trade - and activity involving politically exposed persons with environmental, game, or forestry oversight (C) - the corruption channel that supplies permits, quotas, and protection. The FATF report specifically observed that cryptocurrency plays only a limited role in wildlife-trade payments (B), and paying transport charges with a fraudulent instrument (D) is a fraud typology, not a listed wildlife-trafficking indicator.",
     "is_complete": true,
     "normalized_question": "A compliance officer is reviewing transactions related to a company suspected of being involved in wildlife trafficking. Which of activities below are common in wildlife trafficking schemes? (Select Two.)",
-    "explanation_ai_en": "Correct answer(s): B, D",
-    "explanation_ai_ch": "在反洗钱（AML）和合规的背景下，审查与野生动物走私相关的交易时，识别出指示此类非法计划的活动至关重要。### 正确答案：**B: 将法定货币兑换为加密货币以完成对野生动物农场的付款** - 这个选项是正确的，因为野生动物走私者可能会使用加密货币来掩盖资金的来源和去向，使当局更难追踪非法资金流动。加密货币提供了匿名性，并促进跨境交易，这对参与非法活动（如野生动物走私）的人来说是一个吸引人的特征。**D: 使用欺诈性金融工具支付运输费用** - 这个选项也是正确的，因为它反映了在非法操作中常用的战术，包括野生动物走私。欺诈性金融工具，如伪造支票或伪造文件，可以用来掩盖交易的真实性质。这种方法可以帮助走私者通过在其金融交易中创造合法性的假象来逃避侦查。### 不正确答案：**A: 在野生动物农场与经营不一致业务的公司之间的大额电汇** - 虽然大额电汇可能发生在各种非法计划中，但这个选项过于宽泛，缺乏与野生动物走私的特定性。并非所有大额转账都指示走私，尤其是如果它们发生在可以合法参与野生动物贸易的企业之间。这一活动本身并不能明确表示走私，除非有其他可疑因素。**C: 涉及政治曝光人士的活动，具有环境、游戏或林业监督** - 尽管政治曝光人士（PEPs）的参与可能表明风险，但这个选项并不直接与常见的野生动物走私计划相关。PEPs可能参与各种领域，单纯的监督并不意味着与野生动物走私相关的非法活动，除非有进一步的违法证据。**E: 客户要求将收益支付给不相关的第三方** - 这个选项虽然可能可疑，但并不特别指示野生动物走私。这种做法可能在各种背景下发生，并不唯一指向野生动物走私活动。需要更多的背景信息来确定这种行为是否与走私或合法商业实践相关。### 总结 总之，选项B和D是正确的，因为它们直接反映了用于掩盖和促进野生动物走私计划中交易的战术。其他选项要么缺乏特定性，要么与野生动物走私活动中通常观察到的独特模式无关。理解这些细微差别对于合规官员识别和减轻与此类非法活动相关的风险至关重要。"
+    "explanation_ai_en": "Correct answer(s): A, C\n\nBoth correct options come straight from the red-flag indicators in FATF’s 2020 report on money laundering and the illegal wildlife trade: large wire transfers between licensed wildlife farms and companies operating in inconsistent lines of business (A) - the front-company pattern used to dress trafficking proceeds as legitimate trade - and activity involving politically exposed persons with environmental, game, or forestry oversight (C) - the corruption channel that supplies permits, quotas, and protection. The FATF report specifically observed that cryptocurrency plays only a limited role in wildlife-trade payments (B), and paying transport charges with a fraudulent instrument (D) is a fraud typology, not a listed wildlife-trafficking indicator.",
+    "explanation_ai_ch": "正确答案：A、C。\n\n- 两个正确项均出自 FATF 2020《洗钱与非法野生动物贸易》报告的红旗指标：\n- A：持牌野生动物养殖场与业务毫不相关的公司之间的大额电汇——用幌子公司把走私收益包装成正常贸易。\n- C：涉及负责环境、狩猎或林业监管的 PEP 的活动——腐败是野生动物走私的通行证（许可证、配额、执法放水）。\n- B：FATF 报告明确指出加密货币在野生动物贸易支付中作用有限，不是\"常见\"手法。\n- D：用欺诈性金融工具支付运费属于欺诈类型学，不在 FATF 野生动物贸易指标之列。"
   },
   {
     "id": 761,
