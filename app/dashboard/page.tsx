@@ -369,6 +369,13 @@ export default function DashboardPage() {
             </button>
             <button
               className={styles.reviewButton}
+              onClick={() => router.push('/special')}
+              type="button"
+            >
+              ⭐ Special Group
+            </button>
+            <button
+              className={styles.reviewButton}
               onClick={() => router.push('/review/sprint')}
               type="button"
             >

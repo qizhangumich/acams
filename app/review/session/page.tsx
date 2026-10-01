@@ -47,7 +47,9 @@ export default function ReviewSessionPage() {
 function ReviewSession() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const wrongBookMode = searchParams.get('mode') === 'wrongbook'
+  const mode = searchParams.get('mode')
+  const wrongBookMode = mode === 'wrongbook'
+  const specialMode = mode === 'special'
   const minWrong = Number(searchParams.get('min')) || 1
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -69,9 +71,11 @@ function ReviewSession() {
       setLoading(true)
       setError(null)
       const response = await fetch(
-        wrongBookMode
-          ? `/api/review/queue?mode=wrongbook${minWrong > 1 ? `&min_wrong=${minWrong}` : ''}`
-          : '/api/review/queue',
+        specialMode
+          ? '/api/review/queue?mode=special'
+          : wrongBookMode
+            ? `/api/review/queue?mode=wrongbook${minWrong > 1 ? `&min_wrong=${minWrong}` : ''}`
+            : '/api/review/queue',
         { credentials: 'include' }
       )
       if (!response.ok) {
@@ -215,12 +219,12 @@ function ReviewSession() {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.progressLabel}>
-          {wrongBookMode ? 'Wrong Book' : 'Card'} {position + 1} / {queue.length}
+          {specialMode ? 'Special' : wrongBookMode ? 'Wrong Book' : 'Card'} {position + 1} / {queue.length}
         </div>
         <div className={styles.progressTrack}>
           <div className={styles.progressBar} style={{ width: `${(position / queue.length) * 100}%` }} />
         </div>
-        <Link href={wrongBookMode ? '/wrong-book' : '/review/queue'} className={styles.exitLink}>
+        <Link href={specialMode ? '/special' : wrongBookMode ? '/wrong-book' : '/review/queue'} className={styles.exitLink}>
           Exit
         </Link>
       </div>

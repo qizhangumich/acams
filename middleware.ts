@@ -22,7 +22,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/wrong-book') ||
     pathname.startsWith('/review') ||
-    pathname.startsWith('/exam')
+    pathname.startsWith('/exam') ||
+    pathname.startsWith('/special')
   ) {
     const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)
     const sessionToken = sessionCookie?.value
@@ -89,6 +90,7 @@ export const config = {
     '/wrong-book/:path*',
     '/review/:path*',
     '/exam/:path*',
+    '/special/:path*',
     '/api/progress/:path*',
     '/api/chat/:path*',
     '/api/wrong-book/:path*',

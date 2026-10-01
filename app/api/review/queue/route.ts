@@ -23,6 +23,32 @@ export async function GET(request: NextRequest) {
     const { user, error } = await requireUser(request)
     if (error) return error
 
+    // Special-group mode: every question the user tagged SPECIAL, in
+    // question order — a custom drill independent of SRS due dates.
+    if (request.nextUrl.searchParams.get('mode') === 'special') {
+      const tagged = await prisma.userQuestionTag.findMany({
+        where: { user_id: user.id, tag: 'SPECIAL' },
+        include: {
+          question: { select: { id: true, index: true, domain: true, question_text: true } },
+        },
+        orderBy: { question: { index: 'asc' } },
+      })
+      return NextResponse.json({
+        success: true,
+        queue: tagged.map((t) => ({
+          question_id: t.question_id,
+          domain: t.question.domain,
+          question_text: t.question.question_text,
+          due_at: t.created_at.toISOString(),
+          reps: 0,
+          lapses: 0,
+          wrong_count: 0,
+        })),
+        total: tagged.length,
+        stats: { due_count: tagged.length, total_cards: tagged.length, next_due_at: null },
+      })
+    }
+
     // Wrong-book mode: every not-yet-retested wrong-book question, in
     // question order — a sequential redo pass, independent of SRS due dates.
     if (request.nextUrl.searchParams.get('mode') === 'wrongbook') {
