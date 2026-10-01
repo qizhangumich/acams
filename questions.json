@@ -12888,11 +12888,11 @@
     "correct_answers": [
       "C"
     ],
-    "explanation": "",
+    "explanation": "Alongside mutual evaluations, a core FSRB goal is regional TYPOLOGIES work: analyzing new and developing methods by which criminals and terrorists abuse the financial system in their region (C) and sharing those findings with members and the FATF. The distractors fail on actor: executing AML processes (A) is what financial institutions do; enforcing local laws (B) is the job of national authorities; and setting the standards (D) is FATF’s role - FSRBs assess members AGAINST the FATF 40, they do not write standards of their own.",
     "is_complete": true,
     "normalized_question": "Which is a goal of Financial Action Task Force Regional-Style Bodies?",
-    "explanation_ai_en": "Correct answer(s): C",
-    "explanation_ai_ch": "关于金融行动特别工作组（FATF）区域风格机构目标的问题的正确答案是 **C: 分析犯罪分子或恐怖分子在其地区滥用金融系统的新兴或发展中的方法**。 ## 正确答案的解释： **C: 分析犯罪分子或恐怖分子在其地区滥用金融系统的新兴或发展中的方法** 这个选项是正确的，因为FATF区域风格机构的主要目标之一是识别和分析金融系统中可能被用于洗钱（ML）或恐怖融资（TF）的新兴威胁和脆弱性。通过关注犯罪分子和恐怖分子在各自地区使用的具体方法，这些机构可以提供有价值的见解和建议，以增强针对当地背景量身定制的反洗钱/反恐怖融资（AML/CFT）策略的有效性。 ## 不正确选项的解释： **A: 根据建议执行有效的AML流程** 虽然这个选项提到了实施AML流程的重要性，但它并不是区域风格机构的直接目标。相反，这些机构主要关注评估、指导和能力建设，而不是直接执行这些流程。它们的角色更多是影响和建议成员国最佳实践，而不是执行这些流程。 **B: 执行当地AML法律和法规** 这个选项是不正确的，因为执行AML法律和法规通常是各成员国国家当局和执法机构的责任。区域风格机构没有执法权；相反，它们促进成员国之间的合作、信息共享和合规评估，以加强其AML框架。 **D: 制定标准以评估成员国是否拥有足够的AML机制** 虽然制定标准是FATF本身的一个职能，但区域风格机构更关注区域合作和共享最佳实践，而不是为评估制定正式标准。它们可能会使用FATF制定的标准，但不会制定自己的独立标准。 ## 总结 总之，选项C正确识别了FATF区域风格机构在理解和应对区域金融犯罪中的分析角色。其他选项并未准确反映这些机构的主要目标，因为它们要么夸大了它们在执法和执行中的角色，要么错误地描述了它们在标准制定方面的职能。"
+    "explanation_ai_en": "Correct answer(s): C\n\nAlongside mutual evaluations, a core FSRB goal is regional TYPOLOGIES work: analyzing new and developing methods by which criminals and terrorists abuse the financial system in their region (C) and sharing those findings with members and the FATF. The distractors fail on actor: executing AML processes (A) is what financial institutions do; enforcing local laws (B) is the job of national authorities; and setting the standards (D) is FATF’s role - FSRBs assess members AGAINST the FATF 40, they do not write standards of their own.",
+    "explanation_ai_ch": "正确答案：C — 分析本区域内犯罪分子/恐怖分子滥用金融体系的新型手法。\n\n- FSRB 两大核心职能：互评估 + 区域类型学研究（typologies），即分析区域内新出现的洗钱/恐融手法并与成员和 FATF 共享。\n- 其余选项都是\"主体错位\"：A（执行 AML 流程）是金融机构的事；B（执行本国法律）是各国主管当局的事；D（制定标准）是 FATF 的事——FSRB 只是按 FATF 40 项建议评估成员，不自设标准。"
   },
   {
     "id": 658,
